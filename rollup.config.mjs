@@ -50,5 +50,16 @@ export default [
             }
         ],
         plugins,
+    },
+    {
+        input: 'src/zumbamain.js',
+        output: [
+            {
+                format: 'es',
+                file: 'build/zumba.js',
+                sourcemap: true,
+            }
+        ],
+        plugins,
     }
 ];
