@@ -41,11 +41,40 @@ def classify_tensor_shape(tensor_real, relative_off_diagonal_floor=0.15):
     return "A_1"
 
 
+def find_noise_floor(magnitudes, min_gap_ratio=10.0):
+    """
+    Find the natural boundary between numerical noise and real signal in a
+    set of mode tensor magnitudes: the largest multiplicative jump between
+    consecutive values once sorted. Returns a threshold sitting in that gap
+    (the geometric mean of the two values bracketing it), or None if no gap
+    at least min_gap_ratio wide exists (nothing can be confidently called
+    noise by magnitude alone).
+
+    A fixed *relative* floor (e.g. "1% of the largest magnitude in this
+    calculation") was tried first and was wrong: for ZMO, the real
+    noise/signal boundary sits between ~5e-7 and ~1.2e-3 (a ~2500x gap,
+    consistent across all four LO-TO directions) while the largest active
+    mode reaches ~1.26 -- a 1% floor (~1.3e-2) sat well inside the real
+    signal cluster and killed several genuinely active modes, including a
+    mode at 38 cm-1 that an independent group-theory count expects to be
+    part of a 13-mode E_2 set. Finding the actual gap in the data, rather
+    than assuming where it is, avoids this.
+    """
+    positive = np.sort(np.asarray(magnitudes)[np.asarray(magnitudes) > 0])
+    if len(positive) < 2:
+        return None
+    ratios = positive[1:] / positive[:-1]
+    gap_index = np.argmax(ratios)
+    if ratios[gap_index] < min_gap_ratio:
+        return None
+    return float(np.sqrt(positive[gap_index] * positive[gap_index + 1]))
+
+
 def classify_modes(
     R_modes,
     freqs,
     acoustic_freq_tol_cm1=3.0,
-    magnitude_rel_floor=0.01,
+    min_noise_gap_ratio=10.0,
 ):
     """
     Assign a symmetry label to every mode, or "dark" if it isn't Raman
@@ -59,15 +88,12 @@ def classify_modes(
        Pure translations cannot change the polarizability tensor; any
        nonzero projection here is an ASR/numerical residual, not signal,
        regardless of how large it looks in absolute terms.
-    2. For optical modes, "dark" is decided by comparing each mode's tensor
-       magnitude (max |entry|) to the LARGEST magnitude among optical modes
-       in *this* calculation (a relative threshold), not a fixed absolute
-       tolerance -- the real noise floor depends on how tightly this
-       specific DFPT run converged. This is what catches modes with real
-       tensor magnitude ~1e-7 to 1e-8 (7-8 orders of magnitude below
-       genuinely active modes) that a fixed tolerance like 1e-8 lets
-       through, since it can't tell "small but real" from "pure noise" in
-       absolute terms.
+    2. For optical modes, "dark" is decided by find_noise_floor(): the
+       actual gap between the noise cluster and the signal cluster in
+       *this* calculation, not an assumed fixed tolerance or percentage.
+       If no confident gap is found, nothing is marked dark by magnitude
+       (only the tensor-shape classification and the acoustic filter
+       apply).
 
     An earlier version of this function also demoted E_1/E_2 modes lacking
     an exactly frequency-degenerate partner to "dark", on the assumption
@@ -89,8 +115,9 @@ def classify_modes(
     magnitudes = np.array([np.max(np.abs(np.asarray(R_modes[i]).real)) for i in range(n)])
 
     optical_magnitudes = magnitudes[~is_acoustic]
-    max_optical_magnitude = optical_magnitudes.max() if len(optical_magnitudes) else 0.0
-    dark_threshold = max_optical_magnitude * magnitude_rel_floor
+    dark_threshold = find_noise_floor(optical_magnitudes, min_noise_gap_ratio)
+    if dark_threshold is None:
+        dark_threshold = 0.0
 
     labels = []
     for i in range(n):

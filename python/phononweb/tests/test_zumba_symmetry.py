@@ -8,7 +8,7 @@ from phononweb.scripts.generate_zumba_jsons import (
     parse_dyn_for_raman,
     parse_modes_for_eigvecs,
 )
-from phononweb.scripts.zumba_symmetry import classify_modes
+from phononweb.scripts.zumba_symmetry import classify_modes, find_noise_floor
 
 FIXTURE_DIR = Path(__file__).resolve().parents[3] / "test" / "fixtures" / "qespresso" / "zumba"
 REFERENCE_SPECTRA_DIR = Path(__file__).resolve().parents[3] / "test" / "fixtures" / "zumba"
@@ -75,6 +75,40 @@ def test_genuinely_active_non_degenerate_modes_are_not_demoted():
     for i in known_active_non_degenerate:
         assert labels[i] != "dark", f"mode {i + 1} (freq {freqs[i]:.1f}) should not be dark"
         assert labels[i] in ("A_1", "E_1", "E_2")
+
+
+def test_find_noise_floor_locates_the_real_gap():
+    # regression test: a fixed relative floor (1% of the largest magnitude)
+    # was tried first and was wrong -- it sat inside the real signal cluster
+    # (real magnitudes as low as ~1.2e-3 exist, while 1% of the ~1.26 max is
+    # ~1.3e-2) and killed genuinely active modes. The actual noise/signal
+    # boundary must be found from the data: a ~2500x gap sits consistently
+    # between ~5e-7 and ~1.2e-3 across all four LO-TO directions.
+    freqs, R_modes = _r_modes_for("x")
+    is_acoustic = np.abs(freqs) <= 3.0
+    magnitudes = np.array([np.max(np.abs(R_modes[i].real)) for i in range(len(freqs))])
+    threshold = find_noise_floor(magnitudes[~is_acoustic])
+    assert threshold is not None
+    assert 5e-7 < threshold < 1.2e-3
+
+
+def test_weak_but_genuine_mode_is_not_treated_as_noise():
+    # regression test: Angelina (collaborator) independently expects exactly
+    # 13 doubly-degenerate E_2 modes from group theory. The mode pair at
+    # ~38.12 cm-1 has real tensor magnitude ~3.2e-3 -- three orders of
+    # magnitude above the true noise floor (~1e-7 to 1e-8) but small enough
+    # that a naive "1% of the largest signal" floor incorrectly killed it,
+    # undercounting E_2 by one pair (12 instead of 13).
+    freqs, R_modes = _r_modes_for("x")
+    labels = classify_modes(R_modes, freqs)
+
+    mode4, mode5 = 3, 4  # 0-indexed
+    assert abs(freqs[mode4] - 38.12) < 0.1 and abs(freqs[mode5] - 38.12) < 0.1
+    assert labels[mode4] == "E_2"
+    assert labels[mode5] == "E_2"
+
+    e2_count = sum(1 for label in labels if label == "E_2")
+    assert e2_count == 26, f"expected 13 doubly-degenerate E_2 modes (26 total), got {e2_count}"
 
 
 def test_generate_writes_all_27_geometries_with_expected_shape(tmp_path):
