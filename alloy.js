@@ -93842,82 +93842,6 @@ createComplex.Polar = function(r, phi) {
 
 createComplex.fromPolar = createComplex.Polar;
 
-/*
- * AlloyDB — loads plain .json phonon files from the alloydb/ directory.
- *
- * Because browsers cannot list directories, the class reads a manifest file
- * at  alloydb/manifest.json  which is a simple JSON array of filenames, e.g.:
- *
- *   ["BaZrS_x_0.0_m_32.06.json", "BaZrS_x_1.0_m_78.97.json", ...]
- *
- * Generate / regenerate the manifest any time you add files:
- *
- *   cd phononwebsite/alloydb
- *   python3 -c "import os,json; print(json.dumps(sorted(f for f in os.listdir('.') if f.endswith('.json'))))" > manifest.json
- *
- * The display name shown in the sidebar is taken from the JSON's own "name"
- * field (e.g. "bazrs3").  If that field is absent the filename stem is used.
- */
-
-class AlloyDB {
-
-    constructor() {
-        this.name      = "alloydb";
-        this.author    = "Custom Alloy Database";
-        this.year      = new Date().getFullYear();
-        this.root      = "alloydb";
-        this.manifest  = "alloydb/manifest.json";
-    }
-
-    get_materials(callback) {
-        const root      = this.root;
-        const name      = this.name;
-        const manifest  = this.manifest;
-        const reference = this.author + " (" + this.year + ")";
-
-        // Try to fetch the manifest; fall back to empty list on any error.
-        fetch(manifest)
-            .then(function(response) {
-                if (!response.ok) {
-                    throw new Error("manifest not found: " + manifest);
-                }
-                return response.json();
-            })
-            .then(function(files) {
-                if (!Array.isArray(files) || files.length === 0) {
-                    callback([]);
-                    return;
-                }
-
-                // Sort alphabetically so the sidebar is predictable.
-                files.sort();
-
-                const materials = files.map(function(filename) {
-                    // Strip .json suffix for the display name.
-                    let stem = filename.endsWith(".json")
-                        ? filename.slice(0, -5)
-                        : filename;
-
-                    return {
-                        id:        stem,
-                        name:      stem,          // shown in sidebar; overridden by JSON "name" field at load time
-                        source:    name,
-                        type:      "json",         // tells PhononWebpage to use PhononJson loader (no .gz)
-                        reference: reference,
-                        url:       root + "/" + filename,
-                        link:      null,
-                    };
-                });
-
-                callback(materials);
-            })
-            .catch(function(err) {
-                console.warn("AlloyDB: could not load manifest:", err);
-                callback([]);
-            });
-    }
-}
-
 var jmol_colors = [
 [1.000,0.000,0.000] ,// None
 [1.000,1.000,1.000], // H
@@ -102621,9 +102545,8 @@ class PhononJson {
             : null;
         this.repetitions = data["repetitions"];
 
-	this.raman_intensities = data["raman_intensities"] || null;
+        this.raman_intensities = data["raman_intensities"] || null;
         this.gamma_index = data["gamma_index"] || 0;
-        console.log("SUCCESS: Raman array intercepted ->", this.raman_intensities);
 
         this.average_mass = data["average_mass"];
         this.mode_amplitude_convention = data["mode_amplitude_convention"];
@@ -108753,6 +108676,14 @@ class PhononHighcharts {
             this.chart.destroy();
             this.chart = null;
         }
+        // The old chart's points (including any previously-selected point) are
+        // gone now -- selectModePoint() must not try to deselect a point that
+        // belonged to the destroyed chart on its next call, or Highcharts
+        // throws inside point.select() trying to reach the point's dead chart.
+        this.selectedPoint = null;
+        this.selectedBandIndex = null;
+        this.selectedK = null;
+        this.selectedX = null;
         this.chart = globalThis.Highcharts.chart(this.container[0], this.HighchartsOptions);
         this.refreshLegendAndWeights();
     }
@@ -108834,6 +108765,11 @@ class PhononHighcharts {
         let baseColor = this.showModeWeights ? '#94a3b8' : '#0066FF';
         let visibleTypeIndices = this.getVisibleAtomTypeIndices();
         let singleVisibleType = visibleTypeIndices.length === 1 ? visibleTypeIndices[0] : null;
+        // With a single q-point there is no dispersion to draw a line along --
+        // every band collapses to one stacked point at x=0. Draw those as a
+        // visible, clickable "stick spectrum" of modes instead of 1px dots.
+        let isSingleQpoint = dists.length === 1;
+        let markerRadius = isSingleQpoint ? 5 : 1;
 
         //go through the eigenvalues and create eival list
         for (let n=0; n<nbands; n++) {
@@ -108863,7 +108799,7 @@ class PhononHighcharts {
                         lineWidth: this.showModeWeights ? 0.8 : 2,
                         zIndex: 5,
                         showInLegend: false,
-                        marker: { radius: 1, symbol: "circle"},
+                        marker: { radius: markerRadius, symbol: "circle"},
                         data: eig
                     });
 
@@ -110715,14 +110651,203 @@ class PhononWebpage {
 }
 
 /*
+ * alloymix.js — client-side mixing for the BaZr(S(1-x)Se(x))3 alloy page.
+ *
+ * Replaces a precomputed x/m grid of static json files with live mixing of
+ * two small endpoint payloads (pure BaZrS3 and pure BaZrSe3), each carrying
+ * a "runtime dynamical matrix" (see src/dynamicalmatrix.js) parsed directly
+ * from the underlying QE .dyn files.
+ *
+ * Two independent controls, matching the validated generation pipeline:
+ *   x - chalcogen fraction: linearly interpolates the dynamical matrix
+ *       (force_constants_compact) between the two endpoints. Mixes bonding
+ *       character.
+ *   m - chalcogen mass (amu): overrides the chalcogen-site mass at
+ *       diagonalization time, independent of x. Isolates the pure mass
+ *       effect from the force-constant effect.
+ */
+
+const BA_AMU = 137.327;
+const ZR_AMU = 91.224;
+
+function mixForceConstants(fcS, fcSe, x) {
+    const natoms = fcS.length;
+    const mixed = new Array(natoms);
+    for (let i = 0; i < natoms; i++) {
+        mixed[i] = new Array(natoms);
+        for (let j = 0; j < natoms; j++) {
+            const blockS = fcS[i][j];
+            const blockSe = fcSe[i][j];
+            const block = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+            for (let row = 0; row < 3; row++) {
+                for (let col = 0; col < 3; col++) {
+                    block[row][col] = (1 - x) * blockS[row][col] + x * blockSe[row][col];
+                }
+            }
+            mixed[i][j] = block;
+        }
+    }
+    return mixed;
+}
+
+function buildMixedMasses(atomTypes, mAmu, amuToNative) {
+    return atomTypes.map((type) => {
+        if (type === 'Ba') return BA_AMU * amuToNative;
+        if (type === 'Zr') return ZR_AMU * amuToNative;
+        return mAmu * amuToNative;
+    });
+}
+
+function buildMixedMassesAmu(atomTypes, mAmu) {
+    return atomTypes.map((type) => {
+        if (type === 'Ba') return BA_AMU;
+        if (type === 'Zr') return ZR_AMU;
+        return mAmu;
+    });
+}
+
+/**
+ * Linearly interpolate the DFPT Raman tensor (d(chi)/du, shape
+ * [atom][pol][alpha][beta]) between the two end-members. Same blanket
+ * linear interpolation as the force constants -- verified against real
+ * QE dynmat.x output to reproduce mode Raman activities exactly (see
+ * python/phononweb/tests/test_alloy_endmembers.py).
+ */
+function mixRamanTensor(rtS, rtSe, x) {
+    const natoms = rtS.length;
+    const mixed = new Array(natoms);
+    for (let a = 0; a < natoms; a++) {
+        mixed[a] = new Array(3);
+        for (let p = 0; p < 3; p++) {
+            const blockS = rtS[a][p];
+            const blockSe = rtSe[a][p];
+            const block = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+            for (let row = 0; row < 3; row++) {
+                for (let col = 0; col < 3; col++) {
+                    block[row][col] = (1 - x) * blockS[row][col] + x * blockSe[row][col];
+                }
+            }
+            mixed[a][p] = block;
+        }
+    }
+    return mixed;
+}
+
+/**
+ * Compute the powder-averaged Raman activity for every mode, from raw
+ * (mass-weighted) eigenvectors as returned by solveHermitianEigenSystem,
+ * the (mixed) Raman tensor, and each atom's mass in amu.
+ *
+ * Formula (matches QE's dynmat.x exactly, validated against real
+ * dynmat.out output for both end-members and mixed x/m compositions):
+ *   displacement[atom][pol] = eigenvector[atom][pol] / sqrt(mass_amu[atom])
+ *   R[alpha][beta] = sum_{atom,pol} ramanTensor[atom][pol][alpha][beta] * displacement[atom][pol]
+ *   a = trace(R) / 3
+ *   anisotropy^2 = 0.5*((Rxx-Ryy)^2+(Ryy-Rzz)^2+(Rzz-Rxx)^2) + 3*(Rxy^2+Ryz^2+Rzx^2)
+ *   activity = 45*a^2 + 7*anisotropy^2
+ */
+function computeRamanActivities(eigenvectors, ramanTensor, massesAmu) {
+    const natoms = massesAmu.length;
+    const nmodes = eigenvectors.length;
+    const activities = new Array(nmodes);
+
+    for (let n = 0; n < nmodes; n++) {
+        const eigenvector = eigenvectors[n];
+        const R = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+
+        for (let atom = 0; atom < natoms; atom++) {
+            const invSqrtMass = 1 / Math.sqrt(massesAmu[atom]);
+            for (let pol = 0; pol < 3; pol++) {
+                const displacement = eigenvector[atom * 3 + pol][0] * invSqrtMass;
+                const tensorBlock = ramanTensor[atom][pol];
+                for (let alpha = 0; alpha < 3; alpha++) {
+                    for (let beta = 0; beta < 3; beta++) {
+                        R[alpha][beta] += tensorBlock[alpha][beta] * displacement;
+                    }
+                }
+            }
+        }
+
+        const a = (R[0][0] + R[1][1] + R[2][2]) / 3;
+        const anisotropy2 = 0.5 * (
+            (R[0][0] - R[1][1]) ** 2 +
+            (R[1][1] - R[2][2]) ** 2 +
+            (R[2][2] - R[0][0]) ** 2
+        ) + 3 * (R[0][1] ** 2 + R[1][2] ** 2 + R[2][0] ** 2);
+
+        activities[n] = 45 * a * a + 7 * anisotropy2;
+    }
+
+    return activities;
+}
+
+function mixAlloyDynamicalMatrix(endmemberS, endmemberSe, x, mAmu) {
+    const dmS = endmemberS.dynamical_matrix;
+    const dmSe = endmemberSe.dynamical_matrix;
+
+    return {
+        ...dmS,
+        force_constants_compact: mixForceConstants(
+            dmS.force_constants_compact,
+            dmSe.force_constants_compact,
+            x
+        ),
+        masses: buildMixedMasses(endmemberS.atom_types, mAmu, endmemberS.amu_to_native_mass_unit),
+    };
+}
+
+/**
+ * Compute Raman activities for the mixed alloy at (x, m), given the raw
+ * eigenvectors from solveHermitianEigenSystem(mixedDynamicalMatrix, [0,0,0]).
+ * Returns null if either end-member is missing raman_tensor data.
+ */
+function computeMixedRamanIntensities(endmemberS, endmemberSe, x, mAmu, eigenvectors) {
+    if (!endmemberS.raman_tensor || !endmemberSe.raman_tensor) {
+        return null;
+    }
+    const ramanTensor = mixRamanTensor(endmemberS.raman_tensor, endmemberSe.raman_tensor, x);
+    const massesAmu = buildMixedMassesAmu(endmemberS.atom_types, mAmu);
+    return computeRamanActivities(eigenvectors, ramanTensor, massesAmu);
+}
+
+/**
+ * Build a PhononJson "internal json" object for the mixed alloy at (x, m).
+ * Structure/lattice/atom positions are always the fixed BaZrS3 reference
+ * geometry (endmemberS) -- only the dynamical matrix changes with x/m.
+ */
+function buildMixedInternalJson(endmemberS, endmemberSe, x, mAmu) {
+    return {
+        name: endmemberS.name,
+        formula: endmemberS.formula,
+        natoms: endmemberS.natoms,
+        lattice: endmemberS.lattice,
+        atom_types: endmemberS.atom_types,
+        atom_numbers: endmemberS.atom_numbers,
+        atom_pos_car: endmemberS.atom_pos_car,
+        qpoints: endmemberS.qpoints,
+        distances: endmemberS.distances,
+        highsym_qpts: endmemberS.highsym_qpts,
+        line_breaks: endmemberS.line_breaks,
+        repetitions: endmemberS.repetitions,
+        dynamical_matrix: mixAlloyDynamicalMatrix(endmemberS, endmemberSe, x, mAmu),
+    };
+}
+
+/*
  * alloymain.js  —  entry point for alloy.html
  *
- * Mirrors main.js top-level structure exactly.
- * Material selection via 4 sliders (x and m for each of 2 alloys).
- * Material 2 Raman spectrum is overlaid on Material 1's chart.
+ * Mirrors main.js top-level structure. Loads two small end-member
+ * "runtime dynamical matrix" payloads (pure BaZrS3 and pure BaZrSe3,
+ * parsed from QE .dyn files by generate_alloy_endmembers.py) and mixes
+ * them live in the browser as the x/m sliders move -- see src/alloymix.js.
+ *
+ * Material 1's sliders drive the 3D animation + frequency axis + Raman
+ * spectrum/table (via the shared plotRaman() from the raman feature).
+ * Material 2's sliders drive an independent Raman-curve-only overlay for
+ * comparison -- it never touches the 3D view or mode selection.
  *
  * Place at:   phononwebsite/src/alloymain.js
- * Build to:   phononwebsite/build/alloy.min.js
+ * Build to:   phononwebsite/build/alloy.js
  */
 
 if (ColorManagement && typeof ColorManagement.enabled === 'boolean') {
@@ -110742,35 +110867,16 @@ globalThis.Complex    = createComplex;
 globalThis.jsyaml     = jsYaml;
 globalThis.GIF        = resolveGifConstructor(GIFLib);
 
-
-const X_VALUES = Array.from({length: 21}, (_, i) => (i * 0.05).toFixed(2));
-
-
-const M_VALUES = [
-    '32.06','34.41','36.75','39.10','41.44','43.79','46.13','48.48',
-    '50.82','53.17','55.52','57.86','60.21','62.55','64.90','67.24',
-    '69.59','71.93','74.28','76.62','78.97'
-];
-
-function makeFilename(x, m) {
-    return `alloydb/BaZr_x_${x}_m_${m}.json`;
-}
-
-
 const v = new VibCrystal($$1('#vibcrystal'));
-const d = new PhononHighcharts($$1('#highcharts'), $$1('#raman-spectrum'));
+const d = new PhononHighcharts($$1('#highcharts'));
 const p = new PhononWebpage(v, d);
 
-p.setMaterialsList(        $$1('#mat')              );
-p.setMaterialsFilterInput( $$1('#materials_filter') );
-p.setReferencesList(       $$1('#ref')              );
-p.setAtomPositions(        $$1('#atompos')          );
-p.setLattice(              $$1('#lattice')          );
 p.setRepetitionsInput(     $$1('#nx'), $$1('#ny'), $$1('#nz') );
 p.setModeSelectionInput(   $$1('#kindex'), $$1('#nindex'), $$1('#modeselect') );
 p.setModeWeightsToggle(    $$1('#mode_weights_plot') );
 p.setUpdateButton(         $$1('#update')           );
-p.setFileInput(            $$1('#file-input')       );
+p.setAtomPositions(        $$1('#atompos')          );
+p.setLattice(              $$1('#lattice')          );
 p.setTitle(                $$1('#name')             );
 
 v.setCameraDirectionButton($$1('#camerax'), 'x');
@@ -110802,62 +110908,62 @@ v.setAdvancedAppearanceControls(
 v.setAppearanceUpdatedCallback(() => p.refreshAppearanceUI());
 
 if (!Detector.webgl) { Detector.addGetWebGLMessage(); }
-let comparisonPhonon = null;
-let comparisonLabel  = null;
 
-function computeRamanCurve(phonon) {
-    if (!phonon || !phonon.raman_intensities) return null;
-    const gi  = phonon.gamma_index || 0;
-    const frq = phonon.eigenvalues[gi];
-    const int = phonon.raman_intensities;
-    const g   = 2.0;
-    const maxF = Math.max(...frq) + 50;
+function formatNameHTML(x, m) {
+    const s = (1 - x).toFixed(2);
+    const se = x.toFixed(2);
+    return `BaZr(S<sub>${s}</sub>Se<sub>${se}</sub>)<sub>3</sub><sup>m=${m.toFixed(2)}</sup>`;
+}
 
-    let maxI = 0;
-    for (let i = 0; i < frq.length; i++) {
-        if (int[i] <= 0) continue;
-        let I = 0;
-        for (let j = 0; j < frq.length; j++) {
-            if (int[j] > 0) { const dw = frq[i]-frq[j]; I += int[j]*g*g/(dw*dw+g*g); }
-        }
-        if (I > maxI) maxI = I;
-    }
-    if (maxI === 0) return null;
+let endmemberS = null;
+let endmemberSe = null;
 
+// Lorentzian-broadened Raman curve for an independent set of frequencies/
+// activities, in the same raw (unnormalized) units plotRaman() uses for its
+// main "Spectrum" series -- both materials' curves are directly comparable
+// since Raman activity here is a genuine physical quantity (A^4/amu-derived),
+// not per-material-normalized.
+function computeRamanCurve(frequencies, activities) {
+    if (!activities || !activities.some((v) => v > 0)) return null;
+    const gamma = 2.0;
+    const maxFreq = Math.max(...frequencies) + 50;
     const data = [];
-    for (let w = 0; w < maxF; w++) {
-        let I = 0;
-        for (let i = 0; i < frq.length; i++) {
-            if (int[i] > 0) { const dw = w-frq[i]; I += int[i]*g*g/(dw*dw+g*g); }
+    for (let w = 0; w < maxFreq; w += 1) {
+        let total = 0;
+        for (let i = 0; i < frequencies.length; i++) {
+            if (activities[i] > 0) {
+                const dw = w - frequencies[i];
+                total += activities[i] * (gamma * gamma) / (dw * dw + gamma * gamma);
+            }
         }
-        data.push([w, I / maxI]);
+        data.push([w, total]);
     }
     return data;
 }
 
+let comparisonCurve = null;
+let comparisonLabel = null;
+
 function overlayComparisonRaman() {
     if (typeof Highcharts$1 === 'undefined') return;
     const chart = Highcharts$1.charts.find(
-        c => c && c.renderTo && c.renderTo.id === 'raman-spectrum'
+        (c) => c && c.renderTo && c.renderTo.id === 'raman-spectrum'
     );
     if (!chart) return;
 
-    const old = chart.series.find(s => s.options._isComparison);
+    const old = chart.series.find((s) => s.options._isComparison);
     if (old) old.remove(false);
 
-    if (!comparisonPhonon) { chart.redraw(); return; }
-
-    const data = computeRamanCurve(comparisonPhonon);
-    if (!data)  { chart.redraw(); return; }
+    if (!comparisonCurve) { chart.redraw(); return; }
 
     chart.addSeries({
         _isComparison: true,
-        name:      'Material 2: ' + (comparisonLabel || ''),
-        type:      'line',
-        data:      data,
-        color:     '#e67e22',
+        name: 'Material 2: ' + (comparisonLabel || ''),
+        type: 'line',
+        data: comparisonCurve,
+        color: '#e67e22',
         dashStyle: 'ShortDash',
-        marker:    { enabled: false },
+        marker: { enabled: false },
         enableMouseTracking: false,
     }, true);
 }
@@ -110865,125 +110971,95 @@ function overlayComparisonRaman() {
 const _origPlotRaman = p.plotRaman.bind(p);
 p.plotRaman = function() {
     _origPlotRaman();
-    setTimeout(() => {
-        overlayComparisonRaman();
-        updateChartTitle(_m1x, _m1m);
-        setPageTitle(_m1x, _m1m);
-    }, 0);
+    setTimeout(() => overlayComparisonRaman(), 0);
 };
 
-function xVal(idx)  { return X_VALUES[idx]; }
-function mVal(idx)  { return M_VALUES[idx]; }
+let requestId = 0;
+let requestId2 = 0;
 
-function debounce(fn, ms) {
-    let t;
-    return function(...args) { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
-}
+async function loadMixed(x, m) {
+    if (!endmemberS || !endmemberSe) return;
+    const thisRequest = ++requestId;
 
+    document.getElementById('alloy-name').innerHTML = formatNameHTML(x, m);
+    document.getElementById('name').innerHTML = formatNameHTML(x, m);
 
-function updateLabel(valEl, text) {
-    document.getElementById(valEl).textContent = text;
-}
+    const mixedData = buildMixedInternalJson(endmemberS, endmemberSe, x, m);
 
-function formatNameHTML(x, m) {
-    const xf = parseFloat(x);
-    const s  = (1 - xf).toFixed(2);
-    const se = xf.toFixed(2);
-    return `BaZr(S<sub>${s}</sub>Se<sub>${se}</sub>)<sub>3</sub><sup>${m}</sup>`;
-}
+    const { eigenvectors } = await solveHermitianEigenSystem(mixedData.dynamical_matrix, [0, 0, 0]);
+    const activities = computeMixedRamanIntensities(endmemberS, endmemberSe, x, m, eigenvectors);
+    if (thisRequest !== requestId) return;
 
-
-function formatNameChart2(x, m) {
-    const xf = parseFloat(x);
-    (1 - xf).toFixed(2);
-    xf.toFixed(2);
-    return `Raman Spectrum`;
-}
-
-
-function setPageTitle(x, m) {
-    const el = document.getElementById('name');
-    if (el) el.innerHTML = formatNameHTML(x, m);
-}
-
-
-function updateChartTitle(x, m) {
-    if (typeof Highcharts$1 === 'undefined') return;
-    const chart = Highcharts$1.charts.find(
-        c => c && c.renderTo && c.renderTo.id === 'raman-spectrum'
-    );
-    if (chart) chart.setTitle({ text: formatNameChart2(x) });
-}
-
-
-let _m1x = '0.00', _m1m = '32.06';
-
-function loadMaterial1(xIdx, mIdx) {
-    const x    = xVal(xIdx);
-    const m    = mVal(mIdx);
-    _m1x = x; _m1m = m;
-    const url  = makeFilename(x, m);
-    const html = formatNameHTML(x, m);
-    const plain = formatNameChart2(x);
-    document.getElementById('m1-name').innerHTML = html;
-    p.loadURL({ json: url, name: plain });
-    setTimeout(() => setPageTitle(x, m), 50);
-}
-
-
-const _loadMat2 = debounce(function(xIdx, mIdx) {
-    const x   = xVal(xIdx);
-    const m   = mVal(mIdx);
-    const url = makeFilename(x, m);
-    comparisonLabel = formatNameChart2(x);
-    document.getElementById('m2-name').innerHTML = formatNameHTML(x, m);
-
-    const phonon = new PhononJson();
-    phonon.getFromURL(url, function() {
-        comparisonPhonon = phonon;
-        overlayComparisonRaman();
+    p.k = 0;
+    p.n = 0;
+    delete p.link;
+    p.phonon = new PhononJson();
+    p.phonon.getFromInternalJson(mixedData, () => {
+        if (thisRequest !== requestId) return;
+        if (activities) {
+            p.phonon.raman_intensities = activities;
+            p.phonon.gamma_index = 0;
+        }
+        p.loadCallback();
     });
-}, 300);
+}
 
+async function loadComparison(x2, m2) {
+    if (!endmemberS || !endmemberSe) return;
+    const thisRequest = ++requestId2;
+
+    comparisonLabel = formatNameHTML(x2, m2).replace(/<[^>]+>/g, '');
+    document.getElementById('alloy2-name').innerHTML = formatNameHTML(x2, m2);
+
+    const mixedData = buildMixedInternalJson(endmemberS, endmemberSe, x2, m2);
+    const { eigenvectors, eigenvaluesCm1 } = await solveHermitianEigenSystem(
+        mixedData.dynamical_matrix, [0, 0, 0]
+    );
+    const activities = computeMixedRamanIntensities(endmemberS, endmemberSe, x2, m2, eigenvectors);
+    if (thisRequest !== requestId2) return;
+
+    comparisonCurve = computeRamanCurve(eigenvaluesCm1, activities);
+    overlayComparisonRaman();
+}
 
 function wireSliders() {
-    const m1x = document.getElementById('m1-x-slider');
-    const m1m = document.getElementById('m1-m-slider');
-    const m2x = document.getElementById('m2-x-slider');
-    const m2m = document.getElementById('m2-m-slider');
+    const xSlider = document.getElementById('x-slider');
+    const mSlider = document.getElementById('m-slider');
+    const x2Slider = document.getElementById('x2-slider');
+    const m2Slider = document.getElementById('m2-slider');
 
-    function onM1Change() {
-        updateLabel('m1-x-val', xVal(+m1x.value));
-        updateLabel('m1-m-val', mVal(+m1m.value));
-        loadMaterial1(+m1x.value, +m1m.value);
-    }
-    function onM2Change() {
-        updateLabel('m2-x-val', xVal(+m2x.value));
-        updateLabel('m2-m-val', mVal(+m2m.value));
-        _loadMat2(+m2x.value, +m2m.value);
+    function onChange() {
+        const x = parseFloat(xSlider.value);
+        const m = parseFloat(mSlider.value);
+        document.getElementById('x-val').textContent = x.toFixed(2);
+        document.getElementById('m-val').textContent = m.toFixed(2);
+        loadMixed(x, m);
     }
 
-    m1x.addEventListener('input', onM1Change);
-    m1m.addEventListener('input', onM1Change);
-    m2x.addEventListener('input', onM2Change);
-    m2m.addEventListener('input', onM2Change);
+    function onChange2() {
+        const x2 = parseFloat(x2Slider.value);
+        const m2 = parseFloat(m2Slider.value);
+        document.getElementById('x2-val').textContent = x2.toFixed(2);
+        document.getElementById('m2-val').textContent = m2.toFixed(2);
+        loadComparison(x2, m2);
+    }
+
+    xSlider.addEventListener('input', onChange);
+    mSlider.addEventListener('input', onChange);
+    x2Slider.addEventListener('input', onChange2);
+    m2Slider.addEventListener('input', onChange2);
 }
 
-
-p.materialsIndex = [];
-if (p.dom_mat) { p.dom_mat.empty(); }
-if (p.dom_ref) { p.dom_ref.empty(); }
-
-const alloySource = new AlloyDB();
-alloySource.get_materials(function(materials) {
-    for (let i = 0; i < materials.length; i++) {
-        p.materialsIndex.push(materials[i]);
-    }
-
-    p.renderMaterialsMenu();
-
+Promise.all([
+    fetch('alloydb/bazrs3.json').then((r) => r.json()),
+    fetch('alloydb/bazrse3.json').then((r) => r.json()),
+]).then(([s, se]) => {
+    endmemberS = s;
+    endmemberSe = se;
     wireSliders();
-
-    loadMaterial1(0, 0);
+    loadMixed(0, 32.06);
+    loadComparison(1, 78.97);
+}).catch((err) => {
+    console.error('AlloyMain: could not load end-member payloads:', err);
 });
 //# sourceMappingURL=alloy.js.map

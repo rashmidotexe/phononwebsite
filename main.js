@@ -100148,6 +100148,14 @@ class PhononHighcharts {
             this.chart.destroy();
             this.chart = null;
         }
+        // The old chart's points (including any previously-selected point) are
+        // gone now -- selectModePoint() must not try to deselect a point that
+        // belonged to the destroyed chart on its next call, or Highcharts
+        // throws inside point.select() trying to reach the point's dead chart.
+        this.selectedPoint = null;
+        this.selectedBandIndex = null;
+        this.selectedK = null;
+        this.selectedX = null;
         this.chart = globalThis.Highcharts.chart(this.container[0], this.HighchartsOptions);
         this.refreshLegendAndWeights();
     }
@@ -100229,6 +100237,11 @@ class PhononHighcharts {
         let baseColor = this.showModeWeights ? '#94a3b8' : '#0066FF';
         let visibleTypeIndices = this.getVisibleAtomTypeIndices();
         let singleVisibleType = visibleTypeIndices.length === 1 ? visibleTypeIndices[0] : null;
+        // With a single q-point there is no dispersion to draw a line along --
+        // every band collapses to one stacked point at x=0. Draw those as a
+        // visible, clickable "stick spectrum" of modes instead of 1px dots.
+        let isSingleQpoint = dists.length === 1;
+        let markerRadius = isSingleQpoint ? 5 : 1;
 
         //go through the eigenvalues and create eival list
         for (let n=0; n<nbands; n++) {
@@ -100258,7 +100271,7 @@ class PhononHighcharts {
                         lineWidth: this.showModeWeights ? 0.8 : 2,
                         zIndex: 5,
                         showInLegend: false,
-                        marker: { radius: 1, symbol: "circle"},
+                        marker: { radius: markerRadius, symbol: "circle"},
                         data: eig
                     });
 
@@ -108696,9 +108709,8 @@ class PhononJson {
             : null;
         this.repetitions = data["repetitions"];
 
-	this.raman_intensities = data["raman_intensities"] || null;
+        this.raman_intensities = data["raman_intensities"] || null;
         this.gamma_index = data["gamma_index"] || 0;
-        console.log("SUCCESS: Raman array intercepted ->", this.raman_intensities);
 
         this.average_mass = data["average_mass"];
         this.mode_amplitude_convention = data["mode_amplitude_convention"];

@@ -6,9 +6,8 @@
     <meta name="copyright" content="2014 Theoretical Solid-State Physics Group of University of Luxembourg">
     <meta http-equiv="content-language" content="text/html; charset=utf-8; en">
     <meta name="title" content="Alloy Phonon Visualizations">
-    <meta name="description" content="Interactive visualization of phonons for custom alloy structures.">
+    <meta name="description" content="Interactive visualization of phonons for the BaZr(S(1-x)Se(x))3 alloy, mixed live from two end-member dynamical matrices.">
     <meta name="keywords" content="phonons, lattice vibrations, alloys, visualization">
-    <meta name="Title" content="Alloy Phonon Animation">
     <meta name="Format" content="text/html">
     <meta name="Language" content="en">
     <meta charset="utf-8">
@@ -69,9 +68,8 @@
         .stripe-1 { background: #2c3e50; }
         .stripe-2 { background: #e67e22;
                     background: repeating-linear-gradient(
-                        90deg, #e67e22 0px, #e67e22 4px, transparent 4px, transparent 7px); 
+                        90deg, #e67e22 0px, #e67e22 4px, transparent 4px, transparent 7px);
                     border: 1px solid #e67e22; }
-
         .slider-row {
             display: flex;
             align-items: center;
@@ -91,7 +89,7 @@
             min-width: 0;
         }
         .slider-val {
-            width: 38px;
+            width: 44px;
             text-align: right;
             font-size: 11px;
             color: #555;
@@ -106,24 +104,6 @@
             font-family: monospace;
             min-height: 14px;
         }
-
-        #ref {
-            list-style: none;
-            margin: 4px 0 0 0;
-            padding: 0;
-            font-size: 11px;
-            color: #666;
-        }
-
-        #mat, #ref { display: none; }
-        #material-list > h3 { display: none; }
-        #material-list > input { display: none; }
-        #material-list { margin: 0; padding: 0; height: 0; overflow: hidden; }
-    </style>
-
-    <script src="alloy.min.js" type="module"></script>
-
-    <style>
         .material-name h1 sub,
         .material-name h1 sup {
             font-size: 0.55em;
@@ -135,6 +115,8 @@
             line-height: 0;
         }
     </style>
+
+    <script src="alloy.min.js" type="module"></script>
 </head>
 
 <body>
@@ -150,61 +132,47 @@
         <div class="flex-container">
             <div class="flex-menu">
                 <div id="menu">
-                    <div style="display:none;">
-                        <div id="material-list">
-                            <h3>Materials:</h3>
-                            <input id="materials_filter" type="text" placeholder="">
-                            <ul id="mat"></ul>
-                            <ul id="ref"></ul>
-                        </div>
-                    </div>
-
                     <div class="alloy-panel" id="panel1">
-                        <h3>
-                            <span class="stripe stripe-1"></span>
-                            Material 1
-                        </h3>
+                        <h3><span class="stripe stripe-1"></span>Material 1</h3>
                         <div class="slider-row">
                             <label>x</label>
-                            <input type="range" id="m1-x-slider"
-                                   min="0" max="20" step="1" value="0">
-                            <span class="slider-val" id="m1-x-val">0.00</span>
+                            <input type="range" id="x-slider"
+                                   min="0" max="1" step="0.01" value="0">
+                            <span class="slider-val" id="x-val">0.00</span>
                         </div>
                         <div class="slider-row">
                             <label>m</label>
-                            <input type="range" id="m1-m-slider"
-                                   min="0" max="20" step="1" value="0">
-                            <span class="slider-val" id="m1-m-val">32.06</span>
+                            <input type="range" id="m-slider"
+                                   min="32.06" max="78.97" step="0.1" value="32.06">
+                            <span class="slider-val" id="m-val">32.06</span>
                         </div>
-                        <div class="alloy-name" id="m1-name">—</div>
+                        <div class="alloy-name" id="alloy-name">—</div>
                     </div>
 
                     <div class="alloy-panel" id="panel2">
-                        <h3>
-                            <span class="stripe stripe-2"></span>
-                            Material 2 <small style="font-weight:normal;color:#aaa;">(Raman overlay)</small>
-                        </h3>
+                        <h3><span class="stripe stripe-2"></span>Material 2 <small style="font-weight:normal;color:#aaa;">(Raman overlay)</small></h3>
                         <div class="slider-row">
                             <label>x</label>
-                            <input type="range" id="m2-x-slider"
-                                   min="0" max="20" step="1" value="0">
-                            <span class="slider-val" id="m2-x-val">0.00</span>
+                            <input type="range" id="x2-slider"
+                                   min="0" max="1" step="0.01" value="1">
+                            <span class="slider-val" id="x2-val">1.00</span>
                         </div>
                         <div class="slider-row">
                             <label>m</label>
-                            <input type="range" id="m2-m-slider"
-                                   min="0" max="20" step="1" value="0">
-                            <span class="slider-val" id="m2-m-val">32.06</span>
+                            <input type="range" id="m2-slider"
+                                   min="32.06" max="78.97" step="0.1" value="78.97">
+                            <span class="slider-val" id="m2-val">78.97</span>
                         </div>
-                        <div class="alloy-name" id="m2-name">—</div>
+                        <div class="alloy-name" id="alloy2-name">—</div>
+                    </div>
+
+                    <div class="alloy-name" style="margin-top:6px;">
+                        x mixes the force constants (bonding) between the two
+                        end-member dynamical matrices; m independently overrides
+                        the chalcogen mass at diagonalization time.
                     </div>
 
                     <div id="options-list">
-                        <div>
-                            <h3>Custom file:</h3>
-                            <input type="file" id="file-input" name="customfile"/>
-                        </div>
-
                         <div>
                             <h3>Lattice parameters (Ångström):</h3>
                             <table id="lattice"></table>
@@ -217,9 +185,9 @@
 
                         <div>
                             <h3>Repetitions:</h3>
-                            <input id="nx" value="3" type="number">
-                            <input id="ny" value="3" type="number">
-                            <input id="nz" value="3" type="number">
+                            <input id="nx" value="2" type="number">
+                            <input id="ny" value="2" type="number">
+                            <input id="nz" value="2" type="number">
                             <button id="update" type="button">update</button>
                         </div>
 
@@ -355,8 +323,7 @@
             <div class="flex-vibcrystal"><div id="vibcrystal"></div></div>
             <div class="flex-highcharts">
                 <div id="highcharts"></div>
-                <div id="raman-spectrum"
-                     style="height: 400px; width: 100%; margin-top: 20px;"></div>
+                <div id="raman-spectrum" style="height: 400px; width: 100%; margin-top: 20px;"></div>
             </div>
         </div>
     </div>
