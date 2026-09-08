@@ -105,7 +105,7 @@ describe('alloy dynamical-matrix mixing', () => {
             mixed.dynamical_matrix, [0, 0, 0]
         );
         const order = eigenvaluesCm1.map((_, i) => i).sort((a, b) => eigenvaluesCm1[a] - eigenvaluesCm1[b]);
-        const activities = computeMixedRamanIntensities(endmemberS, endmemberSe, 0, 32.06, eigenvectors);
+        const activities = computeMixedRamanIntensities(endmemberS, endmemberSe, 0, 32.06, eigenvectors, eigenvaluesCm1);
 
         // reference: QE dynmat.x Raman column for bazrs3.dyn, native S mass (1-indexed modes)
         const reference = { 6: 42.8962, 9: 111.7040, 13: 20.3699, 16: 49.8196, 18: 5.3743, 19: 105.8911, 20: 322.9583, 21: 9.9834 };
@@ -126,7 +126,7 @@ describe('alloy dynamical-matrix mixing', () => {
             mixed.dynamical_matrix, [0, 0, 0]
         );
         const order = eigenvaluesCm1.map((_, i) => i).sort((a, b) => eigenvaluesCm1[a] - eigenvaluesCm1[b]);
-        const activities = computeMixedRamanIntensities(endmemberS, endmemberSe, x, m, eigenvectors);
+        const activities = computeMixedRamanIntensities(endmemberS, endmemberSe, x, m, eigenvectors, eigenvaluesCm1);
 
         // reference: dynmat_alloy_10.out (x=10%, m=M_EFF(0.10)=36.75), 1-indexed modes
         const reference = { 6: 38.7286, 9: 136.2116, 15: 0.0172 };
@@ -143,5 +143,36 @@ describe('alloy dynamical-matrix mixing', () => {
         const strippedS = { ...endmemberS, raman_tensor: null };
         const activities = computeMixedRamanIntensities(strippedS, endmemberSe, 0.5, 50, []);
         assert.equal(activities, null);
+    });
+
+    it('zeroes noise-scale and acoustic modes instead of marking every mode active', async () => {
+        // regression test: computeRamanActivities()'s formula (sums of
+        // squares) is never exactly zero in floating point, so a bare
+        // "activity > 0" check (as used by plotRaman()'s active-mode table)
+        // marked every single mode active, including the 3 acoustic modes
+        // and dozens of modes with real activity ~1e-27 to 1e-28 (25+
+        // orders of magnitude below genuinely active modes ~1e0 to 1e2).
+        const mixed = buildMixedInternalJson(endmemberS, endmemberSe, 0, 32.06);
+        const { eigenvectors, eigenvaluesCm1 } = await solveHermitianEigenSystem(
+            mixed.dynamical_matrix, [0, 0, 0]
+        );
+        const activities = computeMixedRamanIntensities(endmemberS, endmemberSe, 0, 32.06, eigenvectors, eigenvaluesCm1);
+
+        const activeCount = activities.filter((a) => a > 0).length;
+        assert.ok(activeCount < eigenvectors.length, 'not every mode should be active');
+        assert.ok(activeCount > 0, 'some modes should still be active');
+
+        for (let i = 0; i < eigenvaluesCm1.length; i++) {
+            if (Math.abs(eigenvaluesCm1[i]) <= 3.0) {
+                assert.equal(activities[i], 0, `acoustic mode at ${eigenvaluesCm1[i]} cm-1 should be zeroed`);
+            }
+        }
+
+        // the two known-active modes (validated against QE ground truth
+        // above) must keep their exact values, not be affected by the
+        // noise-floor filtering
+        const order = eigenvaluesCm1.map((_, i) => i).sort((a, b) => eigenvaluesCm1[a] - eigenvaluesCm1[b]);
+        assert.ok(Math.abs(activities[order[5]] - 42.8962) < 0.01);
+        assert.ok(Math.abs(activities[order[8]] - 111.7040) < 0.01);
     });
 });

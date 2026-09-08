@@ -165,8 +165,8 @@ async function loadMixed(x, m) {
 
     const mixedData = buildMixedInternalJson(endmemberS, endmemberSe, x, m);
 
-    const { eigenvectors } = await solveHermitianEigenSystem(mixedData.dynamical_matrix, [0, 0, 0]);
-    const activities = computeMixedRamanIntensities(endmemberS, endmemberSe, x, m, eigenvectors);
+    const { eigenvectors, eigenvaluesCm1 } = await solveHermitianEigenSystem(mixedData.dynamical_matrix, [0, 0, 0]);
+    const activities = computeMixedRamanIntensities(endmemberS, endmemberSe, x, m, eigenvectors, eigenvaluesCm1);
     if (thisRequest !== requestId) return;
 
     p.k = 0;
@@ -194,7 +194,7 @@ async function loadComparison(x2, m2) {
     const { eigenvectors, eigenvaluesCm1 } = await solveHermitianEigenSystem(
         mixedData.dynamical_matrix, [0, 0, 0]
     );
-    const activities = computeMixedRamanIntensities(endmemberS, endmemberSe, x2, m2, eigenvectors);
+    const activities = computeMixedRamanIntensities(endmemberS, endmemberSe, x2, m2, eigenvectors, eigenvaluesCm1);
     if (thisRequest !== requestId2) return;
 
     comparisonCurve = computeRamanCurve(eigenvaluesCm1, activities);
