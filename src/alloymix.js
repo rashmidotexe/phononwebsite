@@ -82,9 +82,44 @@ export function mixRamanTensor(rtS, rtSe, x) {
 }
 
 /**
+ * Find the natural boundary between numerical noise and real signal in a
+ * set of mode activities: the largest multiplicative jump between
+ * consecutive values once sorted. Returns a threshold sitting in that gap
+ * (the geometric mean of the two values bracketing it), or null if no gap
+ * at least minGapRatio wide exists (nothing can be confidently called
+ * noise by magnitude alone).
+ *
+ * Same fix as zumba_symmetry.py's find_noise_floor(), needed for the same
+ * reason: computeRamanActivities()'s formula (sums of squares) is never
+ * exactly zero in floating point, even for acoustic/silent modes, so a
+ * bare "activity > 0" check (used by plotRaman()'s active-mode table)
+ * marks every single mode active. The real activities span ~1e-27 to
+ * ~1e2, a >25-order-of-magnitude range with a clean gap between the noise
+ * cluster and genuinely active modes -- not a fixed tolerance.
+ */
+export function findNoiseFloor(magnitudes, minGapRatio = 10) {
+    const positive = magnitudes.filter((v) => v > 0).sort((a, b) => a - b);
+    if (positive.length < 2) return null;
+
+    let gapIndex = 0;
+    let maxRatio = 0;
+    for (let i = 1; i < positive.length; i++) {
+        const ratio = positive[i] / positive[i - 1];
+        if (ratio > maxRatio) {
+            maxRatio = ratio;
+            gapIndex = i;
+        }
+    }
+    if (maxRatio < minGapRatio) return null;
+    return Math.sqrt(positive[gapIndex - 1] * positive[gapIndex]);
+}
+
+/**
  * Compute the powder-averaged Raman activity for every mode, from raw
  * (mass-weighted) eigenvectors as returned by solveHermitianEigenSystem,
- * the (mixed) Raman tensor, and each atom's mass in amu.
+ * the (mixed) Raman tensor, and each atom's mass in amu. frequenciesCm1
+ * (same order as eigenvectors) is used only to zero out acoustic modes
+ * outright and to gate the noise-floor detection to optical modes.
  *
  * Formula (matches QE's dynmat.x exactly, validated against real
  * dynmat.out output for both end-members and mixed x/m compositions):
@@ -93,11 +128,18 @@ export function mixRamanTensor(rtS, rtSe, x) {
  *   a = trace(R) / 3
  *   anisotropy^2 = 0.5*((Rxx-Ryy)^2+(Ryy-Rzz)^2+(Rzz-Rxx)^2) + 3*(Rxy^2+Ryz^2+Rzx^2)
  *   activity = 45*a^2 + 7*anisotropy^2
+ *
+ * Modes below the detected noise floor (see findNoiseFloor) are zeroed,
+ * so plotRaman()'s bare "activity > 0" active-mode check works correctly
+ * instead of marking every mode active.
  */
-export function computeRamanActivities(eigenvectors, ramanTensor, massesAmu) {
+export function computeRamanActivities(eigenvectors, ramanTensor, massesAmu, frequenciesCm1, acousticFreqTolCm1 = 3.0) {
     const natoms = massesAmu.length;
     const nmodes = eigenvectors.length;
     const activities = new Array(nmodes);
+    const isAcoustic = frequenciesCm1
+        ? frequenciesCm1.map((f) => Math.abs(f) <= acousticFreqTolCm1)
+        : new Array(nmodes).fill(false);
 
     for (let n = 0; n < nmodes; n++) {
         const eigenvector = eigenvectors[n];
@@ -126,6 +168,14 @@ export function computeRamanActivities(eigenvectors, ramanTensor, massesAmu) {
         activities[n] = 45 * a * a + 7 * anisotropy2;
     }
 
+    const opticalActivities = activities.filter((_, i) => !isAcoustic[i]);
+    const noiseFloor = findNoiseFloor(opticalActivities) ?? 0;
+    for (let n = 0; n < nmodes; n++) {
+        if (isAcoustic[n] || activities[n] < noiseFloor) {
+            activities[n] = 0;
+        }
+    }
+
     return activities;
 }
 
@@ -146,16 +196,16 @@ export function mixAlloyDynamicalMatrix(endmemberS, endmemberSe, x, mAmu) {
 
 /**
  * Compute Raman activities for the mixed alloy at (x, m), given the raw
- * eigenvectors from solveHermitianEigenSystem(mixedDynamicalMatrix, [0,0,0]).
+ * eigenvectors/frequencies from solveHermitianEigenSystem(mixedDynamicalMatrix, [0,0,0]).
  * Returns null if either end-member is missing raman_tensor data.
  */
-export function computeMixedRamanIntensities(endmemberS, endmemberSe, x, mAmu, eigenvectors) {
+export function computeMixedRamanIntensities(endmemberS, endmemberSe, x, mAmu, eigenvectors, frequenciesCm1) {
     if (!endmemberS.raman_tensor || !endmemberSe.raman_tensor) {
         return null;
     }
     const ramanTensor = mixRamanTensor(endmemberS.raman_tensor, endmemberSe.raman_tensor, x);
     const massesAmu = buildMixedMassesAmu(endmemberS.atom_types, mAmu);
-    return computeRamanActivities(eigenvectors, ramanTensor, massesAmu);
+    return computeRamanActivities(eigenvectors, ramanTensor, massesAmu, frequenciesCm1);
 }
 
 /**
