@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>TSS Physics - Visualization of phonons</title>
+    <title>TSS Physics - Mixing</title>
 <!-- META TAGS about the Website-->
     <meta name="author" content="Henrique Miranda, Raoul Weber">
     <meta name="copyright" content="2014 Theoretical Solid-State Physics Group of University of Luxembourg">
@@ -20,7 +20,31 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="stylesheet" type="text/css" href="css/style.css">
-    <script src="main.min.js" type="module"></script>
+    <script src="mixing.min.js" type="module"></script>
+    <style>
+        #mat, #mat2 {
+            list-style: none;
+            margin: 0;
+            height: 120px;
+            overflow: auto;
+            padding-left: 0;
+        }
+        #mat li.selected a, #mat2 li.selected a {
+            font-weight: bold;
+            color: deepskyblue;
+        }
+        #materials_filter2 {
+            box-sizing: border-box;
+            width: 100%;
+            margin: 0 0 0.45rem;
+            padding: 0.4rem 0.55rem;
+            border: 1px solid #b6c2cf;
+            border-radius: 0.4rem;
+        }
+        #character_range {
+            width: 100%;
+        }
+    </style>
 
 </head>
 
@@ -40,10 +64,18 @@
             <div class="flex-menu">
                 <div id="menu">
                 <div id="material-list">
-                    <h3>Materials:</h3>
+                    <h3>Choose material 1:</h3>
                     <input id="materials_filter" type="text" placeholder="Filter materials or elements, e.g. Be C">
                     <ul id="mat"></ul>
                     <ul id="ref"></ul>
+
+                    <h3>Choose material 2:</h3>
+                    <input id="materials_filter2" type="text" placeholder="Filter materials or elements, e.g. Be C">
+                    <ul id="mat2"></ul>
+
+                    <h3>Character %:</h3>
+                    <input id="character_range" type="range" min="0" max="100" step="1" value="0">
+                    <div id="character_value"></div>
                 </div>
 
                 <div id="options-list">
