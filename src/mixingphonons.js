@@ -1,11 +1,19 @@
 /*
  * mixingphonons.js — virtual-crystal mixing of two 2-atom zinc blende / diamond
- * materials on the mixing page:
+ * materials on the mixing page. Force constants and site masses are mixed
+ * separately:
  *
- *     D_alloy(q) = (1 - x) D_1(q) + x D_2(q)
+ *     Phi_k(q)   = M_k^1/2 D_k(q) M_k^1/2
+ *     M_x        = (1 - x) M_1 + x M_2
+ *     D_alloy(q) = M_x^-1/2 [(1 - x) Phi_1(q) + x Phi_2(q)] M_x^-1/2
  *
- * D is the mass-weighted dynamical matrix in THz^2. Before mixing, both
- * end-members are brought to a common representation:
+ * D is the mass-weighted dynamical matrix in THz^2. Mixing D directly would
+ * break the acoustic sum rule whenever the two materials have different mass
+ * ratios (the rigid translation (sqrt(m_1), sqrt(m_2)) is a zero mode of D_1 or
+ * D_2 but not of their average), lifting the acoustic branches off zero at
+ * Gamma. The sum rule is linear in Phi, so mixing Phi keeps it for every x.
+ *
+ * Before mixing, both end-members are brought to a common representation:
  *
  *   gauge  : "atom" Bloch phase exp(2 pi i q.(R + tau_j - tau_i)), which is what
  *            phonopy force constants give (PhononDB). Materials Project
@@ -70,6 +78,27 @@ function scaleMatrix(matrix, factor) {
         for (let j = 0; j < size; j++) {
             out.real[i][j] = matrix.real[i][j] * factor;
             out.imag[i][j] = matrix.imag[i][j] * factor;
+        }
+    }
+    return out;
+}
+
+function mixForceConstantMatrices(d1, masses1, d2, masses2, massesMixed, x) {
+    /*
+    D_x = M_x^-1/2 [(1-x) M_1^1/2 D_1 M_1^1/2 + x M_2^1/2 D_2 M_2^1/2] M_x^-1/2
+    with the masses given per site, each covering 3 rows/columns
+    */
+    let size = d1.real.length;
+    let out = zeroMatrix(size);
+    for (let i = 0; i < size; i++) {
+        let si = Math.floor(i / 3);
+        for (let j = 0; j < size; j++) {
+            let sj = Math.floor(j / 3);
+            let w1 = (1 - x) * Math.sqrt(masses1[si] * masses1[sj]);
+            let w2 = x * Math.sqrt(masses2[si] * masses2[sj]);
+            let norm = 1 / Math.sqrt(massesMixed[si] * massesMixed[sj]);
+            out.real[i][j] = (w1 * d1.real[i][j] + w2 * d2.real[i][j]) * norm;
+            out.imag[i][j] = (w1 * d1.imag[i][j] + w2 * d2.imag[i][j]) * norm;
         }
     }
     return out;
@@ -542,8 +571,8 @@ function getHighSymmetryPoints(lineBreaks, labels) {
 
 export async function computeMixedPhonon(sampled, x) {
     /*
-    diagonalize D_alloy = (1-x) D_1 + x D_2 on the common path and return it in
-    the internal json format of PhononJson
+    diagonalize the virtual-crystal D_alloy (mixed force constants and masses)
+    on the common path and return it in the internal json format of PhononJson
     */
     let endpoint1 = sampled.endpoint1;
     let endpoint2 = sampled.endpoint2;
@@ -559,7 +588,11 @@ export async function computeMixedPhonon(sampled, x) {
     let eigenvalues = [];
     let vectors = [];
     for (let k = 0; k < sampled.qpoints.length; k++) {
-        let solution = await diagonalize(lerpMatrix(sampled.matrices1[k], sampled.matrices2[k], x));
+        let solution = await diagonalize(mixForceConstantMatrices(
+            sampled.matrices1[k], endpoint1.siteMasses,
+            sampled.matrices2[k], endpoint2.siteMasses,
+            masses, x
+        ));
         eigenvalues.push(solution.frequencies);
 
         // mass-weighted eigenvectors -> displacements with the mixed site masses

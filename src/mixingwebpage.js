@@ -79,7 +79,8 @@ export class MixingWebpage extends PhononWebpage {
     and Materials Project (G. Petretto et al.) databases.
 
     Material 1 is picked in the regular list, material 2 in the second list and
-    the character slider sets x in D_alloy = (1-x) D_1 + x D_2.
+    the character slider sets the fraction x of material 2 in the virtual
+    crystal (see mixingphonons.js).
     */
 
     constructor(visualizer, dispersion) {
