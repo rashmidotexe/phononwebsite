@@ -13,6 +13,13 @@
  * D_2 but not of their average), lifting the acoustic branches off zero at
  * Gamma. The sum rule is linear in Phi, so mixing Phi keeps it for every x.
  *
+ * Long-range (LO-TO) part: for two PhononDB materials only the short-range
+ * (Gonze) force constants are mixed, and the dipole-dipole term is recomputed
+ * for the virtual crystal from the linearly mixed Born charges and dielectric
+ * tensor on the mixed lattice. Materials Project files have no Born charges or
+ * dielectric tensor, so with one of them the long-range term is mixed along
+ * with the rest of Phi.
+ *
  * Before mixing, both end-members are brought to a common representation:
  *
  *   gauge  : "atom" Bloch phase exp(2 pi i q.(R + tau_j - tau_i)), which is what
@@ -35,6 +42,7 @@
  */
 
 import { buildDynamicalMatrixBlocks } from './dynamicalmatrix.js';
+import { getGonzeReciprocalCorrection } from './gonze.js';
 import { solveComplexHermitianWithEigenWasm } from './eigenwasm.js';
 import * as atomic_data from './atomic_data.js';
 import * as utils from './utils.js';
@@ -235,6 +243,20 @@ function buildPhononDBEndpoint(raw, entry) {
     let factorSq = factor * factor;
     let qpoints = raw.qpoints;
 
+    let nac = null;
+    let shortRangePayload = null;
+    if (payload.nac && payload.nac.method === 'gonze') {
+        let volume = Math.abs(mat.matrix_determinant(payload.primitive_lattice));
+        nac = {
+            born: payload.nac.born,
+            dielectric: payload.nac.dielectric,
+            // phonopy: nac_factor = unit_conversion * 4 pi / volume
+            unitConversion: payload.nac.nac_factor * volume / (4 * Math.PI),
+            tolerance: payload.nac.q_direction_tolerance || 1e-5,
+        };
+        shortRangePayload = Object.assign({}, payload, { nac: null });
+    }
+
     // each line break is one straight segment; the labels are only stored at the
     // segment ends, the start of a segment carries the label of the previous end
     let labelAtIndex = {};
@@ -255,12 +277,20 @@ function buildPhononDBEndpoint(raw, entry) {
         segment.labelB = labelAtIndex[segment.end - 1];
         let qA = qpoints[segment.start];
         let qB = qpoints[segment.end - 1];
-        segments.push(makeSegment(qpoints, segment, function(t) {
+        let madeSegment = makeSegment(qpoints, segment, function(t) {
             let q = lerpQ(qA, qB, t);
             // non-analytic term at Gamma: approach along the segment
             let qDirection = isGamma(q) ? [qB[0] - qA[0], qB[1] - qA[1], qB[2] - qA[2]] : null;
             return scaleMatrix(buildDynamicalMatrixBlocks(payload, q, qDirection), factorSq);
-        }));
+        });
+        if (shortRangePayload) {
+            // the stored force constants are the Gonze short-range part: without
+            // the dipole-dipole term they give the analytic remainder of D(q)
+            madeSegment.sampleShortRange = function(t) {
+                return scaleMatrix(buildDynamicalMatrixBlocks(shortRangePayload, lerpQ(qA, qB, t)), factorSq);
+            };
+        }
+        segments.push(madeSegment);
     }
 
     return {
@@ -269,6 +299,8 @@ function buildPhononDBEndpoint(raw, entry) {
         lattice: raw.lattice,
         masses: payload.masses.slice(),
         segments: segments,
+        nac: nac,
+        frequencyFactor: factor,
     };
 }
 
@@ -409,6 +441,10 @@ export function buildMixingEndpoint(raw, entry) {
     endpoint.invert = canonical.invert;
     endpoint.siteTypes = canonical.order.map((i) => endpoint.atomTypes[i]);
     endpoint.siteMasses = canonical.order.map((i) => endpoint.masses[i]);
+    if (endpoint.nac) {
+        // Born charges are rank-2 tensors, unchanged by the inversion
+        endpoint.nac.siteBorn = canonical.order.map((i) => endpoint.nac.born[i]);
+    }
     return endpoint;
 }
 
@@ -460,10 +496,11 @@ export function buildCommonPath(endpoint1, endpoint2) {
         if (!match) {
             continue;
         }
+        let orient = (sampler) => (sampler && match.reversed ? (t) => sampler(1 - t) : sampler);
         let sampleLesser = segment.sample;
-        let sampleOther = match.reversed
-            ? (t) => match.segment.sample(1 - t)
-            : match.segment.sample;
+        let sampleOther = orient(match.segment.sample);
+        let shortRangeLesser = segment.sampleShortRange;
+        let shortRangeOther = orient(match.segment.sampleShortRange);
         path.push({
             qA: segment.qA,
             qB: segment.qB,
@@ -472,6 +509,8 @@ export function buildCommonPath(endpoint1, endpoint2) {
             npoints: Math.max(segment.npoints, match.segment.npoints),
             sample1: lesser === endpoint1 ? sampleLesser : sampleOther,
             sample2: lesser === endpoint1 ? sampleOther : sampleLesser,
+            sampleShortRange1: lesser === endpoint1 ? shortRangeLesser : shortRangeOther,
+            sampleShortRange2: lesser === endpoint1 ? shortRangeOther : shortRangeLesser,
         });
     }
     return path;
@@ -479,8 +518,15 @@ export function buildCommonPath(endpoint1, endpoint2) {
 
 export function sampleMixingPair(endpoint1, endpoint2) {
     /*
-    canonical D_1 and D_2 at every q-point of the common path; independent of x
+    canonical D_1 and D_2 at every q-point of the common path; independent of x.
+    When both end-members carry Born charges and dielectric tensors (PhononDB),
+    their short-range parts are kept too, so the dipole-dipole term can be
+    recomputed for the mixed crystal instead of being interpolated.
     */
+    let recomputeNac = !!(endpoint1.nac && endpoint2.nac);
+    let shortRange1 = [];
+    let shortRange2 = [];
+    let qDirections = [];
     let path = buildCommonPath(endpoint1, endpoint2);
     let qpoints = [];
     let matrices1 = [];
@@ -493,9 +539,19 @@ export function sampleMixingPair(endpoint1, endpoint2) {
         let start = qpoints.length;
         for (let k = 0; k < segment.npoints; k++) {
             let t = k / (segment.npoints - 1);
-            qpoints.push(lerpQ(segment.qA, segment.qB, t));
+            let q = lerpQ(segment.qA, segment.qB, t);
+            qpoints.push(q);
             matrices1.push(toCanonical(endpoint1, segment.sample1(t)));
             matrices2.push(toCanonical(endpoint2, segment.sample2(t)));
+            if (recomputeNac) {
+                shortRange1.push(toCanonical(endpoint1, segment.sampleShortRange1(t)));
+                shortRange2.push(toCanonical(endpoint2, segment.sampleShortRange2(t)));
+                qDirections.push(isGamma(q) ? [
+                    segment.qB[0] - segment.qA[0],
+                    segment.qB[1] - segment.qA[1],
+                    segment.qB[2] - segment.qA[2],
+                ] : null);
+            }
         }
         lineBreaks.push([start, qpoints.length]);
         labels.push([segment.labelA, segment.labelB]);
@@ -507,6 +563,10 @@ export function sampleMixingPair(endpoint1, endpoint2) {
         qpoints: qpoints,
         matrices1: matrices1,
         matrices2: matrices2,
+        recomputeNac: recomputeNac,
+        shortRange1: shortRange1,
+        shortRange2: shortRange2,
+        qDirections: qDirections,
         lineBreaks: lineBreaks,
         labels: labels,
     };
@@ -569,6 +629,132 @@ function getHighSymmetryPoints(lineBreaks, labels) {
     return points;
 }
 
+function addBlockTensor(matrix, blocks, factor) {
+    /*
+    add a [i][j][alpha][beta][re,im] block tensor, scaled by factor, to a matrix
+    */
+    for (let i = 0; i < blocks.length; i++) {
+        for (let j = 0; j < blocks[i].length; j++) {
+            for (let alpha = 0; alpha < 3; alpha++) {
+                for (let beta = 0; beta < 3; beta++) {
+                    matrix.real[i * 3 + alpha][j * 3 + beta] += factor * blocks[i][j][alpha][beta][0];
+                    matrix.imag[i * 3 + alpha][j * 3 + beta] += factor * blocks[i][j][alpha][beta][1];
+                }
+            }
+        }
+    }
+}
+
+function getGonzeGList(lattice, reciprocal, gCutoff) {
+    /*
+    reciprocal lattice points (cartesian, no 2 pi) inside the G cutoff, as in
+    phonopy DynamicalMatrixGL._get_G_list
+    */
+    // G = sum_i n_i b_i has n_i = G.a_i, so |n_i| <= gCutoff |a_i|
+    let gRadius = Math.ceil(gCutoff * Math.max.apply(null, lattice.map((a) => Math.sqrt(mat.vec_dot(a, a)))));
+    let gList = [];
+    for (let a = -gRadius; a <= gRadius; a++) {
+        for (let b = -gRadius; b <= gRadius; b++) {
+            for (let c = -gRadius; c <= gRadius; c++) {
+                let g = [0, 1, 2].map((d) => a * reciprocal[0][d] + b * reciprocal[1][d] + c * reciprocal[2][d]);
+                if (mat.vec_dot(g, g) < gCutoff * gCutoff) {
+                    gList.push(g);
+                }
+            }
+        }
+    }
+    return gList;
+}
+
+function getGonzeDdQ0(gList, born, dielectric, positionsCar, lambda) {
+    /*
+    sum_j sum_{G != 0} Z_i^T K(G) Z_j exp(2 pi i G.(r_i - r_j)): the q = 0 term that
+    phonopy subtracts from the diagonal blocks to keep the acoustic sum rule
+    */
+    let natoms = born.length;
+    let ddQ0 = { real: [], imag: [] };
+    for (let i = 0; i < natoms; i++) {
+        ddQ0.real.push([[0, 0, 0], [0, 0, 0], [0, 0, 0]]);
+        ddQ0.imag.push([[0, 0, 0], [0, 0, 0], [0, 0, 0]]);
+    }
+    let l2 = 4 * lambda * lambda;
+    for (let g = 0; g < gList.length; g++) {
+        let G = gList[g];
+        if (Math.sqrt(mat.vec_dot(G, G)) < 1e-5) {
+            continue;
+        }
+        let gEpsG = 0;
+        for (let a = 0; a < 3; a++) {
+            for (let b = 0; b < 3; b++) {
+                gEpsG += G[a] * dielectric[a][b] * G[b];
+            }
+        }
+        let prefactor = Math.exp(-gEpsG / l2) / gEpsG;
+        for (let i = 0; i < natoms; i++) {
+            for (let j = 0; j < natoms; j++) {
+                let phase = 2 * Math.PI * (
+                    G[0] * (positionsCar[i][0] - positionsCar[j][0]) +
+                    G[1] * (positionsCar[i][1] - positionsCar[j][1]) +
+                    G[2] * (positionsCar[i][2] - positionsCar[j][2])
+                );
+                let cos = Math.cos(phase);
+                let sin = Math.sin(phase);
+                // (Z_i^T G)(G^T Z_j) = outer(Z_i^T G, Z_j^T G)
+                let zi = [0, 1, 2].map((alpha) => born[i][0][alpha] * G[0] + born[i][1][alpha] * G[1] + born[i][2][alpha] * G[2]);
+                let zj = [0, 1, 2].map((beta) => born[j][0][beta] * G[0] + born[j][1][beta] * G[1] + born[j][2][beta] * G[2]);
+                for (let alpha = 0; alpha < 3; alpha++) {
+                    for (let beta = 0; beta < 3; beta++) {
+                        let value = zi[alpha] * zj[beta] * prefactor;
+                        ddQ0.real[i][alpha][beta] += value * cos;
+                        ddQ0.imag[i][alpha][beta] += value * sin;
+                    }
+                }
+            }
+        }
+    }
+    return ddQ0;
+}
+
+function buildMixedNacPayload(endpoint1, endpoint2, x, lattice, masses, positionsRed) {
+    /*
+    Gonze dipole-dipole parameters of the virtual crystal: Born charges and
+    dielectric tensor mixed linearly, the G list, Ewald parameter, dd_q0 and
+    unit factor rebuilt for the mixed lattice with phonopy's own rules
+    */
+    let nac1 = endpoint1.nac;
+    let nac2 = endpoint2.nac;
+    let mix = (a, b) => (1 - x) * a + x * b;
+    let born = [0, 1].map((s) => [0, 1, 2].map((a) => [0, 1, 2].map((b) =>
+        mix(nac1.siteBorn[s][a][b], nac2.siteBorn[s][a][b])
+    )));
+    let dielectric = [0, 1, 2].map((a) => [0, 1, 2].map((b) => mix(nac1.dielectric[a][b], nac2.dielectric[a][b])));
+    let positionsCar = utils.red_car_list(positionsRed, lattice);
+
+    let volume = Math.abs(mat.matrix_determinant(lattice));
+    let reciprocal = utils.rec_lat(lattice);
+    // phonopy defaults: 300 G points, exp(-G eps G / 4 lambda^2) = 1e-10 at the cutoff
+    let gCutoff = Math.cbrt(3 * 300 / (4 * Math.PI) / volume);
+    let gList = getGonzeGList(lattice, reciprocal, gCutoff);
+    let trace = dielectric[0][0] + dielectric[1][1] + dielectric[2][2];
+    let lambda = Math.sqrt(-(gCutoff * gCutoff) * trace / 3 / 4 / Math.log(1e-10));
+
+    return {
+        masses: masses,
+        primitive_lattice: lattice,
+        nac: {
+            method: 'gonze',
+            born: born,
+            dielectric: dielectric,
+            positions_car: positionsCar,
+            g_list: gList,
+            lambda: lambda,
+            dd_q0: getGonzeDdQ0(gList, born, dielectric, positionsCar, lambda),
+            nac_factor: mix(nac1.unitConversion, nac2.unitConversion) * 4 * Math.PI / volume,
+            q_direction_tolerance: nac1.tolerance,
+        },
+    };
+}
+
 export async function computeMixedPhonon(sampled, x) {
     /*
     diagonalize the virtual-crystal D_alloy (mixed force constants and masses)
@@ -585,14 +771,32 @@ export async function computeMixedPhonon(sampled, x) {
     let atomTypes = x < 0.5 ? endpoint1.siteTypes.slice() : endpoint2.siteTypes.slice();
     let positionsRed = [[0, 0, 0], [0.25, 0.25, 0.25]];
 
+    let nacPayload = sampled.recomputeNac
+        ? buildMixedNacPayload(endpoint1, endpoint2, x, lattice, masses, positionsRed)
+        : null;
+    let frequencyFactorSq = sampled.recomputeNac ? endpoint1.frequencyFactor * endpoint1.frequencyFactor : 1;
+
     let eigenvalues = [];
     let vectors = [];
     for (let k = 0; k < sampled.qpoints.length; k++) {
-        let solution = await diagonalize(mixForceConstantMatrices(
-            sampled.matrices1[k], endpoint1.siteMasses,
-            sampled.matrices2[k], endpoint2.siteMasses,
-            masses, x
-        ));
+        let matrix;
+        if (nacPayload) {
+            // mixed short-range force constants + dipole-dipole term of the mixed crystal
+            matrix = mixForceConstantMatrices(
+                sampled.shortRange1[k], endpoint1.siteMasses,
+                sampled.shortRange2[k], endpoint2.siteMasses,
+                masses, x
+            );
+            let dd = getGonzeReciprocalCorrection(nacPayload, sampled.qpoints[k], sampled.qDirections[k]);
+            addBlockTensor(matrix, dd, frequencyFactorSq);
+        } else {
+            matrix = mixForceConstantMatrices(
+                sampled.matrices1[k], endpoint1.siteMasses,
+                sampled.matrices2[k], endpoint2.siteMasses,
+                masses, x
+            );
+        }
+        let solution = await diagonalize(matrix);
         eigenvalues.push(solution.frequencies);
 
         // mass-weighted eigenvectors -> displacements with the mixed site masses
@@ -628,5 +832,8 @@ export async function computeMixedPhonon(sampled, x) {
         eigenvalues: eigenvalues,
         vectors: vectors,
         repetitions: [3, 3, 3],
+        // 'recomputed': dipole-dipole term from mixed Born charges and dielectric tensor
+        // 'interpolated': the long-range term is mixed along with the force constants
+        nac_mode: sampled.recomputeNac ? 'recomputed' : 'interpolated',
     };
 }

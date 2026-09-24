@@ -15,6 +15,7 @@ initPhononPage(
             p.setMaterial2List($('#mat2'));
             p.setMaterial2FilterInput($('#materials_filter2'));
             p.setCharacterInput($('#character_range'), $('#character_value'));
+            p.setMixingNote($('#mixing_note'));
         },
     }
 );

@@ -106,6 +106,19 @@ export class MixingWebpage extends PhononWebpage {
         });
     }
 
+    setMixingNote(dom_note) { this.dom_mixing_note = dom_note; }
+
+    updateMixingNote(nacMode) {
+        if (!this.dom_mixing_note) {
+            return;
+        }
+        let notes = {
+            recomputed: "LO–TO splitting from the mixed Born charges and dielectric tensor.",
+            interpolated: "LO–TO splitting interpolated: Materials Project files have no Born charges or dielectric tensor.",
+        };
+        this.dom_mixing_note.text(nacMode && this.material2 ? notes[nacMode] : "");
+    }
+
     setCharacterInput(dom_range, dom_value) {
         this.dom_character_value = dom_value;
         dom_range.on('input', () => {
@@ -332,6 +345,7 @@ export class MixingWebpage extends PhononWebpage {
         if (!this.material2) {
             // plain material 1, as on the phonon page
             this.mixToken += 1;
+            this.updateMixingNote(null);
             super.loadURL(this.material1.url_vars, callback);
             return;
         }
@@ -365,6 +379,7 @@ export class MixingWebpage extends PhononWebpage {
                 this.update();
             }
             this.name = this.getMixingTitle();
+            this.updateMixingNote(data.nac_mode);
             this.updatePage();
             if (callback) {
                 callback();

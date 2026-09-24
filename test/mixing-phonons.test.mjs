@@ -103,6 +103,54 @@ describe('zinc blende dynamical-matrix mixing', () => {
         assert.ok(maxAbsDiff(mixed.eigenvalues, reference) < 1e-4);
     });
 
+    it('recomputes the dipole-dipole term for PhononDB pairs and keeps the end-members exact', async () => {
+        // GaP (P at -1/4, inverted) and AlN (N at +1/4) both carry Born charges
+        let gap = endpoint('phonondb-GaP-mp-2490.json.gz', 'GaP');
+        let aln = endpoint('phonondb-AlN-mp-1700.json.gz', 'AlN');
+        let sampled = sampleMixingPair(gap, aln);
+        assert.equal(sampled.recomputeNac, true);
+        let interpolated = Object.assign({}, sampled, { recomputeNac: false });
+
+        let opticalDiff = (a, b) => {
+            let worst = 0;
+            a.forEach((row, k) => row.forEach((v, n) => {
+                if (Math.abs(v) > 1) {
+                    worst = Math.max(worst, Math.abs(v - b[k][n]));
+                }
+            }));
+            return worst;
+        };
+
+        for (let x of [0, 1]) {
+            let recomputed = await computeMixedPhonon(sampled, x);
+            assert.equal(recomputed.nac_mode, 'recomputed');
+            // short-range part + rebuilt dipole term == the original dynamical matrix
+            assert.ok(opticalDiff(recomputed.eigenvalues, (await computeMixedPhonon(interpolated, x)).eigenvalues) < 1e-6);
+        }
+
+        let half = await computeMixedPhonon(sampled, 0.5);
+        let gamma = half.highsym_qpts.filter((point) => point[1] === 'GAMMA').map((point) => point[0]);
+        for (let k of gamma) {
+            for (let n = 0; n < 3; n++) {
+                assert.ok(Math.abs(half.eigenvalues[k][n]) < 0.5);
+            }
+        }
+        // AlN and GaP have very different dielectric constants: the LO mode at Gamma
+        // must differ from simply interpolating the long-range term
+        let halfInterpolated = await computeMixedPhonon(interpolated, 0.5);
+        assert.ok(Math.abs(half.eigenvalues[gamma[0]][5] - halfInterpolated.eigenvalues[gamma[0]][5]) > 5);
+
+        let mirrored = await computeMixedPhonon(sampleMixingPair(aln, gap), 0.5);
+        assert.ok(opticalDiff(half.eigenvalues, mirrored.eigenvalues) < 1e-6);
+    });
+
+    it('interpolates the long-range term when a Materials Project file is involved', async () => {
+        let gap = endpoint('phonondb-GaP-mp-2490.json.gz', 'GaP');
+        let gaas = endpoint('mpdb-GaAs-mp-2534.json.gz', 'GaAs');
+        let mixed = await computeMixedPhonon(sampleMixingPair(gap, gaas), 0.5);
+        assert.equal(mixed.nac_mode, 'interpolated');
+    });
+
     it('maps an inverted setting of the same compound onto the other one', async () => {
         // AlN is stored with N at +1/4 in PhononDB and at -1/4 in Materials Project
         let pdb = endpoint('phonondb-AlN-mp-1700.json.gz', 'AlN');
