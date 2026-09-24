@@ -1,0 +1,428 @@
+[
+    {
+        "id": "866291",
+        "name": "AgBr",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "22925",
+        "name": "AgI",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "2172",
+        "name": "AlAs",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1700",
+        "name": "AlN",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1550",
+        "name": "AlP",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "2624",
+        "name": "AlSb",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1479",
+        "name": "BP",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "422",
+        "name": "BeS",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1541",
+        "name": "BeSe",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "252",
+        "name": "BeTe",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "2469",
+        "name": "CdS",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "2691",
+        "name": "CdSe",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "406",
+        "name": "CdTe",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "22914",
+        "name": "CuCl",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "830",
+        "name": "GaN",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "2490",
+        "name": "GaP",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "13032",
+        "name": "MgS",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "13031",
+        "name": "MgSe",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "13033",
+        "name": "MgTe",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "149",
+        "name": "Si2",
+        "source": "phonondb",
+        "spacegroup": "Fd-3m"
+    },
+    {
+        "id": "8062",
+        "name": "SiC",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1986",
+        "name": "ZnO",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "10695",
+        "name": "ZnS",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1190",
+        "name": "ZnSe",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "2176",
+        "name": "ZnTe",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "866291",
+        "name": "AgBr",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "22925",
+        "name": "AgI",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "684580",
+        "name": "AgI",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "2172",
+        "name": "AlAs",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1700",
+        "name": "AlN",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1550",
+        "name": "AlP",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "2624",
+        "name": "AlSb",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "10044",
+        "name": "BAs",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1639",
+        "name": "BN",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1479",
+        "name": "BP",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "997618",
+        "name": "BSb",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1778",
+        "name": "BeO",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "422",
+        "name": "BeS",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1541",
+        "name": "BeSe",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "252",
+        "name": "BeTe",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "66",
+        "name": "C2",
+        "source": "mpdb",
+        "spacegroup": "Fd-3m"
+    },
+    {
+        "id": "1008223",
+        "name": "CaSe",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "2469",
+        "name": "CdS",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "2691",
+        "name": "CdSe",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "406",
+        "name": "CdTe",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "22913",
+        "name": "CuBr",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "32880",
+        "name": "CuBr",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "22914",
+        "name": "CuCl",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "22895",
+        "name": "CuI",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "2534",
+        "name": "GaAs",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "830",
+        "name": "GaN",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "2490",
+        "name": "GaP",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1002164",
+        "name": "GeC",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1002124",
+        "name": "HfC",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "20351",
+        "name": "InP",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "13032",
+        "name": "MgS",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "13031",
+        "name": "MgSe",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "13033",
+        "name": "MgTe",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1009540",
+        "name": "OsC",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1009792",
+        "name": "RuC",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1009750",
+        "name": "ScN",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "149",
+        "name": "Si2",
+        "source": "mpdb",
+        "spacegroup": "Fd-3m"
+    },
+    {
+        "id": "8062",
+        "name": "SiC",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1009813",
+        "name": "SiSn",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1009820",
+        "name": "SnC",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "13099",
+        "name": "YN",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1986",
+        "name": "ZnO",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "10695",
+        "name": "ZnS",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1190",
+        "name": "ZnSe",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "2176",
+        "name": "ZnTe",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1009894",
+        "name": "ZrC",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    }
+]

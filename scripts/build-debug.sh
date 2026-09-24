@@ -15,7 +15,7 @@ fi
 
 rollup -c
 
-cp -r figures css libs data README.md phonon.html exciton.html structure.html alloy.html zumba.html favicon.svg favicon.ico build/
+cp -r figures css libs data README.md phonon.html exciton.html structure.html alloy.html zumba.html mixing.html favicon.svg favicon.ico build/
 cp -r alloydb build/alloydb
 cp -r zumbadb build/zumbadb
 rm -f build/data/phonondb2017/.gitignore
@@ -24,3 +24,4 @@ cp build/exciton.js build/exciton.min.js
 cp build/structure.js build/structure.min.js
 cp build/alloy.js build/alloy.min.js
 cp build/zumba.js build/zumba.min.js
+cp build/mixing.js build/mixing.min.js

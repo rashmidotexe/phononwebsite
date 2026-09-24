@@ -63,6 +63,17 @@ export default [
         plugins,
     },
     {
+        input: 'src/mixingmain.js',
+        output: [
+            {
+                format: 'es',
+                file: 'build/mixing.js',
+                sourcemap: true,
+            }
+        ],
+        plugins,
+    },
+    {
         input: 'src/zumbamain.js',
         output: [
             {
