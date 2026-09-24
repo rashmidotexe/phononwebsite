@@ -85,6 +85,8 @@ export class MixingWebpage extends PhononWebpage {
     constructor(visualizer, dispersion) {
         super(visualizer, dispersion);
         this.mixingList = 'data/mixing/models.json';
+        // copies of the PhononDB files outside the LFS-tracked data/phonondb2017
+        this.phonondbRoot = 'data/mixing/phonondb';
         this.material1 = null;
         this.material2 = null;
         this.character = 0;
@@ -149,7 +151,7 @@ export class MixingWebpage extends PhononWebpage {
             if (entry.source === phonondb.name) {
                 m.source = phonondb.name;
                 m.reference = getReference(phonondb);
-                m.url = phonondb.root+"/mp-"+entry.id+".json.gz";
+                m.url = self.phonondbRoot+"/mp-"+entry.id+".json.gz";
             } else {
                 m.source = mpdb.name;
                 m.reference = getReference(mpdb);

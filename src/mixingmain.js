@@ -4,7 +4,7 @@ import { MixingWebpage, MixingHighcharts } from './mixingwebpage.js';
 
 initPhononPage(
     {
-        json: "data/phonondb2017/mp-149.json.gz",
+        json: "data/mixing/phonondb/mp-149.json.gz",
         name: "Si2 [1]",
         link: "https://materialsproject.org/materials/mp-149",
     },
