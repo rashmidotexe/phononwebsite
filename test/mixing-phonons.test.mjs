@@ -12,11 +12,18 @@ import {
     computeMixedPhonon,
     computeReferenceEigenvalues,
 } from '../src/mixingphonons.js';
+import { alphaIdToNumber, indexDielectricRows } from '../src/mpdielectric.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 function loadFixture(name) {
     return JSON.parse(gunzipSync(readFileSync(join(__dirname, 'fixtures', 'mixing', name))));
+}
+
+function mpDielectric() {
+    // GaAs and AlN rows of the MP DFPT phonon collection, as read from its parquet file
+    let rows = JSON.parse(readFileSync(join(__dirname, 'fixtures', 'mixing', 'mp-dfpt-dielectric-GaAs-AlN.json')));
+    return indexDielectricRows(rows);
 }
 
 function endpoint(file, name) {
@@ -144,11 +151,82 @@ describe('zinc blende dynamical-matrix mixing', () => {
         assert.ok(opticalDiff(half.eigenvalues, mirrored.eigenvalues) < 1e-6);
     });
 
-    it('interpolates the long-range term when a Materials Project file is involved', async () => {
+    it('interpolates the long-range term when Materials Project Born charges are missing', async () => {
         let gap = endpoint('phonondb-GaP-mp-2490.json.gz', 'GaP');
         let gaas = endpoint('mpdb-GaAs-mp-2534.json.gz', 'GaAs');
         let mixed = await computeMixedPhonon(sampleMixingPair(gap, gaas), 0.5);
         assert.equal(mixed.nac_mode, 'interpolated');
+    });
+
+    it('decodes Materials Project AlphaIDs', () => {
+        assert.equal(alphaIdToNumber('aaaaaaaa'), 0);
+        assert.equal(alphaIdToNumber('aaaaadtm'), 2534);
+        assert.equal(alphaIdToNumber('aaaaacnk'), 1700);
+    });
+
+    it('splits Materials Project D into a direction-independent short-range part', () => {
+        let table = mpDielectric();
+        let raw = loadFixture('mpdb-GaAs-mp-2534.json.gz');
+        let gaas = buildMixingEndpoint(raw, { name: 'GaAs' }, table.get(2534));
+        assert.ok(gaas.nac);
+
+        // the full D at Gamma depends on the approach direction (LO-TO), the
+        // short-range remainder must not
+        let atGamma = [];
+        for (let segment of gaas.segments) {
+            if (segment.qA.every((v) => Math.abs(v) < 1e-8)) atGamma.push([segment, 0]);
+            if (segment.qB.every((v) => Math.abs(v) < 1e-8)) atGamma.push([segment, 1]);
+        }
+        assert.ok(atGamma.length >= 3);
+        let spread = (matrices) => {
+            let worst = 0;
+            let scale = 0;
+            for (let m of matrices) {
+                m.real.flat().forEach((v, i) => {
+                    scale = Math.max(scale, Math.abs(v));
+                    worst = Math.max(worst, Math.abs(v - matrices[0].real.flat()[i]));
+                });
+            }
+            return worst / scale;
+        };
+        assert.ok(spread(atGamma.map(([s, t]) => s.sample(t))) > 1e-2);
+        assert.ok(spread(atGamma.map(([s, t]) => s.sampleShortRange(t))) < 1e-5);
+    });
+
+    it('recomputes the dipole-dipole term for Materials Project pairs', async () => {
+        let table = mpDielectric();
+        let gaasRaw = loadFixture('mpdb-GaAs-mp-2534.json.gz');
+        let gaas = buildMixingEndpoint(gaasRaw, { name: 'GaAs' }, table.get(2534));
+        let aln = buildMixingEndpoint(loadFixture('mpdb-AlN-mp-1700.json.gz'), { name: 'AlN' }, table.get(1700));
+        let sampled = sampleMixingPair(gaas, aln);
+        assert.equal(sampled.recomputeNac, true);
+
+        // at x = 0, on the q-points of the GaAs file, the file frequencies come back
+        let mixed = await computeMixedPhonon(sampled, 0);
+        assert.equal(mixed.nac_mode, 'recomputed');
+        let matched = 0;
+        for (let k = 0; k < mixed.qpoints.length; k++) {
+            let i = gaasRaw.qpoints.findIndex((q) => q.every((v, d) => Math.abs(v - mixed.qpoints[k][d]) < 1e-6));
+            if (i < 0) {
+                continue;
+            }
+            matched += 1;
+            let expected = gaasRaw.frequencies.map((band) => band[i] * 33.35641).sort((a, b) => a - b);
+            for (let n = 3; n < expected.length; n++) {
+                assert.ok(Math.abs(expected[n] - mixed.eigenvalues[k][n]) < 1e-3);
+            }
+        }
+        assert.ok(matched >= 2 * sampled.lineBreaks.length);
+
+        let half = await computeMixedPhonon(sampled, 0.5);
+        let gamma = half.highsym_qpts.filter((point) => point[1] === 'GAMMA').map((point) => point[0]);
+        for (let k of gamma) {
+            for (let n = 0; n < 3; n++) {
+                assert.ok(Math.abs(half.eigenvalues[k][n]) < 0.05);
+            }
+        }
+        let mirrored = await computeMixedPhonon(sampleMixingPair(aln, gaas), 0.5);
+        assert.ok(maxAbsDiff(half.eigenvalues, mirrored.eigenvalues) < 1e-4);
     });
 
     it('maps an inverted setting of the same compound onto the other one', async () => {

@@ -9,6 +9,7 @@ import {
     computeMixedPhonon,
     computeReferenceEigenvalues,
 } from './mixingphonons.js';
+import { loadMaterialsProjectDielectric } from './mpdielectric.js';
 import * as utils from './utils.js';
 
 class RawPhononJson extends PhononJson {
@@ -114,7 +115,7 @@ export class MixingWebpage extends PhononWebpage {
         }
         let notes = {
             recomputed: "LO–TO splitting from the mixed Born charges and dielectric tensor.",
-            interpolated: "LO–TO splitting interpolated: Materials Project files have no Born charges or dielectric tensor.",
+            interpolated: "LO–TO splitting interpolated: the Materials Project Born charges could not be loaded.",
         };
         this.dom_mixing_note.text(nacMode && this.material2 ? notes[nacMode] : "");
     }
@@ -313,14 +314,35 @@ export class MixingWebpage extends PhononWebpage {
         return this.rawCache.get(url);
     }
 
+    async getMaterialsProjectDielectric(url, raw) {
+        /*
+        Born charges and dielectric tensor of a Materials Project material, from
+        the MP DFPT phonon collection; null (long-range term interpolated) if the
+        collection cannot be loaded
+        */
+        let match = /mp-(\d+)\.json\.gz$/.exec(url);
+        if (raw.dynamical_matrix || !match) {
+            return null;
+        }
+        try {
+            let table = await loadMaterialsProjectDielectric();
+            return table.get(Number(match[1])) || null;
+        } catch (error) {
+            console.log("Materials Project Born charges unavailable, interpolating the LO-TO term:", error);
+            return null;
+        }
+    }
+
     async getSampledPair() {
         let key = this.material1.url + "::" + this.material2.url;
         if (this.pairCache && this.pairCache.key === key) {
             return this.pairCache;
         }
         let raws = await Promise.all([this.getRawJson(this.material1.url), this.getRawJson(this.material2.url)]);
-        let endpoint1 = buildMixingEndpoint(raws[0], this.material1);
-        let endpoint2 = buildMixingEndpoint(raws[1], this.material2);
+        let dielectric1 = await this.getMaterialsProjectDielectric(this.material1.url, raws[0]);
+        let dielectric2 = await this.getMaterialsProjectDielectric(this.material2.url, raws[1]);
+        let endpoint1 = buildMixingEndpoint(raws[0], this.material1, dielectric1);
+        let endpoint2 = buildMixingEndpoint(raws[1], this.material2, dielectric2);
         let sampled = sampleMixingPair(endpoint1, endpoint2);
         if (!sampled.qpoints.length) {
             throw new Error("The two materials have no high-symmetry segment in common.");

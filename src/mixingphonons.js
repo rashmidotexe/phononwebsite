@@ -13,12 +13,14 @@
  * D_2 but not of their average), lifting the acoustic branches off zero at
  * Gamma. The sum rule is linear in Phi, so mixing Phi keeps it for every x.
  *
- * Long-range (LO-TO) part: for two PhononDB materials only the short-range
- * (Gonze) force constants are mixed, and the dipole-dipole term is recomputed
- * for the virtual crystal from the linearly mixed Born charges and dielectric
- * tensor on the mixed lattice. Materials Project files have no Born charges or
- * dielectric tensor, so with one of them the long-range term is mixed along
- * with the rest of Phi.
+ * Long-range (LO-TO) part: only the short-range force constants are mixed, and
+ * the dipole-dipole term is recomputed for the virtual crystal from the
+ * linearly mixed Born charges and dielectric tensor on the mixed lattice. For
+ * PhononDB the stored (Gonze) force constants already are the short-range part.
+ * For Materials Project the Born charges and dielectric tensor come from the MP
+ * DFPT collection (mpdielectric.js), and the material's own dipole-dipole term
+ * is subtracted from D rebuilt at the q-points of the file. If they are not
+ * available the long-range term is mixed along with the rest of Phi.
  *
  * Before mixing, both end-members are brought to a common representation:
  *
@@ -50,6 +52,10 @@ import * as mat from './mat.js';
 
 const QTOL = 1e-5;
 const THZ_TO_CM1 = 33.35641;
+// phonopy units: sqrt(eV/Angstrom^2/amu) -> THz, and Hartree*Bohr in eV*Angstrom
+// (the NAC unit conversion stored in every PhononDB file)
+const PHONOPY_THZ = 15.633302300230191;
+const PHONOPY_NAC_UNIT = 14.39965172592227;
 
 function sameQ(a, b) {
     return Math.abs(a[0] - b[0]) < QTOL &&
@@ -304,7 +310,7 @@ function buildPhononDBEndpoint(raw, entry) {
     };
 }
 
-function buildMaterialsProjectEndpoint(raw) {
+function buildMaterialsProjectEndpoint(raw, dielectric) {
     let structure = raw.structure;
     let sites = structure.sites;
     let atomTypes = sites.map((site) => site.label);
@@ -382,6 +388,43 @@ function buildMaterialsProjectEndpoint(raw) {
         return matrix;
     };
 
+    // with the Born charges and dielectric tensor of the same calculation, split
+    // D into the dipole-dipole term and the analytic (short-range) remainder
+    let lattice = structure.lattice.matrix;
+    let nac = null;
+    let getShortRangeMatrix = null;
+    if (dielectric) {
+        let born = atomTypes.map((type, i) => {
+            let index = atomTypes[0] === atomTypes[1] ? i : dielectric.labels.indexOf(type);
+            if (index < 0) {
+                throw new Error('No Born charge for ' + type);
+            }
+            return dielectric.born[index];
+        });
+        nac = {
+            born: born,
+            dielectric: dielectric.dielectric,
+            unitConversion: PHONOPY_NAC_UNIT,
+            tolerance: 1e-5,
+        };
+        let ownPayload = buildNacPayload(
+            born, dielectric.dielectric, PHONOPY_NAC_UNIT,
+            lattice, masses, utils.red_car_list(positionsRed, lattice), nac.tolerance
+        );
+        let shortRange = new Array(qpoints.length).fill(null);
+        getShortRangeMatrix = function(qIndex, direction) {
+            if (!shortRange[qIndex]) {
+                let q = qpoints[qIndex];
+                let matrix = scaleMatrix(getMatrix(qIndex), 1);
+                // at Gamma the file holds the limit taken along this segment
+                let dd = getGonzeReciprocalCorrection(ownPayload, q, isGamma(q) ? direction : null);
+                addBlockTensor(matrix, dd, -PHONOPY_THZ * PHONOPY_THZ);
+                shortRange[qIndex] = matrix;
+            }
+            return shortRange[qIndex];
+        };
+    }
+
     let labelPoints = Object.keys(raw.labels_dict).map((label) => ({
         q: raw.labels_dict[label],
         label: normalizeLabel(label),
@@ -395,8 +438,9 @@ function buildMaterialsProjectEndpoint(raw) {
         for (let k = segment.start; k < segment.end; k++) {
             fractions.push(mat.distance(qpoints[k], qA) / length);
         }
-        return makeSegment(qpoints, segment, function(t) {
-            // linear interpolation of D between the sampled q-points of the file
+        let direction = [qB[0] - qA[0], qB[1] - qA[1], qB[2] - qA[2]];
+        // linear interpolation of D between the sampled q-points of the file
+        let interpolate = function(getter, t) {
             let k = 0;
             while (k < fractions.length - 2 && fractions[k + 1] < t) {
                 k++;
@@ -404,29 +448,38 @@ function buildMaterialsProjectEndpoint(raw) {
             let t0 = fractions[k];
             let t1 = fractions[k + 1];
             let w = t1 > t0 ? Math.min(1, Math.max(0, (t - t0) / (t1 - t0))) : 0;
-            return lerpMatrix(getMatrix(segment.start + k), getMatrix(segment.start + k + 1), w);
-        });
+            return lerpMatrix(getter(segment.start + k, direction), getter(segment.start + k + 1, direction), w);
+        };
+        let madeSegment = makeSegment(qpoints, segment, (t) => interpolate(getMatrix, t));
+        if (getShortRangeMatrix) {
+            madeSegment.sampleShortRange = (t) => interpolate(getShortRangeMatrix, t);
+        }
+        return madeSegment;
     });
 
     return {
         atomTypes: atomTypes,
         positionsRed: positionsRed,
-        lattice: structure.lattice.matrix,
+        lattice: lattice,
         masses: masses,
         segments: segments,
+        nac: nac,
+        frequencyFactor: PHONOPY_THZ,
     };
 }
 
-export function buildMixingEndpoint(raw, entry) {
+export function buildMixingEndpoint(raw, entry, dielectric = null) {
     /*
     raw is the parsed json of a PhononDB (internal format with a dynamical_matrix)
-    or a Materials Project OpenData phonon file; entry is its menu entry
+    or a Materials Project OpenData phonon file; entry is its menu entry.
+    dielectric ({ born, dielectric, labels }, see mpdielectric.js) supplies the
+    Born charges and dielectric tensor of a Materials Project material.
     */
     let endpoint;
     if (raw.dynamical_matrix) {
         endpoint = buildPhononDBEndpoint(raw, entry);
     } else if (raw.eigendisplacements && raw.structure) {
-        endpoint = buildMaterialsProjectEndpoint(raw);
+        endpoint = buildMaterialsProjectEndpoint(raw, dielectric);
     } else {
         throw new Error('No dynamical matrix available for ' + (entry && entry.name));
     }
@@ -718,8 +771,7 @@ function getGonzeDdQ0(gList, born, dielectric, positionsCar, lambda) {
 function buildMixedNacPayload(endpoint1, endpoint2, x, lattice, masses, positionsRed) {
     /*
     Gonze dipole-dipole parameters of the virtual crystal: Born charges and
-    dielectric tensor mixed linearly, the G list, Ewald parameter, dd_q0 and
-    unit factor rebuilt for the mixed lattice with phonopy's own rules
+    dielectric tensor mixed linearly on the mixed lattice
     */
     let nac1 = endpoint1.nac;
     let nac2 = endpoint2.nac;
@@ -728,8 +780,19 @@ function buildMixedNacPayload(endpoint1, endpoint2, x, lattice, masses, position
         mix(nac1.siteBorn[s][a][b], nac2.siteBorn[s][a][b])
     )));
     let dielectric = [0, 1, 2].map((a) => [0, 1, 2].map((b) => mix(nac1.dielectric[a][b], nac2.dielectric[a][b])));
-    let positionsCar = utils.red_car_list(positionsRed, lattice);
+    return buildNacPayload(
+        born, dielectric,
+        mix(nac1.unitConversion, nac2.unitConversion),
+        lattice, masses, utils.red_car_list(positionsRed, lattice),
+        nac1.tolerance
+    );
+}
 
+function buildNacPayload(born, dielectric, unitConversion, lattice, masses, positionsCar, tolerance) {
+    /*
+    payload for getGonzeReciprocalCorrection: the G list, Ewald parameter, dd_q0
+    and unit factor built for the given lattice with phonopy's own rules
+    */
     let volume = Math.abs(mat.matrix_determinant(lattice));
     let reciprocal = utils.rec_lat(lattice);
     // phonopy defaults: 300 G points, exp(-G eps G / 4 lambda^2) = 1e-10 at the cutoff
@@ -749,8 +812,8 @@ function buildMixedNacPayload(endpoint1, endpoint2, x, lattice, masses, position
             g_list: gList,
             lambda: lambda,
             dd_q0: getGonzeDdQ0(gList, born, dielectric, positionsCar, lambda),
-            nac_factor: mix(nac1.unitConversion, nac2.unitConversion) * 4 * Math.PI / volume,
-            q_direction_tolerance: nac1.tolerance,
+            nac_factor: unitConversion * 4 * Math.PI / volume,
+            q_direction_tolerance: tolerance,
         },
     };
 }
