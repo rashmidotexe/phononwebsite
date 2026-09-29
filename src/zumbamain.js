@@ -215,7 +215,7 @@ function computeRamanCurve(phonon) {
 function overlayComparisonRaman() {
     if (typeof Highcharts === 'undefined') return;
     const chart = Highcharts.charts.find(
-        c => c && c.renderTo && c.renderTo.id === 'raman-spectrum'
+        c => c && c.renderTo && c.renderTo.id === 'raman-spectrum-chart'
     );
     if (!chart) return;
 
@@ -241,7 +241,7 @@ function overlayComparisonRaman() {
 
 function fixActiveModesDots() {
     if (typeof Highcharts === 'undefined') return;
-    const chart = Highcharts.charts.find(c => c && c.renderTo && c.renderTo.id === 'raman-spectrum');
+    const chart = Highcharts.charts.find(c => c && c.renderTo && c.renderTo.id === 'raman-spectrum-chart');
     if (!chart) return;
 
     const phonon = p.phonon;
