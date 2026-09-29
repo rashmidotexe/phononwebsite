@@ -41,8 +41,15 @@
             border: 1px solid #b6c2cf;
             border-radius: 0.4rem;
         }
-        #character_range {
+        #character_range, #mass_range {
             width: 100%;
+        }
+        #mass_range:disabled {
+            opacity: 0.4;
+        }
+        #mass_toggle_label, #mass_value {
+            display: block;
+            font-size: 0.9em;
         }
         #mixing_note {
             font-size: 0.8em;
@@ -82,6 +89,11 @@
                     <input id="character_range" type="range" min="0" max="100" step="1" value="0">
                     <div id="character_value"></div>
                     <div id="mixing_note"></div>
+
+                    <h3>Mass %:</h3>
+                    <label id="mass_toggle_label"><input id="mass_toggle" type="checkbox"> Tune mass separately</label>
+                    <input id="mass_range" type="range" min="0" max="100" step="1" value="0" disabled>
+                    <div id="mass_value"></div>
                 </div>
 
                 <div id="options-list">
