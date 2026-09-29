@@ -113,11 +113,12 @@ export class MixingWebpage extends PhononWebpage {
         if (!this.dom_mixing_note) {
             return;
         }
-        let notes = {
-            recomputed: "LO–TO splitting from the mixed Born charges and dielectric tensor.",
-            interpolated: "LO–TO splitting interpolated: the Materials Project Born charges could not be loaded.",
-        };
-        this.dom_mixing_note.text(nacMode && this.material2 ? notes[nacMode] : "");
+        // the dipole-dipole term is normally recomputed from the mixed Born charges and
+        // dielectric tensor; only the fallback, where it is interpolated, is flagged
+        let note = nacMode === 'interpolated' && this.material2
+            ? "LO–TO splitting interpolated: the Materials Project Born charges could not be loaded."
+            : "";
+        this.dom_mixing_note.text(note);
     }
 
     setCharacterInput(dom_range, dom_value) {
