@@ -92,6 +92,9 @@ export class MixingWebpage extends PhononWebpage {
         this.material1 = null;
         this.material2 = null;
         this.character = 0;
+        // site masses follow the character unless tuned separately
+        this.massLinked = true;
+        this.massCharacter = 0;
         this.material2FilterQuery = '';
         this.rawCache = new Map();
         this.pairCache = null;
@@ -126,12 +129,84 @@ export class MixingWebpage extends PhononWebpage {
         dom_range.on('input', () => {
             this.character = Number(dom_range.val()) / 100;
             this.updateCharacterLabel();
+            if (this.massLinked) {
+                this.setMassCharacter(this.character);
+            }
             if (this.material2) {
                 this.refreshMixing(false);
             }
         });
         this.character = Number(dom_range.val()) / 100;
         this.updateCharacterLabel();
+    }
+
+    setMassInput(dom_toggle, dom_range, dom_value) {
+        /*
+        mass slider: disabled and following the character slider by default,
+        independent once "tune mass separately" is checked
+        */
+        this.dom_mass_range = dom_range;
+        this.dom_mass_value = dom_value;
+        dom_toggle.on('change', () => {
+            this.massLinked = !dom_toggle.prop('checked');
+            dom_range.prop('disabled', this.massLinked);
+            if (this.massLinked && this.massCharacter !== this.character) {
+                this.setMassCharacter(this.character);
+                if (this.material2) {
+                    this.refreshMixing(false);
+                }
+            }
+            this.updateMassLabel();
+        });
+        dom_range.on('input', () => {
+            if (this.massLinked) {
+                return;
+            }
+            this.setMassCharacter(Number(dom_range.val()) / 100);
+            if (this.material2) {
+                this.refreshMixing(false);
+            }
+        });
+        this.massLinked = !dom_toggle.prop('checked');
+        dom_range.prop('disabled', this.massLinked);
+        this.setMassCharacter(this.massLinked ? this.character : Number(dom_range.val()) / 100);
+    }
+
+    setMassCharacter(fraction) {
+        this.massCharacter = fraction;
+        if (this.dom_mass_range) {
+            this.dom_mass_range.val(Math.round(fraction * 100));
+        }
+        this.updateMassLabel();
+    }
+
+    getMassFraction() {
+        return this.massLinked ? this.character : this.massCharacter;
+    }
+
+    updateMassLabel() {
+        if (!this.dom_mass_value) {
+            return;
+        }
+        let percent = Math.round(this.getMassFraction() * 100);
+        let pair = this.pairCache && this.material2 && this.pairCache.key === this.material1.url + "::" + this.material2.url
+            ? this.pairCache.sampled
+            : null;
+        if (!pair) {
+            this.dom_mass_value.html(this.massLinked ? "follows character %" : percent + " %");
+            return;
+        }
+        // site masses of the virtual crystal, e.g. "Ga 69.72 · P/As 51.35 amu"
+        let y = this.getMassFraction();
+        let e1 = pair.endpoint1;
+        let e2 = pair.endpoint2;
+        let sites = [0, 1].map((s) => {
+            let mass = (1 - y) * e1.siteMasses[s] + y * e2.siteMasses[s];
+            let types = e1.siteTypes[s] === e2.siteTypes[s] ? e1.siteTypes[s] : e1.siteTypes[s] + "/" + e2.siteTypes[s];
+            return types + " " + mass.toFixed(2);
+        });
+        let prefix = this.massLinked ? "" : percent + " % " + utils.format_formula_html(this.material2.name) + ": ";
+        this.dom_mass_value.html(prefix + sites.join(" · ") + " amu");
     }
 
     updateCharacterLabel() {
@@ -303,6 +378,7 @@ export class MixingWebpage extends PhononWebpage {
         this.material2 = material ? { url: material.url, name: material.name } : null;
         this.renderMaterial2Menu();
         this.updateCharacterLabel();
+        this.updateMassLabel();
         this.refreshMixing(true);
     }
 
@@ -355,9 +431,10 @@ export class MixingWebpage extends PhononWebpage {
 
     getMixingTitle() {
         let percent = Math.round(this.character * 100);
+        let mass = this.massLinked ? "" : ", mass " + Math.round(this.massCharacter * 100) + " %";
         return utils.format_formula_html(this.material1.name) +
             " + " + utils.format_formula_html(this.material2.name) +
-            " (" + percent + " % " + utils.format_formula_html(this.material2.name) + ")";
+            " (" + percent + " % " + utils.format_formula_html(this.material2.name) + mass + ")";
     }
 
     async refreshMixing(pairChanged, callback) {
@@ -375,13 +452,14 @@ export class MixingWebpage extends PhononWebpage {
 
         let token = ++this.mixToken;
         let x = this.character;
+        let massFraction = this.getMassFraction();
         if (pairChanged) {
             this.startLoadingFeedback(this.material1.name + " + " + this.material2.name);
         }
 
         try {
             let pair = await this.getSampledPair();
-            let data = await computeMixedPhonon(pair.sampled, x);
+            let data = await computeMixedPhonon(pair.sampled, x, massFraction);
             if (token !== this.mixToken) {
                 return;
             }
@@ -403,6 +481,7 @@ export class MixingWebpage extends PhononWebpage {
             }
             this.name = this.getMixingTitle();
             this.updateMixingNote(data.nac_mode);
+            this.updateMassLabel();
             this.updatePage();
             if (callback) {
                 callback();

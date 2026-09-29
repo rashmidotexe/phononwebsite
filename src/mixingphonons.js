@@ -818,10 +818,15 @@ function buildNacPayload(born, dielectric, unitConversion, lattice, masses, posi
     };
 }
 
-export async function computeMixedPhonon(sampled, x) {
+export async function computeMixedPhonon(sampled, x, massFraction = x) {
     /*
     diagonalize the virtual-crystal D_alloy (mixed force constants and masses)
-    on the common path and return it in the internal json format of PhononJson
+    on the common path and return it in the internal json format of PhononJson.
+
+    x mixes the bonding: force constants, Born charges, dielectric tensor and
+    lattice. massFraction mixes the site masses, M = (1-y) M_1 + y M_2, and
+    defaults to x (plain virtual crystal). The masses only divide the mixed
+    force constants, so any choice keeps the acoustic sum rule.
     */
     let endpoint1 = sampled.endpoint1;
     let endpoint2 = sampled.endpoint2;
@@ -830,7 +835,7 @@ export async function computeMixedPhonon(sampled, x) {
     let lattice = [0, 1, 2].map((i) => [0, 1, 2].map((j) =>
         (1 - x) * endpoint1.lattice[i][j] + x * endpoint2.lattice[i][j]
     ));
-    let masses = [0, 1].map((s) => (1 - x) * endpoint1.siteMasses[s] + x * endpoint2.siteMasses[s]);
+    let masses = [0, 1].map((s) => (1 - massFraction) * endpoint1.siteMasses[s] + massFraction * endpoint2.siteMasses[s]);
     let atomTypes = x < 0.5 ? endpoint1.siteTypes.slice() : endpoint2.siteTypes.slice();
     let positionsRed = [[0, 0, 0], [0.25, 0.25, 0.25]];
 

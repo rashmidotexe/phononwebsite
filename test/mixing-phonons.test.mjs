@@ -229,6 +229,47 @@ describe('zinc blende dynamical-matrix mixing', () => {
         assert.ok(maxAbsDiff(half.eigenvalues, mirrored.eigenvalues) < 1e-4);
     });
 
+    it('tunes the site masses independently of the character', async () => {
+        let gap = endpoint('phonondb-GaP-mp-2490.json.gz', 'GaP');
+        let aln = endpoint('phonondb-AlN-mp-1700.json.gz', 'AlN');
+        let sampled = sampleMixingPair(gap, aln);
+
+        // by default the masses follow x
+        let linked = await computeMixedPhonon(sampled, 0.5);
+        assert.ok(maxAbsDiff(linked.eigenvalues, (await computeMixedPhonon(sampled, 0.5, 0.5)).eigenvalues) < 1e-12);
+
+        let heavy = await computeMixedPhonon(sampled, 0.5, 0);
+        let light = await computeMixedPhonon(sampled, 0.5, 1);
+        let gamma = heavy.highsym_qpts.filter((point) => point[1] === 'GAMMA').map((point) => point[0]);
+        for (let mixed of [heavy, light]) {
+            // same force constants, only the masses differ: the sum rule still holds
+            for (let k of gamma) {
+                for (let n = 0; n < 3; n++) {
+                    assert.ok(Math.abs(mixed.eigenvalues[k][n]) < 0.5);
+                }
+            }
+            // the bonding (lattice) still follows x
+            assert.deepEqual(mixed.lattice, linked.lattice);
+        }
+        // GaP masses (Ga, P) are heavier than AlN masses (Al, N): lower optical modes
+        assert.ok(heavy.eigenvalues[gamma[0]][5] < linked.eigenvalues[gamma[0]][5]);
+        assert.ok(linked.eigenvalues[gamma[0]][5] < light.eigenvalues[gamma[0]][5]);
+
+        // a -> b at (x, y) is b -> a at (1 - x, 1 - y)
+        let mirrored = await computeMixedPhonon(sampleMixingPair(aln, gap), 0.7, 0.8);
+        let forward = await computeMixedPhonon(sampled, 0.3, 0.2);
+        let optical = (a, b) => {
+            let worst = 0;
+            a.forEach((row, k) => row.forEach((v, n) => {
+                if (Math.abs(v) > 1) {
+                    worst = Math.max(worst, Math.abs(v - b[k][n]));
+                }
+            }));
+            return worst;
+        };
+        assert.ok(optical(forward.eigenvalues, mirrored.eigenvalues) < 1e-6);
+    });
+
     it('maps an inverted setting of the same compound onto the other one', async () => {
         // AlN is stored with N at +1/4 in PhononDB and at -1/4 in Materials Project
         let pdb = endpoint('phonondb-AlN-mp-1700.json.gz', 'AlN');
