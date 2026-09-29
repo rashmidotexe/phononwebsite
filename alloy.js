@@ -111035,7 +111035,7 @@ let comparisonLabel = null;
 function overlayComparisonRaman() {
     if (typeof Highcharts$1 === 'undefined') return;
     const chart = Highcharts$1.charts.find(
-        (c) => c && c.renderTo && c.renderTo.id === 'raman-spectrum'
+        (c) => c && c.renderTo && c.renderTo.id === 'raman-spectrum-chart'
     );
     if (!chart) return;
 
