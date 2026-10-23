@@ -11,6 +11,7 @@ import * as utils from './utils.js';
 import { atomColorHexToCss, getAtomBadgeTextColor } from './atomcolors.js';
 import { renderLatticeTable, renderAtomPositionsTable } from './structureinfo.js';
 import { getMaterialsProjectId, fetchRamanTensors, mapRamanIntensities, findGammaIndex, RAMANDB_PROXY_URL, RAMANDB_REFERENCE } from './ramandb.js';
+import { fetchRruffSpectra, getRruffSeries, RRUFF_DATA_URL, RRUFF_REFERENCE } from './rruff.js';
 
 export class PhononWebpage {
 
@@ -45,6 +46,7 @@ export class PhononWebpage {
         this.plotViewControlsInitialized = false;
         this.ramanDbId = null;
         this.ramanDbProxyUrl = RAMANDB_PROXY_URL;
+        this.rruffDataUrl = RRUFF_DATA_URL;
     }
 
     getModeMaxDisplacementNorm() {
@@ -436,6 +438,23 @@ export class PhononWebpage {
         }
         this.update();
         this.loadRamanDatabase();
+        this.loadExperimentalRaman();
+    }
+
+    loadExperimentalRaman() {
+        /*
+        fetch the measured RRUFF spectra of the material to overlay on the
+        computed Raman spectrum
+        */
+        let phonon = this.phonon;
+        if (!phonon || !this.ramanDbId) {
+            return Promise.resolve();
+        }
+        return fetchRruffSpectra(this.ramanDbId, this.rruffDataUrl).then((payload) => {
+            if (!payload || this.phonon !== phonon) { return; }
+            phonon.experimental_raman = payload;
+            if (phonon.raman_intensities) { this.plotRaman(); }
+        });
     }
 
     loadRamanDatabase() {
@@ -778,18 +797,32 @@ export class PhononWebpage {
             if (existingChart) existingChart.destroy();
         
             let source = this.phonon.raman_source;
+            let experimental = this.phonon.experimental_raman;
+            let credits = [];
+            if (source) {
+                credits.push('Tensors: <a href="' + source.url + '" target="_blank">' +
+                             source.short + '</a>, ' + source.license);
+            }
+            if (experimental) {
+                credits.push('Measured: <a href="' + RRUFF_REFERENCE.url + '" target="_blank">' +
+                             RRUFF_REFERENCE.text + '</a>');
+            }
+            let peakHeight = Math.max(...continuousData.map((point) => point[1]));
+            let experimentalSeries = getRruffSeries(experimental, peakHeight, maxFreq * 1.15);
             Highcharts.chart('raman-spectrum-chart', {
                 title: { text: 'Raman Spectrum' },
-                subtitle: source ? {
-                    text: 'Raman tensors: <a href="' + source.url + '" target="_blank">' +
-                          source.text + '</a>, ' + source.license,
-                    useHTML: true
+                caption: credits.length ? {
+                    text: credits.join(' · '),
+                    useHTML: true,
+                    style: { fontSize: '10px' }
                 } : undefined,
+                //keep the plot readable when measured spectra add legend entries
+                legend: { itemStyle: { fontSize: '11px' }, maxHeight: 72 },
                 xAxis: { title: { text: 'Frequency (cm⁻¹)' } },
                 yAxis: { title: { text: 'Intensity' } },
                 series: [
                     {
-                        name: 'Spectrum',
+                        name: 'Calculated',
                         type: 'line',
                         data: continuousData,
                         color: '#2c3e50',
@@ -809,7 +842,8 @@ export class PhononWebpage {
                                 }
                             }
                         }
-                    }
+                    },
+                    ...experimentalSeries
                 ]
             });
         }
