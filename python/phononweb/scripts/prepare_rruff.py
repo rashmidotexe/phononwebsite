@@ -430,8 +430,9 @@ def parse_args(argv=None):
     parser.add_argument("--step", type=float, default=2.0, help="grid spacing in cm-1")
     parser.add_argument("--length-tolerance", type=float, default=0.06)
     parser.add_argument("--volume-tolerance", type=float, default=0.15)
-    parser.add_argument("--all-materials", action="store_true",
-                        help="keep materials without Raman tensors in the Computational Raman Database")
+    parser.add_argument("--only-ramandb", action="store_true",
+                        help="only keep materials with Raman tensors in the Computational Raman "
+                             "Database (the page also shows measured spectra on their own)")
     parser.add_argument("--workers", type=int, default=8)
     return parser.parse_args(argv)
 
@@ -459,8 +460,8 @@ def main(argv=None):
         for material_id, cell in pool.map(load_cell, candidates):
             cells[material_id] = cell
 
-    keep = (lambda m: True) if args.all_materials else \
-        (lambda m: has_ramandb(m, args.cache_dir))
+    keep = (lambda m: has_ramandb(m, args.cache_dir)) if args.only_ramandb else \
+        (lambda m: True)
     matches = match_materials(samples, materials, cells.get, keep,
                               args.length_tolerance, args.volume_tolerance)
 
