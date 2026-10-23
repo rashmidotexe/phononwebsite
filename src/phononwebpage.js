@@ -40,6 +40,8 @@ export class PhononWebpage {
         this.disabledReferenceKeys = new Set();
         this.loadingState = null;
         this.activePlotView = null;
+        //view shown when a material with Raman data is opened
+        this.defaultPlotView = 'dispersion';
         this.plotViewControlsInitialized = false;
         this.ramanDbId = null;
         this.ramanDbProxyUrl = RAMANDB_PROXY_URL;
@@ -721,7 +723,7 @@ export class PhononWebpage {
                 this.plotViewControlsInitialized = true;
             }
         }
-        if (!this.activePlotView) this.activePlotView = 'raman';
+        if (!this.activePlotView) this.activePlotView = this.defaultPlotView;
         this.setPlotView(this.activePlotView);
         window.app = this;
         
