@@ -19,6 +19,7 @@ export const RAMANDB_PROXY_URL = 'https://ramandb-proxy.rashmidotexe.workers.dev
 
 export const RAMANDB_REFERENCE = {
     text: 'Computational Raman Database (M. Bagheri and H.-P. Komsa, Sci. Data 10, 80 (2023))',
+    short: 'Computational Raman Database (Bagheri & Komsa 2023)',
     url: 'https://ramandb.oulu.fi/',
     license: 'CC BY 4.0',
 };
