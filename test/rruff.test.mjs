@@ -110,12 +110,12 @@ describe('PhononWebpage.loadExperimentalRaman', () => {
     assert.equal(page.plotted, 1);
   });
 
-  it('keeps the data for later when there is no computed spectrum yet', async () => {
+  it('shows the measured spectra without a computed spectrum', async () => {
     const page = makePage({ raman_intensities: null });
     await PhononWebpage.prototype.loadExperimentalRaman.call(page);
 
     assert.deepEqual(page.phonon.experimental_raman, PAYLOAD);
-    assert.equal(page.plotted, 0);
+    assert.equal(page.plotted, 1);
   });
 
   it('ignores spectra of a material that is no longer shown', async () => {

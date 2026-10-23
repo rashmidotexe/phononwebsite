@@ -19,8 +19,9 @@ Download the Raman archives from https://rruff.info/zipped_data_files/raman/
 
 A sample is kept when its ideal chemistry has the same reduced formula as a
 website material, both are in the same crystal family, and the conventional
-cells agree (lattice lengths within 6 %, volume within 15 %). Only materials
-with Raman tensors in the Computational Raman Database are kept, unless
-`--all-materials` is given. Each spectrum is the processed RRUFF spectrum
+cells agree (lattice lengths within 6 %, volume within 15 %). Materials without
+a computed Raman spectrum are kept too, and the page then shows the measured
+spectrum on its own; `--only-ramandb` keeps only materials with Raman tensors
+in the Computational Raman Database. Each spectrum is the processed RRUFF spectrum
 resampled every 2 cm⁻¹ and scaled to integers 0–1000; up to three spectra per
 material, best quality and unoriented first.
