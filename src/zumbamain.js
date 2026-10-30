@@ -10,6 +10,10 @@
  * is handled correctly per pol direction — no hardcoded position array.
  *
  * Constraint: pol direction cannot equal ei or es (enforced in UI).
+ *
+ * Resonance tab: exciton-phonon resonant Raman vs excitation energy
+ * (zumbaresonance.js), with its own Porto dropdown in place of the
+ * Geometry 1/2 panels while it is shown.
  */
 
 import $ from 'jquery';
@@ -41,6 +45,8 @@ globalThis.GIF        = resolveGifConstructor(GIFLib);
 import { ZumbaDB }    from './zumbadb.js';
 import { PhononJson } from './phononjson.js';
 import { VibCrystal, PhononHighcharts, PhononWebpage } from './phononwebsite.js';
+import { ResonanceView } from './zumbaresonance.js';
+import { installResonanceTab } from './zumbaresonancetab.js';
 
 function makeFilename(pol, ei, es) {
     return `zumbadb/ZMO_pol_${pol}_ei_${ei}_es_${es}.json`;
@@ -432,6 +438,15 @@ p.selectModeByBandIndex = function (gamma_index, band_index) {
 };
 
 window.app = p;
+
+const resonanceView = new ResonanceView({
+    view:         document.getElementById('resonance-view'),
+    menu:         document.getElementById('resonance-menu'),
+    dataUrl:      'zumbadb/resonance/ZMO_resonance.json',
+    ramanFileFor: makeFilename,
+});
+
+installResonanceTab(p, resonanceView);
 
 function setPageTitle() {
     const el = document.getElementById('name');
