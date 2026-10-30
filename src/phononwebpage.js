@@ -797,7 +797,16 @@ export class PhononWebpage {
         
         if (typeof Highcharts !== 'undefined') {
             let existingChart = Highcharts.charts.find(c => c && c.renderTo && c.renderTo.id === 'raman-spectrum-chart');
-            if (existingChart) existingChart.destroy();
+            //pages that reload one material in several geometries (keepRamanZoom)
+            //carry the user's zoom over to the rebuilt chart
+            let zoom = null;
+            if (existingChart) {
+                let extremes = existingChart.xAxis[0].getExtremes();
+                if (this.keepRamanZoom && (extremes.userMin !== undefined || extremes.userMax !== undefined)) {
+                    zoom = [extremes.min, extremes.max];
+                }
+                existingChart.destroy();
+            }
         
             let source = this.phonon.raman_source;
             let experimental = this.phonon.experimental_raman;
@@ -836,7 +845,12 @@ export class PhononWebpage {
                     }
                 }
             ] : [];
-            Highcharts.chart('raman-spectrum-chart', {
+            let chart = Highcharts.chart('raman-spectrum-chart', {
+                chart: {
+                    zooming: { type: 'xy' },
+                    panning: { enabled: true, type: 'xy' },
+                    panKey: 'shift'
+                },
                 title: { text: 'Raman Spectrum' },
                 caption: credits.length ? {
                     text: credits.join(' · '),
@@ -849,6 +863,13 @@ export class PhononWebpage {
                 yAxis: { title: { text: 'Intensity' } },
                 series: [...computedSeries, ...experimentalSeries]
             });
+            if (zoom) {
+                let extremes = chart.xAxis[0].getExtremes();
+                if (zoom[1] > extremes.dataMin && zoom[0] < extremes.dataMax) {
+                    chart.xAxis[0].setExtremes(Math.max(zoom[0], extremes.dataMin), Math.min(zoom[1], extremes.dataMax));
+                    chart.showResetZoom();
+                }
+            }
         }
         
         const maxI = Math.max(...allModes.filter(m => m.active).map(d => d.y));

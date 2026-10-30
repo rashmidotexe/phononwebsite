@@ -134,6 +134,8 @@ function enforcePolConstraint(prefix) {
 const v = new VibCrystal($('#vibcrystal'));
 const d = new PhononHighcharts($('#highcharts'), $('#raman-spectrum'));
 const p = new PhononWebpage(v, d);
+// the 27 geometries are one material: keep a Raman-tab zoom across them
+p.keepRamanZoom = true;
 
 p.setMaterialsList(        $('#mat')              );
 p.setMaterialsFilterInput( $('#materials_filter') );
