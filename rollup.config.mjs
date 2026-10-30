@@ -52,11 +52,44 @@ export default [
         plugins,
     },
     {
+        input: 'src/alloymain.js',
+        output: [
+            {
+                format: 'es',
+                file: 'build/alloy.js',
+                sourcemap: true,
+            }
+        ],
+        plugins,
+    },
+    {
+        input: 'src/mixingmain.js',
+        output: [
+            {
+                format: 'es',
+                file: 'build/mixing.js',
+                sourcemap: true,
+            }
+        ],
+        plugins,
+    },
+    {
         input: 'src/zumbamain.js',
         output: [
             {
                 format: 'es',
                 file: 'build/zumba.js',
+                sourcemap: true,
+            }
+        ],
+        plugins,
+    },
+    {
+        input: 'src/cuvacmain.js',
+        output: [
+            {
+                format: 'es',
+                file: 'build/cuvac.js',
                 sourcemap: true,
             }
         ],
