@@ -29,8 +29,6 @@ const LOG_FLOOR = 1e-4;
 const PLAY_SECONDS = 9;
 const SYMBOLS = { A_1: 'circle', E_1: 'triangle', E_2: 'diamond' };
 const SUB = { A_1: 'A₁', E_1: 'E₁', E_2: 'E₂' };
-const EQUIVALENT = { 'x(yy)x': 'y(xx)y', 'y(xx)y': 'x(yy)x', 'x(yz)x': 'y(xz)y',
-                     'y(xz)y': 'x(yz)x', 'x(zz)x': 'y(zz)y', 'y(zz)y': 'x(zz)x' };
 
 /* ---------- pure helpers (no DOM, unit tested) ---------- */
 
@@ -206,9 +204,7 @@ export class ResonanceView {
         this.selected = [];                 // global peak ids, oldest first
         this.colorOf = new Map();
         this.efRef = 'offres';
-        this.showEF = true;
         this.showDFPT = false;
-        this.showExp = false;
         this.wfTraces = 29;
         this.wfHeight = 3;
         this.sort = { key: 'I', dir: -1 };
@@ -251,10 +247,7 @@ export class ResonanceView {
         this.energies = data.energies;
         this.nE = data.energies.length;
         this.laserIdx = LASER_LINES.map((nm) => snapIndex(this.energies, nmToEV(nm)));
-        const yy = data.geometries[0];
-        const yyNorm = computeNormalisers(yy.intensity);
-        this.yyMax = yyNorm.M;
-        this.ie = yyNorm.mIndex;
+        this.ie = computeNormalisers(data.geometries[0].intensity).mIndex;
         this.buildMenu();
         this.buildView();
         this.built = true;
@@ -271,22 +264,11 @@ export class ResonanceView {
         this.menu.innerHTML = `
             <h3>Resonance geometry</h3>
             <select id="res-geom">${options}</select>
-            <div class="res-menu-line" id="res-species"></div>
-            <div class="res-menu-line res-menu-note" id="res-equiv"></div>
-            <div class="res-menu-line" id="res-strongest"></div>
-            <div class="res-menu-line res-menu-small">${escapeHTML(this.provenance())}</div>
-            <div class="res-menu-line res-menu-small">Selecting a peak animates it in the 3D view; Geometry 1 follows this geometry (same LDA phonons, within 0.5 cm⁻¹).</div>`;
+            <div class="res-menu-line" id="res-species"></div>`;
         this.menu.querySelector('#res-geom').addEventListener('change', (e) => {
             this.stopPlay();
             this.setGeometry(parseInt(e.target.value, 10));
         });
-    }
-
-    provenance() {
-        const d = this.data;
-        const n = d.exciton_count ? `${d.exciton_count.toLocaleString('en').replace(',', ' ')} excitons` : '';
-        return ['LDA · GW-BSE · DIP_iR (length gauge)', n, `exciton FWHM ${d.broadening} eV`,
-                `Stokes ${d.temperature} K`].filter(Boolean).join(' · ');
     }
 
     buildView() {
@@ -337,7 +319,6 @@ export class ResonanceView {
                         <button type="button" data-value="waterfall">Waterfall</button>
                     </span>
                     <span class="res-opts-spectrum">
-                        <label><input type="checkbox" class="res-show-ef" checked> EF bars</label>
                         <label title="The DFPT spectrum of the Raman tab, own maximum = 1"><input type="checkbox" class="res-show-dfpt"> Non-resonant DFPT</label>
                     </span>
                     <span class="res-opts-waterfall">
@@ -358,12 +339,9 @@ export class ResonanceView {
                         <button type="button" data-value="log">Log</button>
                         <button type="button" data-value="lin">Lin</button>
                     </span>
-                    <label class="res-exp-toggle" title="Gudima et al. Fig. 4b, hand-digitised; shape only">
-                        <input type="checkbox" class="res-show-exp"> Experiment (446 cm⁻¹ ⊥c)</label>
                     <span class="res-hint">click a line to select it · click the plot to set E_L</span>
                 </div>
                 <div class="res-chart" id="res-chart-profiles"></div>
-                <p class="res-foot res-exp-caption"></p>
                 <p class="res-foot">Top strip: strongest peak at each E_L. Bottom: GW-BSE absorption for the light polarisations of
                     this geometry and the bright excitons (one common scale). The ~2.7–2.8 eV ⊥c feature is real (Biswas 2017).</p>
             </div>
@@ -385,34 +363,16 @@ export class ResonanceView {
                     </tr></thead>
                     <tbody></tbody>
                 </table></div>
-                <p class="res-foot res-caveat"></p>
-            </div>
-
-            <details class="res-section res-about">
-                <summary>About this calculation — note: the selective enhancement seen in experiment is not reproduced</summary>
-                <ul>
-                    <li>${escapeHTML(this.data.description)}; phonons at q = 0.</li>
-                    <li>I = |ê<sub>s</sub>·α·ê<sub>i</sub>|²(n+1)/ω, summed over degenerate partners, with no ω⁴ prefactor and no
-                        absorption, penetration-depth or reflectivity correction: compare with CaF₂-normalised data, not raw counts.</li>
-                    <li>A constant exciton linewidth of ${this.data.broadening} eV (FWHM) is used, so features narrower than about 0.05 eV are not resolved.</li>
-                    <li>The exciton–phonon tensor only holds the BSE band window, 10–40 % of the full DFPT tensor off resonance:
-                        off-resonant ratios and absolute enhancement factors are unreliable, and antiresonance dips may be too deep.</li>
-                    <li>TO phonons only (no Fröhlich/LO term). The GW gap (2.79 eV) is below the published ~3.15 eV, so exciton energies
-                        are uncertain by about 0.1–0.3 eV.</li>
-                    <li>These phonon frequencies come from the exciton–phonon DFPT run and differ by up to ~10 cm⁻¹ from the Raman tab.</li>
-                    <li>Notations related by the hexagonal symmetry give the same result up to numerical noise.
-                        -X(ZZ)X and -X(YZ)X are still rising at 3.0 eV: their resonance lies above the window.</li>
-                </ul>
-            </details>`;
+            </div>`;
 
         const q = (sel) => this.view.querySelector(sel);
         this.el = {
             play: q('.res-play'), slider: q('.res-slider'), energy: q('.res-energy'), readout: q('.res-readout'),
             badge: q('.res-badge'), pins: q('.res-pins'), pin: q('.res-pin'), overlay: q('.res-overlay'),
             even: q('.res-even'), normInfo: q('.res-norm-info'), tbody: q('.res-table tbody'),
-            tableTitle: q('.res-table-title'), caveat: q('.res-caveat'), efref: q('.res-efref'),
-            thEF: q('.res-th-ef'), thRel: q('.res-th-rel'), expToggle: q('.res-exp-toggle'),
-            expCaption: q('.res-exp-caption'), optsSpectrum: q('.res-opts-spectrum'),
+            tableTitle: q('.res-table-title'), efref: q('.res-efref'),
+            thEF: q('.res-th-ef'), thRel: q('.res-th-rel'),
+            optsSpectrum: q('.res-opts-spectrum'),
             optsWaterfall: q('.res-opts-waterfall'),
         };
         this.wireControls();
@@ -485,20 +445,9 @@ export class ResonanceView {
                 this.syncSegments();
             });
         });
-        this.view.querySelector('.res-show-ef').addEventListener('change', (e) => {
-            this.showEF = e.target.checked;
-            this.layoutSpectrumAxes();
-            this.updateSpectrum();
-        });
         this.view.querySelector('.res-show-dfpt').addEventListener('change', (e) => {
             this.showDFPT = e.target.checked;
             this.updateDFPT();
-        });
-        this.view.querySelector('.res-show-exp').addEventListener('change', (e) => {
-            this.showExp = e.target.checked;
-            const expPeak = this.data.experiment && this.data.experiment.calc_peak;
-            if (this.showExp && expPeak !== undefined && !this.selected.includes(expPeak)) this.toggleSelect(expPeak);
-            else this.updateProfiles();
         });
         this.view.querySelector('.res-wf-traces').addEventListener('change', (e) => {
             this.wfTraces = parseInt(e.target.value, 10);
@@ -511,7 +460,6 @@ export class ResonanceView {
         el.efref.addEventListener('change', () => {
             this.efRef = el.efref.value;
             this.computeRefs();
-            this.layoutSpectrumAxes();
             this.updateSpectrum();
             this.buildTable();
         });
@@ -594,9 +542,7 @@ export class ResonanceView {
             subtitle: { text: '', align: 'left' },
             xAxis: { title: { text: 'Raman shift (cm⁻¹)' }, min: 0, max: X_MAX },
             yAxis: [
-                { id: 'y-spec', title: { text: '' }, min: 0, startOnTick: false, endOnTick: false, top: '0%', height: '72%', offset: 0 },
-                { id: 'y-ef', title: { text: '' }, type: 'logarithmic', top: '78%', height: '22%', offset: 0,
-                  zoomEnabled: false, startOnTick: false, endOnTick: false, gridLineDashStyle: 'Dot' },
+                { id: 'y-spec', title: { text: '' }, min: 0, startOnTick: false, endOnTick: false },
             ],
             legend: { align: 'right', verticalAlign: 'top', layout: 'vertical', floating: true, y: 24,
                       itemStyle: { fontSize: '11px', fontWeight: 'normal' }, maxHeight: 140,
@@ -605,7 +551,7 @@ export class ResonanceView {
                       events: { itemClick: () => false } },
             tooltip: { useHTML: true, formatter() { return self.pointTooltip(this); } },
             series: [
-                { id: 'dfpt', type: 'line', name: 'Non-resonant DFPT (Raman tab), own max = 1; positions differ ≤ 10 cm⁻¹',
+                { id: 'dfpt', type: 'line', name: 'Non-resonant DFPT (Raman tab), own max = 1',
                   data: [], color: '#95a5a6', dashStyle: 'Dash', lineWidth: 1.2, zIndex: 1, enableMouseTracking: false,
                   visible: false, showInLegend: false, yAxis: 0 },
                 { id: 'live', type: 'line', name: 'current E_L', data: [], color: LIVE_COLOR, lineWidth: 2, zIndex: 3,
@@ -614,9 +560,6 @@ export class ResonanceView {
                   cursor: 'pointer', stickyTracking: false, marker: { enabled: true },
                   dataLabels: { enabled: true, allowOverlap: false, style: { fontSize: '10px', fontWeight: 'normal', textOutline: '2px white' },
                                 formatter() { return this.point.options.label || null; } },
-                  point: { events: { click() { self.toggleSelect(this.options.peak); } } } },
-                { id: 'ef', type: 'column', name: 'EF', data: [], yAxis: 1, zIndex: 2, showInLegend: false,
-                  pointWidth: 4, grouping: false, threshold: null, borderWidth: 0, cursor: 'pointer',
                   point: { events: { click() { self.toggleSelect(this.options.peak); } } } },
             ],
         }));
@@ -675,20 +618,6 @@ export class ResonanceView {
         }));
     }
 
-    layoutSpectrumAxes() {
-        const chart = this.charts.spectrum;
-        const show = this.showEF && this.chartMode === 'spectrum';
-        chart.yAxis[0].update({ height: show ? '72%' : '100%' }, false);
-        const [lo, hi] = this.efRange;
-        const label = this.efRef === 'offres' ? `${this.data.offres_energy.toFixed(1)} eV` : `${LASER_LINES[this.efRef]} nm`;
-        chart.yAxis[1].update({
-            visible: show, min: lo, max: hi,
-            title: { text: `×EF vs ${label}`, style: { fontSize: '10px' } },
-            plotLines: this.efRef === 'offres' ? [] : [{ value: 1, color: '#7f8c8d', width: 1, dashStyle: 'Dash' }],
-        }, false);
-        chart.get('ef').setVisible(show, false);
-    }
-
     /* ----- state changes ----- */
 
     setGeometry(index) {
@@ -724,17 +653,10 @@ export class ResonanceView {
 
         const sel = this.menu.querySelector('#res-geom');
         if (sel) sel.value = String(index);
-        const hasExp = !!(this.data.experiment && this.data.experiment.geometries.includes(g.id));
-        this.el.expToggle.style.display = hasExp ? '' : 'none';
-        if (!hasExp) {
-            this.showExp = false;
-            this.el.expToggle.querySelector('input').checked = false;
-        }
 
         this.computeRefs();
         this.updateMenu();
         this.syncSegments();
-        this.layoutSpectrumAxes();
         this.refreshAll();
         if (this.showDFPT) this.updateDFPT();
     }
@@ -760,46 +682,12 @@ export class ResonanceView {
         this.refMax = Math.max(...ref);
         this.refSum = ref.reduce((a, b) => a + b, 0);
         this.refRow = this.rowOf.get(g.ref_peak);
-        // fixed log range of the EF bars over the whole window
-        let lo = Infinity, hi = 0;
-        g.intensity.forEach((row, k) => {
-            if (!(ref[k] >= RESONLY * this.refMax)) return;
-            for (const v of row) {
-                const ef = v / ref[k];
-                if (ef > 0) { lo = Math.min(lo, ef); hi = Math.max(hi, ef); }
-            }
-        });
-        if (!(hi > 0)) { lo = 0.1; hi = 10; }
-        this.efRange = [Math.max(1e-2, 10 ** Math.floor(Math.log10(lo))), 10 ** Math.ceil(Math.log10(hi))];
     }
 
     updateMenu() {
-        const g = this.g, P = this.data.peaks;
+        const g = this.g;
         const counts = g.allowed.map((s) => symLabel(s)).join(' + ');
         this.menu.querySelector('#res-species').textContent = `${counts} · ${g.peaks.length} peaks`;
-
-        const partnerId = EQUIVALENT[g.id];
-        const partner = this.data.geometries.find((x) => x.id === partnerId);
-        let equiv = '';
-        if (partner) {
-            let diff = 0;
-            g.peaks.forEach((id, k) => {
-                const kk = partner.peaks.indexOf(id);
-                const a = g.intensity[k], b = kk >= 0 ? partner.intensity[kk] : null;
-                for (let i = 0; i < this.nE; i++) diff = Math.max(diff, Math.abs(a[i] - (b ? b[i] : 0)));
-            });
-            const rel = diff / this.norm.M;
-            const how = rel < 1e-6 ? 'identical' : `computed curves differ < ${Math.max(0.01, Math.ceil(rel * 1000) / 10)} %`;
-            equiv = `≡ ${partner.label} by hexagonal symmetry (${how})`;
-        }
-        this.menu.querySelector('#res-equiv').textContent = equiv;
-
-        const m = this.norm, top = P[g.peaks[m.mPeak]];
-        const pct = 100 * m.M / this.yyMax;
-        const edge = m.mIndex === this.nE - 1 ? ' — at the window edge; the resonance lies above 3.0 eV' : '';
-        this.menu.querySelector('#res-strongest').textContent =
-            `Strongest: ${top.freq.toFixed(1)} ${symLabel(top.sym)} at ${fmtEV(this.energies[m.mIndex])} · ` +
-            `${pct >= 10 ? pct.toFixed(0) : pct.toFixed(1)} % of ${this.data.geometries[0].label}${edge}`;
     }
 
     requestIndex(i) {
@@ -855,7 +743,7 @@ export class ResonanceView {
         this.syncSegments();
         to.reflow();
         if (mode === 'waterfall') this.updateWaterfall(true);
-        else { this.layoutSpectrumAxes(); this.updateSpectrum(); }
+        else this.updateSpectrum();
         if (ext.userMin !== undefined || ext.userMax !== undefined) {
             to.xAxis[0].setExtremes(ext.min, ext.max);
             if (!to.resetZoomButton) to.showResetZoom();
@@ -918,7 +806,7 @@ export class ResonanceView {
         const nm = evToNm(ev);
         this.el.slider.value = String(this.ie);
         this.el.energy.value = ev.toFixed(3);
-        this.el.readout.innerHTML = `= ${nm.toFixed(1)} nm <span class="res-swatch" style="background:${wavelengthColor(nm)}"></span>`;
+        this.el.readout.innerHTML = `eV = ${nm.toFixed(1)} nm <span class="res-swatch" style="background:${wavelengthColor(nm)}"></span>`;
         const near = LASER_LINES.findIndex((l) => Math.abs(nmToEV(l) - ev) <= 0.004);
         this.el.badge.textContent = near >= 0 ? `≈ ${LASER_LINES[near]} nm line` : '';
         this.view.querySelectorAll('.res-laser').forEach((chip) => {
@@ -1010,18 +898,6 @@ export class ResonanceView {
             };
         });
         chart.get('markers').setData(markers, false, false, false);
-
-        const efPoints = [];
-        if (this.showEF) {
-            g.peaks.forEach((id, k) => {
-                const cell = efCell(g.intensity[k][i], this.ref[k], this.refMax, g.intensity[k][i] >= WEAK * strongest);
-                if (cell.state === 'resonly') return;
-                const color = this.colorOf.get(id) || '#95a5a6';
-                efPoints.push({ x: this.freqs[k], y: cell.value, peak: id,
-                                color: cell.state === 'weak' ? Highcharts.color(color).setOpacity(0.3).get() : color });
-            });
-        }
-        chart.get('ef').setData(efPoints, false, false, false);
 
         const dominant = P[g.peaks[order[0]]];
         const sMax = strongest / this.norm.M;
@@ -1262,7 +1138,6 @@ export class ResonanceView {
             chart.addSeries({ type: 'line', yAxis: 1, data, name: 'Σ all peaks', color: LIVE_COLOR, dashStyle: 'Dash',
                               lineWidth: 1.5, zIndex: 4, isTotal: true, turboThreshold: 0 }, false);
         }
-        this.addExperiment(value, floor);
         this.addAbsorption();
 
         // room for the Σ curve, which can exceed the strongest single peak
@@ -1282,34 +1157,6 @@ export class ResonanceView {
             top = Math.max(top, t / this.norm.M);
         }
         return top;
-    }
-
-    addExperiment(value, floor) {
-        const chart = this.charts.profiles;
-        const exp = this.data.experiment;
-        const axis = chart.xAxis[0];
-        axis.removePlotBand('res-exp-band');
-        this.el.expCaption.textContent = '';
-        if (!this.showExp || !exp || !exp.geometries.includes(this.g.id)) return;
-        const k = this.rowOf.get(exp.calc_peak);
-        const E = this.energies;
-        const lo = E[0], hi = 2.68;
-        const pts = exp.points.filter(([e]) => e >= lo - 1e-9 && e <= E[this.nE - 1] + 1e-9);
-        if (k === undefined || !pts.length) return;
-        let calcMax = 0;
-        for (let i = 0; i < this.nE; i++) if (E[i] <= hi) calcMax = Math.max(calcMax, value(k, i));
-        const expMax = Math.max(...pts.filter(([e]) => e <= hi).map(([, v]) => v));
-        const scale = calcMax / expMax;
-        chart.addSeries({
-            type: 'scatter', yAxis: 1, name: exp.label, isExp: true, zIndex: 8,
-            marker: { enabled: true, symbol: 'diamond', radius: 4, fillColor: '#fff', lineColor: '#000', lineWidth: 1.2 },
-            data: pts.map(([e, v]) => ({ x: e, y: floor(v * scale), raw: v * scale, measured: v })),
-        }, false);
-        axis.addPlotBand({ id: 'res-exp-band', from: lo, to: 2.755, color: '#fdf2e9', zIndex: 0,
-                           label: { text: 'measured range (450–650 nm)', style: { fontSize: '9px', color: '#b9770e' }, y: 30 } });
-        this.el.expCaption.textContent = `Diamonds: ${exp.label}, ${exp.note}, scaled once to the calculated ` +
-            `${this.data.peaks[exp.calc_peak].freq.toFixed(1)} A₁ profile (shape only). The peak position agrees; the calculated ` +
-            'profile falls faster above 2.6 eV, and the selective enhancement seen in experiment is not reproduced.';
     }
 
     addAbsorption() {
@@ -1396,12 +1243,6 @@ export class ResonanceView {
             const exc = this.data.excitons, j = o.j;
             return `exciton at <b>${exc.energies[j].toFixed(3)} eV</b> (${o.pol})<br>|d<sub>x</sub>|² ${fmtI(exc.x[j])} · |d<sub>y</sub>|² ${fmtI(exc.y[j])} · |d<sub>z</sub>|² ${fmtI(exc.z[j])}`;
         }
-        if (s.isExp) {
-            const exp = this.data.experiment;
-            return `<b>Experiment</b> ${o.x.toFixed(3)} ± ${exp.err_E} eV · I ${o.measured} ± ${exp.err_I} (CaF₂-norm.)<br>` +
-                `${escapeHTML(exp.note)} · exp. 446 ↔ calc. ${this.data.peaks[exp.calc_peak].freq.toFixed(1)} A₁ ` +
-                '(446.3 E₂ lies 4 cm⁻¹ away)<br>points below 2.3 eV are not shown (≤ 2.1 eV features are defect-related)';
-        }
         if (s.isTotal) return `<b>Σ all peaks</b> · ${fmtEV(o.x)}<br>${fmtI(o.raw)} of the strongest single resonance`;
         if (s.peak === undefined) return false;
         const i = snapIndex(this.energies, o.x);
@@ -1444,10 +1285,6 @@ export class ResonanceView {
                 ef: tr.querySelector('.res-cell-ef'), rel: tr.querySelector('.res-cell-rel'),
             });
         });
-        this.el.caveat.textContent = `EF vs ${refLabel} comes from the same exciton–phonon calculation, whose tensor holds only ` +
-            'the BSE band window (10–40 % of the full DFPT tensor off resonance): absolute EFs are overestimated, unevenly between ' +
-            `modes, so compare modes with ×rel. "res.-only" = below ${RESONLY * 100} % of the strongest peak at the reference energy; ` +
-            `grey = below ${WEAK * 100} % of the strongest peak at E_L. Laser-line references are more robust, but 532 nm is already pre-resonant.`;
         this.updateTableValues();
     }
 

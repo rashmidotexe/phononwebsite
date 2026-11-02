@@ -28,7 +28,7 @@ Usage:
     python3 generate_zumba_resonance.py \
         --tensor Raman_tensor_e0_iR.npy --freqs ph_freq_e0.npy \
         --excitons BS_eigs.npy --dipoles ex_dip_iR.npy \
-        --experiment exp446_perp.dat --out zumbadb/resonance/ZMO_resonance.json
+        --out zumbadb/resonance/ZMO_resonance.json
 
 The enhancement factor reference ("offres") is the same calculation at
 1.0 eV, the off-resonant energy ref/08_excph_raman/05_raman_gw_selectivity

@@ -194,10 +194,6 @@
     color: #7f8c8d;
 }
 
-#resonance-view .res-exp-caption:empty {
-    display: none;
-}
-
 /* peak table */
 #resonance-view .res-table-wrap {
     max-height: 380px;
@@ -292,18 +288,6 @@
     font-size: 11px;
 }
 
-#resonance-view .res-about summary {
-    cursor: pointer;
-    font-weight: bold;
-    padding: 4px 0;
-}
-
-#resonance-view .res-about ul {
-    margin: 4px 0 8px 0;
-    padding-left: 18px;
-    line-height: 1.45;
-}
-
 /* left menu */
 #resonance-menu h3 {
     margin: 6px 0 8px 0;
@@ -323,13 +307,4 @@
 #resonance-menu .res-menu-line {
     margin-top: 6px;
     font-size: 12px;
-}
-
-#resonance-menu .res-menu-note {
-    color: #555;
-}
-
-#resonance-menu .res-menu-small {
-    font-size: 11px;
-    color: #888;
 }
