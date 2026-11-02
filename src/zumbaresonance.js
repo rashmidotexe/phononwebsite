@@ -5,7 +5,7 @@
  * E_L (zumbadb/resonance/ZMO_resonance.json, written by
  * python/phononweb/scripts/generate_zumba_resonance.py):
  *   - a spectrum at the slider energy, with pinned overlays, or a waterfall
- *   - resonance profiles of every peak over the GW-BSE absorption
+ *   - resonance profiles of every peak over the bright GW-BSE excitons
  *   - a peak table with enhancement factors
  *
  * Every plotted value derives from the stick intensities I_m(E) of the
@@ -319,7 +319,7 @@ export class ResonanceView {
                         <button type="button" data-value="waterfall">Waterfall</button>
                     </span>
                     <span class="res-opts-spectrum">
-                        <label title="The DFPT spectrum of the Raman tab, own maximum = 1"><input type="checkbox" class="res-show-dfpt"> Non-resonant DFPT</label>
+                        <label class="res-dfpt-toggle" title="The DFPT spectrum of the Raman tab, own maximum = 1"><input type="checkbox" class="res-show-dfpt"> Non-resonant DFPT</label>
                     </span>
                     <span class="res-opts-waterfall">
                         <label>Traces <select class="res-wf-traces">
@@ -342,8 +342,7 @@ export class ResonanceView {
                     <span class="res-hint">click a line to select it · click the plot to set E_L</span>
                 </div>
                 <div class="res-chart" id="res-chart-profiles"></div>
-                <p class="res-foot">Top strip: strongest peak at each E_L. Bottom: GW-BSE absorption for the light polarisations of
-                    this geometry and the bright excitons (one common scale). The ~2.7–2.8 eV ⊥c feature is real (Biswas 2017).</p>
+                <p class="res-foot">Top strip: strongest peak at each E_L. Bottom: bright GW-BSE excitons for the light polarisations of this geometry.</p>
             </div>
 
             <div class="res-section">
@@ -439,7 +438,16 @@ export class ResonanceView {
                 if (!button) return;
                 const control = seg.dataset.control;
                 if (this[control === 'norm' ? 'normMode' : control] === button.dataset.value) return;
-                if (control === 'norm') { this.normMode = button.dataset.value; this.refreshAll(); }
+                if (control === 'norm') {
+                    this.normMode = button.dataset.value;
+                    // the DFPT overlay has its own maximum, so it is only comparable per curve
+                    if (this.normMode !== 'each' && this.showDFPT) {
+                        this.showDFPT = false;
+                        this.view.querySelector('.res-show-dfpt').checked = false;
+                        this.updateDFPT();
+                    }
+                    this.refreshAll();
+                }
                 if (control === 'chartMode') this.setChartMode(button.dataset.value);
                 if (control === 'profScale') { this.profScale = button.dataset.value; this.updateProfiles(); }
                 this.syncSegments();
@@ -497,6 +505,7 @@ export class ResonanceView {
             });
         });
         this.el.optsSpectrum.style.display = this.chartMode === 'spectrum' ? '' : 'none';
+        this.view.querySelector('.res-dfpt-toggle').style.display = this.normMode === 'each' ? '' : 'none';
         this.el.optsWaterfall.style.display = this.chartMode === 'waterfall' ? '' : 'none';
     }
 
@@ -596,11 +605,9 @@ export class ResonanceView {
             yAxis: [
                 { id: 'y-strip', top: '0%', height: '5%', min: 0, max: 1, title: { text: null }, labels: { enabled: false },
                   gridLineWidth: 0, zoomEnabled: false, offset: 0 },
-                { id: 'y-prof', top: '8%', height: '60%', offset: 0, title: { text: '' }, zoomEnabled: false,
+                { id: 'y-prof', top: '8%', height: '66%', offset: 0, title: { text: '' }, zoomEnabled: false,
                   startOnTick: false, endOnTick: false },
-                { id: 'y-abs', top: '72%', height: '28%', offset: 0, min: 0, max: 1.05, title: { text: 'absorption' },
-                  zoomEnabled: false, startOnTick: false, endOnTick: false, gridLineWidth: 0 },
-                { id: 'y-exc', top: '72%', height: '28%', offset: 0, min: 0, max: 1.1, opposite: true, title: { text: null },
+                { id: 'y-exc', top: '78%', height: '22%', offset: 0, min: 0, max: 1.1, title: { text: 'excitons' },
                   labels: { enabled: false }, gridLineWidth: 0, zoomEnabled: false },
             ],
             // narrow line trackers, so clicks between the faint profiles reach
@@ -987,11 +994,11 @@ export class ResonanceView {
         const ef = efCell(I, this.ref[k], this.refMax, I >= WEAK * s);
         const rel = this.relCell(k, i);
         const refLabel = this.efRef === 'offres' ? `${this.data.offres_energy.toFixed(1)} eV` : `${LASER_LINES[this.efRef]} nm`;
-        const efText = ef.state === 'resonly' ? 'res.-only' : formatEF(ef.value);
+        const efText = ef.state === 'resonly' ? 'resonant only' : formatEF(ef.value);
         return `<b>${p.freq.toFixed(1)} cm⁻¹ ${symLabel(p.sym)}</b> · ${fmtEV(this.energies[i])}<br>
             I = ${fmtI(n)} (${how})${maxLine}<br>
             ${(100 * I / s).toFixed(0)} % of the strongest peak here · share ${(100 * I / total).toFixed(0)} %<br>
-            ×EF ${efText} vs ${refLabel} · ×rel ${rel.state === 'resonly' ? 'res.-only' : formatEF(rel.value)}`;
+            ×EF ${efText} vs ${refLabel} · ×rel ${rel.state === 'resonly' ? 'resonant only' : formatEF(rel.value)}`;
     }
 
     // a peak's window maximum as a percentage of the strongest resonance
@@ -1138,7 +1145,7 @@ export class ResonanceView {
             chart.addSeries({ type: 'line', yAxis: 1, data, name: 'Σ all peaks', color: LIVE_COLOR, dashStyle: 'Dash',
                               lineWidth: 1.5, zIndex: 4, isTotal: true, turboThreshold: 0 }, false);
         }
-        this.addAbsorption();
+        this.addExcitons();
 
         // room for the Σ curve, which can exceed the strongest single peak
         const top = this.normMode === 'strongest' ? Math.max(1, this.totalMax()) : 1;
@@ -1159,28 +1166,13 @@ export class ResonanceView {
         return top;
     }
 
-    addAbsorption() {
+    addExcitons() {
         const chart = this.charts.profiles;
-        const g = this.g, abs = this.data.absorption, exc = this.data.excitons, E = this.energies;
+        const g = this.g, exc = this.data.excitons, E = this.energies;
         const lo = E[0], hi = E[this.nE - 1];
-        const perp = abs.x.map((v, j) => (v + abs.y[j]) / 2);
-        let scale = 0;
-        abs.energies.forEach((e, j) => { if (e >= lo && e <= hi) scale = Math.max(scale, perp[j]); });
         const wantPerp = g.ei !== 'z' || g.es !== 'z';
         const wantPar = g.ei === 'z' || g.es === 'z';
-        if (wantPerp) {
-            chart.addSeries({ type: 'area', yAxis: 2, name: 'GW-BSE absorption ⊥c', isAbs: true, color: '#7f8c8d',
-                              fillColor: 'rgba(189,195,199,0.5)', lineWidth: 1, enableMouseTracking: false,
-                              data: abs.energies.map((e, j) => [e, perp[j] / scale]) }, false);
-        }
-        if (wantPar) {
-            const both = wantPerp;
-            chart.addSeries({ type: both ? 'line' : 'area', yAxis: 2, name: 'GW-BSE absorption ∥c', isAbs: true,
-                              color: '#34495e', dashStyle: both ? 'Dash' : 'Solid', fillColor: 'rgba(52,73,94,0.25)',
-                              lineWidth: 1, enableMouseTracking: false,
-                              data: abs.energies.map((e, j) => [e, abs.z[j] / scale]) }, false);
-        }
-        // bright-exciton sticks on the same common scale
+        // bright-exciton sticks, one scale for both polarisations
         const sticks = [];
         let top = 0;
         exc.energies.forEach((e, j) => { if (e >= lo && e <= hi) top = Math.max(top, (exc.x[j] + exc.y[j]) / 2); });
@@ -1197,7 +1189,7 @@ export class ResonanceView {
         sticks.sort((a, b) => b.y - a.y);
         const shown = sticks.slice(0, 60);
         shown.slice(0, 5).forEach((s) => { s.label = s.x.toFixed(3); });
-        chart.addSeries({ type: 'column', yAxis: 3, name: 'bright excitons', isExc: true, pointWidth: 1.5, minPointLength: 2,
+        chart.addSeries({ type: 'column', yAxis: 2, name: 'bright excitons', isExc: true, pointWidth: 1.5, minPointLength: 2,
                           borderWidth: 0, grouping: false, data: shown.sort((a, b) => a.x - b.x), turboThreshold: 0,
                           dataLabels: { enabled: true, formatter() { return this.point.options.label || null; }, crop: false,
                                         style: { fontSize: '9px', fontWeight: 'normal', textOutline: '2px white' } } }, false);
@@ -1309,11 +1301,11 @@ export class ResonanceView {
             row.bar.style.width = `${Math.min(100, 100 * n)}%`;
             row.text.textContent = fmtI(n);
             const efHTML = ef.state === 'resonly'
-                ? '<span class="res-pill" title="Below 1 % of the strongest peak at the reference energy in this calculation; the ratio is not meaningful">res.-only</span>'
+                ? '<span class="res-pill" title="Below 1 % of the strongest peak at the reference energy, so it is only seen in resonance; an enhancement ratio is not meaningful">resonant only</span>'
                 : formatEF(ef.value);
             row.ef.innerHTML = efHTML;
             row.ef.classList.toggle('res-weak', ef.state === 'weak');
-            row.rel.innerHTML = rel.state === 'resonly' ? '<span class="res-pill">res.-only</span>' : formatEF(rel.value);
+            row.rel.innerHTML = rel.state === 'resonly' ? '<span class="res-pill" title="Below 1 % of the strongest peak at the reference energy, so it is only seen in resonance; an enhancement ratio is not meaningful">resonant only</span>' : formatEF(rel.value);
             row.rel.classList.toggle('res-weak', !visible);
         });
 
