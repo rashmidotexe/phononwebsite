@@ -5,7 +5,7 @@
  * E_L (zumbadb/resonance/ZMO_resonance.json, written by
  * python/phononweb/scripts/generate_zumba_resonance.py):
  *   - a spectrum at the slider energy, with pinned overlays, or a waterfall
- *   - resonance profiles of every peak over the bright GW-BSE excitons
+ *   - resonance profiles of every peak
  *   - a peak table with enhancement factors
  *
  * Every plotted value derives from the stick intensities I_m(E) of the
@@ -342,7 +342,7 @@ export class ResonanceView {
                     <span class="res-hint">click a line to select it · click the plot to set E_L</span>
                 </div>
                 <div class="res-chart" id="res-chart-profiles"></div>
-                <p class="res-foot">Top strip: strongest peak at each E_L. Bottom: bright GW-BSE excitons for the light polarisations of this geometry.</p>
+                <p class="res-foot">Top strip: strongest peak at each E_L.</p>
             </div>
 
             <div class="res-section">
@@ -605,10 +605,8 @@ export class ResonanceView {
             yAxis: [
                 { id: 'y-strip', top: '0%', height: '5%', min: 0, max: 1, title: { text: null }, labels: { enabled: false },
                   gridLineWidth: 0, zoomEnabled: false, offset: 0 },
-                { id: 'y-prof', top: '8%', height: '66%', offset: 0, title: { text: '' }, zoomEnabled: false,
+                { id: 'y-prof', top: '8%', height: '92%', offset: 0, title: { text: '' }, zoomEnabled: false,
                   startOnTick: false, endOnTick: false },
-                { id: 'y-exc', top: '78%', height: '22%', offset: 0, min: 0, max: 1.1, title: { text: 'excitons' },
-                  labels: { enabled: false }, gridLineWidth: 0, zoomEnabled: false },
             ],
             // narrow line trackers, so clicks between the faint profiles reach
             // the plot (set E_L) instead of selecting the nearest peak
@@ -1145,7 +1143,6 @@ export class ResonanceView {
             chart.addSeries({ type: 'line', yAxis: 1, data, name: 'Σ all peaks', color: LIVE_COLOR, dashStyle: 'Dash',
                               lineWidth: 1.5, zIndex: 4, isTotal: true, turboThreshold: 0 }, false);
         }
-        this.addExcitons();
 
         // room for the Σ curve, which can exceed the strongest single peak
         const top = this.normMode === 'strongest' ? Math.max(1, this.totalMax()) : 1;
@@ -1166,36 +1163,7 @@ export class ResonanceView {
         return top;
     }
 
-    addExcitons() {
-        const chart = this.charts.profiles;
-        const g = this.g, exc = this.data.excitons, E = this.energies;
-        const lo = E[0], hi = E[this.nE - 1];
-        const wantPerp = g.ei !== 'z' || g.es !== 'z';
-        const wantPar = g.ei === 'z' || g.es === 'z';
-        // bright-exciton sticks, one scale for both polarisations
-        const sticks = [];
-        let top = 0;
-        exc.energies.forEach((e, j) => { if (e >= lo && e <= hi) top = Math.max(top, (exc.x[j] + exc.y[j]) / 2); });
-        const add = (proj, color, pol) => {
-            let polTop = 0;
-            exc.energies.forEach((e, j) => { if (e >= lo && e <= hi) polTop = Math.max(polTop, proj(j)); });
-            exc.energies.forEach((e, j) => {
-                if (e < lo || e > hi || proj(j) < 0.01 * polTop) return;
-                sticks.push({ x: e, y: proj(j) / top, color, pol, j });
-            });
-        };
-        if (wantPerp) add((j) => (exc.x[j] + exc.y[j]) / 2, '#7f8c8d', '⊥c');
-        if (wantPar) add((j) => exc.z[j], '#34495e', '∥c');
-        sticks.sort((a, b) => b.y - a.y);
-        const shown = sticks.slice(0, 60);
-        shown.slice(0, 5).forEach((s) => { s.label = s.x.toFixed(3); });
-        chart.addSeries({ type: 'column', yAxis: 2, name: 'bright excitons', isExc: true, pointWidth: 1.5, minPointLength: 2,
-                          borderWidth: 0, grouping: false, data: shown.sort((a, b) => a.x - b.x), turboThreshold: 0,
-                          dataLabels: { enabled: true, formatter() { return this.point.options.label || null; }, crop: false,
-                                        style: { fontSize: '9px', fontWeight: 'normal', textOutline: '2px white' } } }, false);
-    }
-
-    // laser lines and pins on the profile chart (they span all three panes)
+    // laser lines and pins on the profile chart (they span both panes)
     drawEnergyLines() {
         const chart = this.charts.profiles;
         if (!chart) return;
@@ -1230,10 +1198,6 @@ export class ResonanceView {
             if (!seg) return false;
             const p = this.data.peaks[this.g.peaks[seg.k]];
             return `${this.energies[seg.i0].toFixed(3)}–${this.energies[seg.i1].toFixed(3)} eV: <b>${p.freq.toFixed(1)} ${symLabel(p.sym)}</b> strongest`;
-        }
-        if (s.isExc) {
-            const exc = this.data.excitons, j = o.j;
-            return `exciton at <b>${exc.energies[j].toFixed(3)} eV</b> (${o.pol})<br>|d<sub>x</sub>|² ${fmtI(exc.x[j])} · |d<sub>y</sub>|² ${fmtI(exc.y[j])} · |d<sub>z</sub>|² ${fmtI(exc.z[j])}`;
         }
         if (s.isTotal) return `<b>Σ all peaks</b> · ${fmtEV(o.x)}<br>${fmtI(o.raw)} of the strongest single resonance`;
         if (s.peak === undefined) return false;
