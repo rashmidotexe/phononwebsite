@@ -317,6 +317,11 @@ export class PhononWebpage {
             this.phonon = new PhononJson();
             this.phonon.getFromURL(url_vars.json,wrappedCallback,hooks);
         }
+        else if ("data" in url_vars) {
+            //an already parsed internal-format json object
+            this.phonon = new PhononJson();
+            this.phonon.getFromJson(url_vars.data,wrappedCallback,hooks);
+        }
         else {
             //alert("Ivalid url");
         }

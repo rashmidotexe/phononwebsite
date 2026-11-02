@@ -55,6 +55,38 @@ function portoLabel(pol, ei, es) {
     return `${pol}(${ei},${es})${pol}`;
 }
 
+// The full-path dispersion (matdyn) is one file shared by the 27 geometries;
+// its vectors are decoded once.
+const DISPERSION_URL = 'zumbadb/ZMO_dispersion.json';
+let dispersionPromise = null;
+function loadDispersion() {
+    if (!dispersionPromise) {
+        dispersionPromise = fetch(DISPERSION_URL)
+            .then(res => res.json())
+            .then(data => ({ ...data, vectors: new PhononJson().decodeCompressedVectors(data.vectors_compressed) }))
+            .catch(err => { console.error('Could not load the dispersion:', err); return null; });
+    }
+    return dispersionPromise;
+}
+
+// The geometry's own Gamma point (its LO-TO frequencies, Raman intensities and
+// symmetries) goes first as gamma_index 0, in a line segment of its own, so it
+// shows as points at x = 0 ahead of the dispersion path.
+function withDispersion(geom, disp) {
+    if (!disp || !disp.vectors) return geom;
+    const gi = geom.gamma_index || 0;
+    return {
+        ...geom,
+        qpoints:      [geom.qpoints[gi], ...disp.qpoints],
+        distances:    [0, ...disp.distances],
+        eigenvalues:  [geom.eigenvalues[gi], ...disp.eigenvalues],
+        vectors:      [geom.vectors[gi], ...disp.vectors],
+        highsym_qpts: disp.highsym_qpts.map(([i, label]) => [i + 1, label]),
+        line_breaks:  [[0, 1], ...(disp.line_breaks || [[0, disp.qpoints.length]]).map(([a, b]) => [a + 1, b + 1])],
+        gamma_index:  0,
+    };
+}
+
 const PORTO_RULES = {
     'z(x,x)z': new Set(['A_1', 'E_2']),
     'z(y,y)z': new Set(['A_1', 'E_2']),
@@ -190,7 +222,8 @@ let comparisonLabel  = null;
 let showGeometry2    = true;
 
 let _g1pol = 'x', _g1ei = 'y', _g1es = 'y';
-let g1Symmetries = []; 
+let g1Symmetries = [];
+let g1LoadToken = 0;
 
 function computeRamanCurve(phonon) {
     if (!phonon || !phonon.raman_intensities) return null;
@@ -408,7 +441,13 @@ p.selectModeByBandIndex = function (gamma_index, band_index) {
 
     const phonon = p.phonon;
     if (!phonon || !phonon.eigenvalues) return;
-    
+    if (gamma_index !== (phonon.gamma_index || 0)) {
+        // a mode away from Gamma has no Raman line or symmetry label
+        if (d.chart.xAxis && d.chart.xAxis[0]) d.chart.xAxis[0].removePlotLine('selected-mode-line');
+        document.querySelectorAll('#raman-table-container tbody tr').forEach(tr => tr.style.borderLeft = 'none');
+        return;
+    }
+
     const freq = phonon.eigenvalues[gamma_index][band_index];
     const symLabels = getModeSymmetry();
     const sym = symLabels[band_index];
@@ -512,17 +551,18 @@ function loadGeometry1(pol, ei, es, onLoaded = null) {
     document.getElementById('m1-name').textContent = label;
     updateNotationDisplay('m1-notation', pol, ei, es);
 
-    fetch(url)
-        .then(res => res.json())
-        .then(data => {
+    const token = ++g1LoadToken;
+    Promise.all([fetch(url).then(res => res.json()), loadDispersion()])
+        .then(([data, disp]) => {
+            if (token !== g1LoadToken) return;  // a newer geometry was picked meanwhile
             g1Symmetries = data.mode_symmetry || [];
+            p.loadURL({ data: withDispersion(data, disp), name: label },
+                      onLoaded && (() => { p.loadCallback(); onLoaded(); }));
             rebuildRamanTable();
             fixActiveModesDots();
+            setPageTitle();
         })
-        .catch(err => console.error("Could not load symmetries:", err));
-
-    p.loadURL({ json: url, name: label }, onLoaded && (() => { p.loadCallback(); onLoaded(); }));
-    setTimeout(setPageTitle, 50);
+        .catch(err => console.error("Could not load geometry:", err));
 }
 
 const _loadGeometry2 = debounce(function (pol, ei, es) {
