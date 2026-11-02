@@ -439,11 +439,54 @@ p.selectModeByBandIndex = function (gamma_index, band_index) {
 
 window.app = p;
 
+// The resonance phonons (08_excph_raman) are the same LDA calculation as the
+// Raman-tab ones up to the acoustic sum rule (<0.5 cm-1 apart). A selected
+// peak is animated from the Raman-tab file of the same geometry, so polar
+// modes have the same LO/TO character, matched by symmetry and frequency.
+// Weak modes are labelled 'dark' there, hence the fallback.
+const RESONANCE_MATCH_CM = 1.0;
+const symmetryCache = new Map();
+function symmetriesFor(url) {
+    if (!symmetryCache.has(url)) {
+        symmetryCache.set(url, fetch(url).then(res => res.json()).then(data => data.mode_symmetry || []));
+    }
+    return symmetryCache.get(url);
+}
+
+function matchResonanceMode(peak, syms) {
+    const k = p.phonon.gamma_index || 0;
+    const freqs = p.phonon.eigenvalues[k] || [];
+    let best = -1, bestCost = Infinity;
+    for (let n = 0; n < freqs.length; n++) {
+        if (syms[n] !== peak.sym && syms[n] !== 'dark') continue;
+        const cost = Math.abs(freqs[n] - peak.freq) + (syms[n] === peak.sym ? 0 : RESONANCE_MATCH_CM);
+        if (cost < bestCost) { best = n; bestCost = cost; }
+    }
+    if (best >= 0 && Math.abs(freqs[best] - peak.freq) < RESONANCE_MATCH_CM) p.selectModeByBandIndex(k, best);
+}
+
+function animateResonancePeak(peak, g) {
+    if (!peak || !g) return;
+    const url = makeFilename(g.prop, g.ei, g.es);
+    symmetriesFor(url).then(syms => {
+        if (_g1pol === g.prop && _g1ei === g.ei && _g1es === g.es && p.phonon) {
+            matchResonanceMode(peak, syms);
+            return;
+        }
+        document.getElementById('m1-pol').value = g.prop;
+        document.getElementById('m1-ei').value = g.ei;
+        document.getElementById('m1-es').value = g.es;
+        enforcePolConstraint('m1');
+        loadGeometry1(g.prop, g.ei, g.es, () => matchResonanceMode(peak, syms));
+    }).catch(err => console.error('Could not animate resonance peak:', err));
+}
+
 const resonanceView = new ResonanceView({
     view:         document.getElementById('resonance-view'),
     menu:         document.getElementById('resonance-menu'),
     dataUrl:      'zumbadb/resonance/ZMO_resonance.json',
     ramanFileFor: makeFilename,
+    onPeakSelect: animateResonancePeak,
 });
 
 installResonanceTab(p, resonanceView);
@@ -462,7 +505,7 @@ function debounce(fn, ms) {
     return function (...args) { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
 }
 
-function loadGeometry1(pol, ei, es) {
+function loadGeometry1(pol, ei, es, onLoaded = null) {
     _g1pol = pol; _g1ei = ei; _g1es = es;
     const url   = makeFilename(pol, ei, es);
     const label = portoLabel(pol, ei, es);
@@ -478,7 +521,7 @@ function loadGeometry1(pol, ei, es) {
         })
         .catch(err => console.error("Could not load symmetries:", err));
 
-    p.loadURL({ json: url, name: label });
+    p.loadURL({ json: url, name: label }, onLoaded && (() => { p.loadCallback(); onLoaded(); }));
     setTimeout(setPageTitle, 50);
 }
 

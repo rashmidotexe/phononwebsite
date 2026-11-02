@@ -186,11 +186,12 @@ function escapeHTML(text) {
 
 export class ResonanceView {
 
-    constructor({ view, menu, dataUrl, ramanFileFor }) {
+    constructor({ view, menu, dataUrl, ramanFileFor, onPeakSelect = null }) {
         this.view = view;
         this.menu = menu;
         this.dataUrl = dataUrl;
         this.ramanFileFor = ramanFileFor;
+        this.onPeakSelect = onPeakSelect;   // (peak, geometry) => void, e.g. animate it in the 3D view
 
         this.loading = null;
         this.built = false;
@@ -274,7 +275,7 @@ export class ResonanceView {
             <div class="res-menu-line res-menu-note" id="res-equiv"></div>
             <div class="res-menu-line" id="res-strongest"></div>
             <div class="res-menu-line res-menu-small">${escapeHTML(this.provenance())}</div>
-            <div class="res-menu-line res-menu-small">3D view shows the Raman-tab calculation; it is not linked to these peaks.</div>`;
+            <div class="res-menu-line res-menu-small">Selecting a peak animates it in the 3D view; Geometry 1 follows this geometry (same LDA phonons, within 0.5 cm⁻¹).</div>`;
         this.menu.querySelector('#res-geom').addEventListener('change', (e) => {
             this.stopPlay();
             this.setGeometry(parseInt(e.target.value, 10));
@@ -717,6 +718,9 @@ export class ResonanceView {
             this.selected = kept;
             for (const id of Array.from(this.colorOf.keys())) if (!kept.includes(id)) this.colorOf.delete(id);
         }
+        // the 3D view follows the geometry: strongest new peak, else the latest kept one
+        const shown = kept.length ? kept[kept.length - 1] : this.selected[0];
+        if (this.onPeakSelect && shown !== undefined) this.onPeakSelect(this.data.peaks[shown], g);
 
         const sel = this.menu.querySelector('#res-geom');
         if (sel) sel.value = String(index);
@@ -878,6 +882,7 @@ export class ResonanceView {
             this.colorOf.delete(id);
         } else {
             this.addSelected(id);
+            if (this.onPeakSelect) this.onPeakSelect(this.data.peaks[id], this.data.geometries[this.geom]);
         }
         this.updateSpectrum();
         this.updateWaterfallGuides();
