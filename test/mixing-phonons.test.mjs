@@ -976,3 +976,173 @@ describe('ternary rocksalt dynamical-matrix mixing', () => {
         assert.throws(() => sampleMixingPair(cao, nains2), /force constants/);
     });
 });
+
+describe('fluorite dynamical-matrix mixing', () => {
+    let gammaIndices = (sampled) => sampled.qpoints
+        .map((q, k) => (q.every((v) => Math.abs(v - Math.round(v)) < 1e-9) ? k : -1))
+        .filter((k) => k >= 0);
+
+    it('matches 3-atom cells as fluorite or antifluorite', () => {
+        let caf2 = endpoint('phonondb-CaF2-mp-2741.json.gz', 'CaF2');
+        assert.equal(caf2.family, 'fluorite');
+        assert.deepEqual(caf2.siteTypes, ['Ca', 'F', 'F']);
+        assert.equal(caf2.invert, false);
+        let li2o = endpoint('phonondb-Li2O-mp-1960.json.gz', 'Li2O');
+        assert.equal(li2o.family, 'antifluorite');
+        assert.deepEqual(li2o.siteTypes, ['O', 'Li', 'Li']);
+    });
+
+    it('keeps end-members exact, acoustic modes at zero and mirror symmetry', async () => {
+        let caf2 = endpoint('phonondb-CaF2-mp-2741.json.gz', 'CaF2');
+        let srf2 = endpoint('phonondb-SrF2-mp-981.json.gz', 'SrF2');
+        let sampled = sampleMixingPair(caf2, srf2);
+        assert.equal(sampled.recomputeNac, true);
+        // the acoustic modes at Gamma are ~1e-3 cm-1 of roundoff either way: compare the others
+        let optical = (a, b) => maxAbsDiff(a.map((row) => row.slice(3)), b.map((row) => row.slice(3)));
+        let end0 = await computeMixedPhonon(sampled, 0);
+        assert.ok(optical(end0.eigenvalues, await computeReferenceEigenvalues(sampled)) < 1e-4);
+        let end1 = await computeMixedPhonon(sampled, 1);
+        assert.ok(optical(end1.eigenvalues, await computeReferenceEigenvalues(sampleMixingPair(srf2, caf2))) < 1e-4);
+        let mixed = await computeMixedPhonon(sampled, 0.4, 0.7);
+        for (let k of gammaIndices(sampled)) {
+            for (let n = 0; n < 3; n++) {
+                assert.ok(Math.abs(mixed.eigenvalues[k][n]) < 0.05);
+            }
+        }
+        let mirrored = await computeMixedPhonon(sampleMixingPair(srf2, caf2), 0.6, 0.3);
+        assert.ok(maxAbsDiff(mixed.eigenvalues, mirrored.eigenvalues) < 1e-4);
+    });
+
+    it('does not mix a fluorite with an antifluorite or a rocksalt', () => {
+        let caf2 = endpoint('phonondb-CaF2-mp-2741.json.gz', 'CaF2');
+        let li2o = endpoint('phonondb-Li2O-mp-1960.json.gz', 'Li2O');
+        let nacl = endpoint('phonondb-NaCl-mp-22862.json.gz', 'NaCl');
+        assert.throws(() => sampleMixingPair(caf2, li2o), /Cannot mix/);
+        assert.throws(() => sampleMixingPair(nacl, caf2), /Cannot mix/);
+    });
+});
+
+describe('ternary fluorite dynamical-matrix mixing', () => {
+    let gammaIndices = (sampled) => sampled.qpoints
+        .map((q, k) => (q.every((v) => Math.abs(v - Math.round(v)) < 1e-9) ? k : -1))
+        .filter((k) => k >= 0);
+    let opticalDiff = (a, b) => {
+        let worst = 0;
+        a.forEach((row, k) => row.forEach((v, n) => {
+            if (Math.abs(v) > 1) {
+                worst = Math.max(worst, Math.abs(v - b[k][n]));
+            }
+        }));
+        return worst;
+    };
+    let eigen = async (m) => (await solveComplexHermitianWithEigenWasm(m.real, m.imag)).values.sort((p, q) => p - q);
+
+    it('matches cation orderings on the fcc and on the tetrahedral sites', () => {
+        // antifluorite: N on the fcc site, Li and Mg ordered on the tetrahedral sites
+        let limgn = endpoint('phonondb-LiMgN-mp-37906.json.gz', 'LiMgN');
+        assert.equal(limgn.family, 'antifluorite-ABX-F43m');
+        assert.deepEqual(limgn.siteTypes, ['Li', 'Mg', 'N']);
+        let liznas = endpoint('phonondb-LiZnAs-mp-9124.json.gz', 'LiZnAs');
+        assert.equal(liznas.family, 'antifluorite-ABX-F43m');
+        assert.deepEqual(liznas.siteTypes, ['Li', 'Zn', 'As']);
+        // fluorite: Ca and Zn ordered on the fcc site (scheelite)
+        let caznf4 = endpoint('phonondb-CaZnF4-mp-5104.json.gz', 'CaZnF4');
+        assert.equal(caznf4.family, 'fluorite-ABX4-I41a');
+        assert.deepEqual(caznf4.siteTypes.slice(0, 4), ['Ca', 'Ca', 'Zn', 'Zn']);
+        assert.ok(caznf4.siteTypes.slice(4).every((type) => type === 'F'));
+    });
+
+    it('maps the Materials Project file of a non-centrosymmetric cell onto the PhononDB one', () => {
+        // LiMgN (F-43m) has no inversion: Li and Mg on the wrong tetrahedral sites would differ
+        let pdb = endpoint('phonondb-LiMgN-mp-37906.json.gz', 'LiMgN');
+        let mp = buildMixingEndpoint(loadFixture('mpdb-LiMgN-mp-37906-trimmed.json.gz'), { name: 'LiMgN' });
+        let relative = (a, b) => {
+            let n = 0;
+            let d = 0;
+            a.real.forEach((row, i) => row.forEach((v, j) => {
+                n += (v - b.real[i][j]) ** 2 + (a.imag[i][j] - b.imag[i][j]) ** 2;
+                d += v * v + a.imag[i][j] ** 2;
+            }));
+            return Math.sqrt(n / d);
+        };
+        let median = (sampled) => {
+            let r = sampled.matrices1.map((m, k) => relative(m, sampled.matrices2[k])).sort((p, q) => p - q);
+            return r[r.length >> 1];
+        };
+        assert.ok(median(sampleMixingPair(pdb, mp)) < 0.05);
+        mp.invert = !mp.invert;
+        assert.ok(median(sampleMixingPair(pdb, mp)) > 0.1);
+    });
+
+    it('folds a binary fluorite into the scheelite cell', async () => {
+        // D of the 12-atom supercell at Q has the eigenvalues of CaF2 at the 4 points Q + g
+        let caf2 = endpoint('phonondb-CaF2-mp-2741.json.gz', 'CaF2');
+        let folded = binaryAsSuperstructure(caf2, 'fluorite-ABX4-I41a');
+        assert.equal(folded.siteTypes.filter((type) => type === 'Ca').length, 4);
+        let superReciprocal = utils.rec_lat(folded.lattice);
+        let toCart = (q) => [0, 1, 2].map((d) => q[0] * superReciprocal[0][d] + q[1] * superReciprocal[1][d] + q[2] * superReciprocal[2][d]);
+        let toPrimitive = (k) => caf2.lattice.map((p) => p[0] * k[0] + p[1] * k[1] + p[2] * k[2]);
+        for (let Q of [[0.13, -0.07, 0.21], [0.5, 0, 0]]) {
+            let qCart = toCart(Q);
+            let candidates = [];
+            for (let a = -2; a <= 2; a++) {
+                for (let b = -2; b <= 2; b++) {
+                    for (let c = -2; c <= 2; c++) {
+                        candidates.push(toCart([a, b, c]));
+                    }
+                }
+            }
+            candidates.sort((g, h) => g.reduce((t, v) => t + v * v, 0) - h.reduce((t, v) => t + v * v, 0));
+            let seen = new Set();
+            let expected = [];
+            for (let g of candidates) {
+                let key = toPrimitive(g).map((v) => Math.round((v - Math.floor(v + 1e-9)) * 1e6) % 1000000).join(',');
+                if (seen.has(key)) {
+                    continue;
+                }
+                seen.add(key);
+                expected.push(...await eigen(caf2.evaluate(toPrimitive([0, 1, 2].map((d) => qCart[d] + g[d])), null)));
+            }
+            assert.equal(seen.size, 4);
+            expected.sort((p, q) => p - q);
+            let actual = await eigen(folded.sampleAtQ(Q, null));
+            actual.forEach((v, i) => assert.ok(Math.abs(v - expected[i]) < 1e-9 * (1 + Math.abs(expected[i]))));
+        }
+    });
+
+    it('keeps end-members exact, acoustic modes at zero and mirror symmetry', async () => {
+        let li2o = endpoint('phonondb-Li2O-mp-1960.json.gz', 'Li2O');
+        let limgn = endpoint('phonondb-LiMgN-mp-37906.json.gz', 'LiMgN');
+        let liznas = endpoint('phonondb-LiZnAs-mp-9124.json.gz', 'LiZnAs');
+        let caf2 = endpoint('phonondb-CaF2-mp-2741.json.gz', 'CaF2');
+        let caznf4 = endpoint('phonondb-CaZnF4-mp-5104.json.gz', 'CaZnF4');
+        for (let [a, b] of [[li2o, limgn], [limgn, liznas], [caf2, caznf4]]) {
+            let sampled = sampleMixingPair(a, b);
+            let reversed = sampleMixingPair(b, a);
+            assert.equal(sampled.recomputeNac, true);
+            assert.deepEqual(sampled.labels, reversed.labels);
+            let end0 = await computeMixedPhonon(sampled, 0);
+            assert.ok(opticalDiff(end0.eigenvalues, await computeReferenceEigenvalues(sampled)) < 1e-4);
+            let end1 = await computeMixedPhonon(sampled, 1);
+            assert.ok(opticalDiff(end1.eigenvalues, await computeReferenceEigenvalues(reversed)) < 1e-4);
+            let mixed = await computeMixedPhonon(sampled, 0.5, 0.3);
+            for (let k of gammaIndices(sampled)) {
+                for (let n = 0; n < 3; n++) {
+                    assert.ok(Math.abs(mixed.eigenvalues[k][n]) < 0.05, `mode ${n}: ${mixed.eigenvalues[k][n]}`);
+                }
+            }
+            let mirrored = await computeMixedPhonon(reversed, 0.5, 0.7);
+            assert.ok(opticalDiff(mixed.eigenvalues, mirrored.eigenvalues) < 1e-6);
+        }
+    });
+
+    it('refuses pairs across the fluorite and antifluorite lattices', () => {
+        let caf2 = endpoint('phonondb-CaF2-mp-2741.json.gz', 'CaF2');
+        let li2o = endpoint('phonondb-Li2O-mp-1960.json.gz', 'Li2O');
+        let limgn = endpoint('phonondb-LiMgN-mp-37906.json.gz', 'LiMgN');
+        let caznf4 = endpoint('phonondb-CaZnF4-mp-5104.json.gz', 'CaZnF4');
+        assert.throws(() => sampleMixingPair(caf2, limgn), /Cannot mix/);
+        assert.throws(() => sampleMixingPair(li2o, caznf4), /Cannot mix/);
+        assert.throws(() => sampleMixingPair(limgn, caznf4), /Cannot mix/);
+    });
+});

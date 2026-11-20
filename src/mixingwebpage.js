@@ -77,14 +77,16 @@ export class MixingHighcharts extends PhononHighcharts {
 export class MixingWebpage extends PhononWebpage {
     /*
     Phonon page restricted to the curated list of 2-atom zinc blende / diamond,
-    2-atom rocksalt, 4-atom wurtzite / lonsdaleite, 8-atom chalcopyrite,
-    ternary wurtzite (beta-NaFeO2, enargite and Cu2SiS3 type) and cation-
-    ordered ternary rocksalt (alpha-NaFeO2, gamma-LiFeO2, Li2ZrO3 type, ...)
-    materials in data/mixing/models.json, drawn from the PhononDB (A. Togo) and
-    Materials Project (G. Petretto et al.) databases. Materials mix within their
-    family; a binary with force constants (PhononDB) can also be mixed with an
-    ordered ternary on its lattice (zinc blende with chalcopyrite, wurtzite and
-    rocksalt with their ternaries), folded into the cell of the ternary.
+    2-atom rocksalt, 3-atom fluorite and antifluorite, 4-atom wurtzite /
+    lonsdaleite, 8-atom chalcopyrite, ternary wurtzite (beta-NaFeO2, enargite and
+    Cu2SiS3 type) and cation-ordered ternary rocksalt (alpha-NaFeO2,
+    gamma-LiFeO2, Li2ZrO3 type, ...), fluorite (scheelite, CaUO4 type, ...) and
+    antifluorite (MgAgAs type LiMgN, Li5SiP3) materials in
+    data/mixing/models.json, drawn from the PhononDB (A. Togo) and Materials
+    Project (G. Petretto et al.) databases. Materials mix within their family; a
+    binary with force constants (PhononDB) can also be mixed with an ordered
+    ternary on its lattice (zinc blende with chalcopyrite, the others with their
+    ternaries), folded into the cell of the ternary.
 
     Material 1 is picked in the regular list, material 2 in the second list and
     the character slider sets the fraction x of material 2 in the virtual
@@ -306,8 +308,8 @@ export class MixingWebpage extends PhononWebpage {
         if (materialsHeading && this.dom_mat) {
             materialsHeading.textContent = "Choose material 1 (" + this.dom_mat.children().length + "):";
         }
-        // the base list shows the formula only: tag the wurtzites and rocksalts,
-        // the same compound is often listed as a zinc blende too
+        // the base list shows the formula only: tag every family but zinc blende,
+        // the same compound is often listed in several
         let materials = this.getMenuMaterials();
         let items = this.dom_mat ? this.dom_mat.children() : [];
         for (let i = 0; i < items.length && i < materials.length; i++) {
@@ -330,7 +332,7 @@ export class MixingWebpage extends PhononWebpage {
 
     getFamilyTag(material) {
         /*
-        the structure family; ternary rocksalts also name their space group,
+        the structure family; ternary rocksalts and (anti)fluorites also name their space group,
         e.g. LiDyS2 is listed in the alpha-NaFeO2 (R-3m) and gamma-LiFeO2
         (I4_1/amd) orderings
         */
@@ -338,11 +340,15 @@ export class MixingWebpage extends PhononWebpage {
         let tag = "";
         if (family.indexOf("wurtzite") === 0) {
             tag = "wurtzite";
-        } else if (family === "rocksalt") {
-            tag = "rocksalt";
-        } else if (family.indexOf("rocksalt-") === 0) {
-            let spacegroup = (material.spacegroup || "").replace(/_(\d)/g, "<sub>$1</sub>");
-            tag = "rocksalt" + (spacegroup ? " " + spacegroup : "");
+        } else {
+            for (let parent of ["rocksalt", "fluorite", "antifluorite"]) {
+                if (family === parent) {
+                    tag = parent;
+                } else if (family.indexOf(parent + "-") === 0) {
+                    let spacegroup = (material.spacegroup || "").replace(/_(\d)/g, "<sub>$1</sub>");
+                    tag = parent + (spacegroup ? " " + spacegroup : "");
+                }
+            }
         }
         return tag ? ' <span class="family-tag">' + tag + '</span>' : "";
     }
@@ -418,6 +424,8 @@ export class MixingWebpage extends PhononWebpage {
             zincblende: ["zinc blende", "Chalcopyrites"],
             wurtzite: ["wurtzite", "Ternary wurtzites"],
             rocksalt: ["rocksalt", "Ternary rocksalts"],
+            fluorite: ["fluorite", "Ternary fluorites"],
+            antifluorite: ["antifluorite", "Ternary antifluorites"],
         };
         let family1 = material1 ? material1.family : "zincblende";
         let parent = FAMILY_NAMES[family1] ? family1 : getParentFamily(family1);
@@ -585,7 +593,7 @@ export class MixingWebpage extends PhononWebpage {
         let percent = Math.round(this.character * 100);
         let mass = this.massLinked ? "" : ", mass " + Math.round(this.massCharacter * 100) + " %";
         let familyName = this.pairCache ? this.pairCache.sampled.endpoint1.family : "";
-        let family = ["wurtzite", "rocksalt"].find((name) => familyName.indexOf(name) === 0);
+        let family = ["wurtzite", "rocksalt", "fluorite", "antifluorite"].find((name) => familyName.indexOf(name) === 0);
         family = family ? family + ", " : "";
         return utils.format_formula_html(this.material1.name) +
             " + " + utils.format_formula_html(this.material2.name) +

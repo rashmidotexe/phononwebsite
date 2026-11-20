@@ -3014,5 +3014,705 @@
         "source": "mpdb",
         "spacegroup": "Fm-3m",
         "family": "rocksalt"
+    },
+    {
+        "id": "12558",
+        "name": "LiMgAs",
+        "source": "phonondb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "752798",
+        "name": "CeTh2O6",
+        "source": "phonondb",
+        "spacegroup": "Immm",
+        "family": "fluorite-A2BX6-Immm"
+    },
+    {
+        "id": "685991",
+        "name": "Li5SiP3",
+        "source": "phonondb",
+        "spacegroup": "Cc",
+        "family": "antifluorite-A5BX3-Cc"
+    },
+    {
+        "id": "20194",
+        "name": "CeO2",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "11327",
+        "name": "Rb2Se",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "9124",
+        "name": "LiZnAs",
+        "source": "phonondb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "556639",
+        "name": "DyNbO4",
+        "source": "phonondb",
+        "spacegroup": "C2/c",
+        "family": "fluorite-ABX4-I41a"
+    },
+    {
+        "id": "5104",
+        "name": "CaZnF4",
+        "source": "phonondb",
+        "spacegroup": "I4_1/a",
+        "family": "fluorite-ABX4-I41a"
+    },
+    {
+        "id": "1747",
+        "name": "K2Te",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "754964",
+        "name": "HfZrO4",
+        "source": "phonondb",
+        "spacegroup": "I4_1/a",
+        "family": "fluorite-ABX4-I41a"
+    },
+    {
+        "id": "36329",
+        "name": "SrUO4",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "fluorite-ABX4-R3m"
+    },
+    {
+        "id": "27888",
+        "name": "Zr3GeO8",
+        "source": "phonondb",
+        "spacegroup": "I-42m",
+        "family": "fluorite-A3BX8-I4mmm"
+    },
+    {
+        "id": "241",
+        "name": "CdF2",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "615746",
+        "name": "RbBiF4",
+        "source": "phonondb",
+        "spacegroup": "Fd-3m",
+        "family": "fluorite-ABX4-Fd3m"
+    },
+    {
+        "id": "676074",
+        "name": "Na2ThF6",
+        "source": "phonondb",
+        "spacegroup": "C2/c",
+        "family": "fluorite-A2BX6-C2c"
+    },
+    {
+        "id": "36111",
+        "name": "LiMgP",
+        "source": "phonondb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "8426",
+        "name": "K2Se",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "568662",
+        "name": "BaCl2",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "8177",
+        "name": "HgF2",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "5370",
+        "name": "ErNbO4",
+        "source": "phonondb",
+        "spacegroup": "C2/c",
+        "family": "fluorite-ABX4-I41a"
+    },
+    {
+        "id": "1266",
+        "name": "Na2Se",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "754736",
+        "name": "BaSr3I8",
+        "source": "phonondb",
+        "spacegroup": "I4/mmm",
+        "family": "fluorite-A3BX8-I4mmm"
+    },
+    {
+        "id": "23209",
+        "name": "SrCl2",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "2741",
+        "name": "CaF2",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "760513",
+        "name": "La2UO6",
+        "source": "phonondb",
+        "spacegroup": "Immm",
+        "family": "fluorite-A2BX6-Immm"
+    },
+    {
+        "id": "981",
+        "name": "SrF2",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "8041",
+        "name": "Rb2S",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "5387",
+        "name": "YNbO4",
+        "source": "phonondb",
+        "spacegroup": "C2/c",
+        "family": "fluorite-ABX4-I41a"
+    },
+    {
+        "id": "2286",
+        "name": "Li2Se",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "315",
+        "name": "PbF2",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "754852",
+        "name": "BaSrI4",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "fluorite-ABX4-R3m"
+    },
+    {
+        "id": "675800",
+        "name": "Li5TiP3",
+        "source": "phonondb",
+        "spacegroup": "C2/c",
+        "family": "antifluorite-A5BX3-Cc"
+    },
+    {
+        "id": "961684",
+        "name": "LiCaAs",
+        "source": "phonondb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "1569",
+        "name": "Be2C",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "675562",
+        "name": "K2ThF6",
+        "source": "phonondb",
+        "spacegroup": "C2/c",
+        "family": "fluorite-A2BX6-C2c"
+    },
+    {
+        "id": "2352",
+        "name": "Na2O",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "675798",
+        "name": "NaHoF4",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "fluorite-ABX4-I41a"
+    },
+    {
+        "id": "3960",
+        "name": "CaUO4",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "fluorite-ABX4-R3m"
+    },
+    {
+        "id": "34081",
+        "name": "NaYF4",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "fluorite-ABX4-I41a"
+    },
+    {
+        "id": "648",
+        "name": "Na2S",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "971",
+        "name": "K2O",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "1394",
+        "name": "Rb2O",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "1776",
+        "name": "UN2",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "7575",
+        "name": "LiZnN",
+        "source": "phonondb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "1029",
+        "name": "BaF2",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "867674",
+        "name": "Ba3CaI8",
+        "source": "phonondb",
+        "spacegroup": "I4/mmm",
+        "family": "fluorite-A3BX8-I4mmm"
+    },
+    {
+        "id": "756235",
+        "name": "Ba3SrI8",
+        "source": "phonondb",
+        "spacegroup": "I4/mmm",
+        "family": "fluorite-A3BX8-I4mmm"
+    },
+    {
+        "id": "674459",
+        "name": "NaErF4",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "fluorite-ABX4-I41a"
+    },
+    {
+        "id": "674531",
+        "name": "Li5GeP3",
+        "source": "phonondb",
+        "spacegroup": "Cc",
+        "family": "antifluorite-A5BX3-Cc"
+    },
+    {
+        "id": "961685",
+        "name": "NaCaAs",
+        "source": "phonondb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "27478",
+        "name": "Na3PaF8",
+        "source": "phonondb",
+        "spacegroup": "I4/mmm",
+        "family": "fluorite-A3BX8-I4mmm"
+    },
+    {
+        "id": "2530",
+        "name": "Li2Te",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "1153",
+        "name": "Li2S",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "581857",
+        "name": "KBiF4",
+        "source": "phonondb",
+        "spacegroup": "Fd-3m",
+        "family": "fluorite-ABX4-Fd3m"
+    },
+    {
+        "id": "768383",
+        "name": "SmBiO4",
+        "source": "phonondb",
+        "spacegroup": "C2/c",
+        "family": "fluorite-ABX4-I41a"
+    },
+    {
+        "id": "644492",
+        "name": "LuNbO4",
+        "source": "phonondb",
+        "spacegroup": "C2/c",
+        "family": "fluorite-ABX4-I41a"
+    },
+    {
+        "id": "1960",
+        "name": "Li2O",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "1022",
+        "name": "K2S",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "10182",
+        "name": "LiZnP",
+        "source": "phonondb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "12862",
+        "name": "LuTaO4",
+        "source": "phonondb",
+        "spacegroup": "C2/c",
+        "family": "fluorite-ABX4-I41a"
+    },
+    {
+        "id": "643",
+        "name": "ThO2",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "2784",
+        "name": "Na2Te",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "37906",
+        "name": "LiMgN",
+        "source": "phonondb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "36111",
+        "name": "LiMgP",
+        "source": "mpdb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "37906",
+        "name": "LiMgN",
+        "source": "mpdb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "568662",
+        "name": "BaCl2",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "961684",
+        "name": "LiCaAs",
+        "source": "mpdb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "961685",
+        "name": "NaCaAs",
+        "source": "mpdb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "1009733",
+        "name": "Ca2Si",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "1011695",
+        "name": "Cs2Se",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "241",
+        "name": "CdF2",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "315",
+        "name": "PbF2",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "441",
+        "name": "Rb2Te",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "648",
+        "name": "Na2S",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "971",
+        "name": "K2O",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "981",
+        "name": "SrF2",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "1022",
+        "name": "K2S",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "1029",
+        "name": "BaF2",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "1153",
+        "name": "Li2S",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "1266",
+        "name": "Na2Se",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "1367",
+        "name": "Mg2Si",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "1394",
+        "name": "Rb2O",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "1565",
+        "name": "ZrO2",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "1569",
+        "name": "Be2C",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "1747",
+        "name": "K2Te",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "1960",
+        "name": "Li2O",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "2286",
+        "name": "Li2Se",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "2352",
+        "name": "Na2O",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "2530",
+        "name": "Li2Te",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "2741",
+        "name": "CaF2",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "2784",
+        "name": "Na2Te",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "7575",
+        "name": "LiZnN",
+        "source": "mpdb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "8041",
+        "name": "Rb2S",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "8177",
+        "name": "HgF2",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "8426",
+        "name": "K2Se",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "9124",
+        "name": "LiZnAs",
+        "source": "mpdb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "10182",
+        "name": "LiZnP",
+        "source": "mpdb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "11327",
+        "name": "Rb2Se",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "12558",
+        "name": "LiMgAs",
+        "source": "mpdb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "23209",
+        "name": "SrCl2",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
     }
 ]
