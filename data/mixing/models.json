@@ -816,5 +816,411 @@
         "source": "mpdb",
         "spacegroup": "I-42d",
         "family": "chalcopyrite"
+    },
+    {
+        "id": "22894",
+        "name": "AgI",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "8881",
+        "name": "AlAs",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "661",
+        "name": "AlN",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "8880",
+        "name": "AlP",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "2542",
+        "name": "BeO",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "672",
+        "name": "CdS",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "1070",
+        "name": "CdSe",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "12779",
+        "name": "CdTe",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "569346",
+        "name": "CuI",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "804",
+        "name": "GaN",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "8882",
+        "name": "GaP",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "966800",
+        "name": "InP",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "976280",
+        "name": "LiBr",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "570935",
+        "name": "LiI",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "1039",
+        "name": "MgTe",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "7140",
+        "name": "SiC",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "2133",
+        "name": "ZnO",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "560588",
+        "name": "ZnS",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "380",
+        "name": "ZnSe",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "8884",
+        "name": "ZnTe",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "22894",
+        "name": "AgI",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "8881",
+        "name": "AlAs",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "661",
+        "name": "AlN",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "8880",
+        "name": "AlP",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "1018100",
+        "name": "AlSb",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "1008559",
+        "name": "BP",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "2542",
+        "name": "BeO",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "672",
+        "name": "CdS",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "1070",
+        "name": "CdSe",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "12779",
+        "name": "CdTe",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "569346",
+        "name": "CuI",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "804",
+        "name": "GaN",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "8882",
+        "name": "GaP",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "966800",
+        "name": "InP",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "976280",
+        "name": "LiBr",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "570935",
+        "name": "LiI",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "1018040",
+        "name": "MgSe",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "1039",
+        "name": "MgTe",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "165",
+        "name": "Si4",
+        "source": "mpdb",
+        "spacegroup": "P6_3/mmc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "7140",
+        "name": "SiC",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "2133",
+        "name": "ZnO",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "560588",
+        "name": "ZnS",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "380",
+        "name": "ZnSe",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "8884",
+        "name": "ZnTe",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "9248",
+        "name": "Cu2SiS3",
+        "source": "phonondb",
+        "spacegroup": "Cmc2_1",
+        "family": "wurtzite-A2BX3"
+    },
+    {
+        "id": "3934",
+        "name": "Cu3PS4",
+        "source": "phonondb",
+        "spacegroup": "Pmn2_1",
+        "family": "wurtzite-A3BX4"
+    },
+    {
+        "id": "756316",
+        "name": "Li3SbS4",
+        "source": "phonondb",
+        "spacegroup": "Pmn2_1",
+        "family": "wurtzite-A3BX4"
+    },
+    {
+        "id": "755642",
+        "name": "Li3VS4",
+        "source": "phonondb",
+        "spacegroup": "Pmn2_1",
+        "family": "wurtzite-A3BX4"
+    },
+    {
+        "id": "21459",
+        "name": "AgInS2",
+        "source": "phonondb",
+        "spacegroup": "Pna2_1",
+        "family": "wurtzite-ABX2"
+    },
+    {
+        "id": "7913",
+        "name": "BeSiN2",
+        "source": "phonondb",
+        "spacegroup": "Pna2_1",
+        "family": "wurtzite-ABX2"
+    },
+    {
+        "id": "7117",
+        "name": "LiAlSe2",
+        "source": "phonondb",
+        "spacegroup": "Pna2_1",
+        "family": "wurtzite-ABX2"
+    },
+    {
+        "id": "5854",
+        "name": "LiGaO2",
+        "source": "phonondb",
+        "spacegroup": "Pna2_1",
+        "family": "wurtzite-ABX2"
+    },
+    {
+        "id": "3647",
+        "name": "LiGaS2",
+        "source": "phonondb",
+        "spacegroup": "Pna2_1",
+        "family": "wurtzite-ABX2"
+    },
+    {
+        "id": "11582",
+        "name": "LiGaSe2",
+        "source": "phonondb",
+        "spacegroup": "Pna2_1",
+        "family": "wurtzite-ABX2"
+    },
+    {
+        "id": "20310",
+        "name": "LiInSe2",
+        "source": "phonondb",
+        "spacegroup": "Pna2_1",
+        "family": "wurtzite-ABX2"
+    },
+    {
+        "id": "7798",
+        "name": "MgGeN2",
+        "source": "phonondb",
+        "spacegroup": "Pna2_1",
+        "family": "wurtzite-ABX2"
+    },
+    {
+        "id": "2979",
+        "name": "ZnGeN2",
+        "source": "phonondb",
+        "spacegroup": "Pna2_1",
+        "family": "wurtzite-ABX2"
+    },
+    {
+        "id": "2979",
+        "name": "ZnGeN2",
+        "source": "mpdb",
+        "spacegroup": "Pna2_1",
+        "family": "wurtzite-ABX2"
     }
 ]

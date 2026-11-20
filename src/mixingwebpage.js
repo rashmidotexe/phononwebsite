@@ -8,6 +8,7 @@ import {
     sampleMixingPair,
     computeMixedPhonon,
     computeReferenceEigenvalues,
+    getParentFamily,
 } from './mixingphonons.js';
 import { loadMaterialsProjectDielectric } from './mpdielectric.js';
 import * as utils from './utils.js';
@@ -75,11 +76,14 @@ export class MixingHighcharts extends PhononHighcharts {
 
 export class MixingWebpage extends PhononWebpage {
     /*
-    Phonon page restricted to the curated list of 2-atom zinc blende / diamond
-    and 8-atom chalcopyrite materials in data/mixing/models.json, drawn from the
-    PhononDB (A. Togo) and Materials Project (G. Petretto et al.) databases.
-    A zinc blende with force constants (PhononDB) can also be mixed with a
-    chalcopyrite, folded into the chalcopyrite cell.
+    Phonon page restricted to the curated list of 2-atom zinc blende / diamond,
+    4-atom wurtzite / lonsdaleite, 8-atom chalcopyrite and ternary wurtzite
+    (beta-NaFeO2, enargite and Cu2SiS3 type) materials in
+    data/mixing/models.json, drawn from the PhononDB (A. Togo) and Materials
+    Project (G. Petretto et al.) databases. Materials mix within their family; a
+    binary with force constants (PhononDB) can also be mixed with an ordered
+    ternary on its lattice (zinc blende with chalcopyrite, wurtzite with the
+    ternary wurtzites), folded into the cell of the ternary.
 
     Material 1 is picked in the regular list, material 2 in the second list and
     the character slider sets the fraction x of material 2 in the virtual
@@ -101,9 +105,11 @@ export class MixingWebpage extends PhononWebpage {
         this.rawCache = new Map();
         this.pairCache = null;
         this.mixToken = 0;
+        // a slider-triggered mixture is waiting to run
+        this.mixScheduled = false;
     }
 
-    setMaterial2List(dom_mat2) { this.dom_mat2 = dom_mat2; }
+    setMaterial2List(dom_mat2, dom_note) { this.dom_mat2 = dom_mat2; this.dom_mat2_note = dom_note; }
 
     setMaterial2FilterInput(dom_input) {
         dom_input.on('input', () => {
@@ -290,8 +296,40 @@ export class MixingWebpage extends PhononWebpage {
         if (materialsHeading && this.dom_mat) {
             materialsHeading.textContent = "Choose material 1 (" + this.dom_mat.children().length + "):";
         }
+        // the base list shows the formula only: tag the wurtzites, the same
+        // compound is often listed as a zinc blende too
+        let materials = this.getMenuMaterials();
+        let items = this.dom_mat ? this.dom_mat.children() : [];
+        for (let i = 0; i < items.length && i < materials.length; i++) {
+            let tag = this.getFamilyTag(materials[i]);
+            if (tag) {
+                items[i].querySelector("a").insertAdjacentHTML("beforeend", tag);
+            }
+        }
         this.markSelectedMaterials();
         this.renderMaterial2Menu();
+    }
+
+    getMenuMaterials() {
+        // materials of the material 1 list, in the order they are shown
+        return this.materialsIndex
+            .filter((material) => this.materialMatchesFilter(material, this.getMaterialFilterTokens()))
+            .filter((material) => this.isReferenceEnabled(this.getMaterialReferenceKey(material)))
+            .sort(this.compareMaterialsForMenu.bind(this));
+    }
+
+    getFamilyTag(material) {
+        return material && material.family && material.family.indexOf("wurtzite") === 0
+            ? ' <span class="family-tag">wurtzite</span>'
+            : "";
+    }
+
+    materialMatchesFilter(material, tokens) {
+        // a filter token may also name the structure family, e.g. "wurtzite"
+        return tokens.every((token) =>
+            super.materialMatchesFilter(material, [token]) ||
+            (token.length > 2 && (material.family || "").indexOf(token) === 0)
+        );
     }
 
     getReferenceIndices() {
@@ -341,8 +379,45 @@ export class MixingWebpage extends PhononWebpage {
         for (let i = 0; i < materials.length; i++) {
             let m = materials[i];
             let index = referenceIndices.get(this.getMaterialReferenceKey(m));
-            addItem(utils.format_formula_html(m.name) + " [" + index + "]", m);
+            addItem(utils.format_formula_html(m.name) + this.getFamilyTag(m) + " [" + index + "]", m);
         }
+        if (this.dom_mat2_note) {
+            this.dom_mat2_note.html(this.getMaterial2Note(material1, referenceIndices));
+        }
+    }
+
+    getMaterial2Note(material1, referenceIndices) {
+        /*
+        explain the pairs canMix leaves out: folding a binary into a ternary cell
+        needs its force constants, which only the PhononDB entries carry
+        */
+        let FAMILY_NAMES = {
+            zincblende: ["zinc blende", "Chalcopyrites"],
+            wurtzite: ["wurtzite", "Ternary wurtzites"],
+        };
+        let family1 = material1 ? material1.family : "zincblende";
+        let parent = FAMILY_NAMES[family1] ? family1 : getParentFamily(family1);
+        if (!FAMILY_NAMES[parent]) {
+            return "";
+        }
+        let reference = this.materialsIndex.find((m) => m.family === parent && m.source === "phonondb");
+        let index = reference ? referenceIndices.get(this.getMaterialReferenceKey(reference)) : null;
+        let phonondb = "PhononDB" + (index ? " [" + index + "]" : "");
+        let [binaryName, ternaryName] = FAMILY_NAMES[parent];
+        if (family1 === parent) {
+            let hasTernaries = this.materialsIndex.some((m) => getParentFamily(m.family) === parent);
+            if (!material1 || material1.source === "phonondb" || !hasTernaries) {
+                return "";
+            }
+            return ternaryName + " are listed only when material 1 is a " + phonondb + " "
+                + binaryName + ": mixing them requires its force constants.";
+        }
+        let hasMpBinaries = this.materialsIndex.some((m) => m.family === parent && m.source !== "phonondb");
+        if (!hasMpBinaries) {
+            return "";
+        }
+        return "Only " + phonondb + " " + binaryName + "s are listed: mixing with a "
+            + ternaryName.toLowerCase().replace(/s$/, "") + " requires their force constants.";
     }
 
     markSelectedMaterials() {
@@ -350,10 +425,7 @@ export class MixingWebpage extends PhononWebpage {
             return;
         }
         let url = this.material1.url;
-        let sorted = this.materialsIndex
-            .filter((material) => this.materialMatchesFilter(material, this.getMaterialFilterTokens()))
-            .filter((material) => this.isReferenceEnabled(this.getMaterialReferenceKey(material)))
-            .sort(this.compareMaterialsForMenu.bind(this));
+        let sorted = this.getMenuMaterials();
         let items = this.dom_mat.children();
         for (let i = 0; i < items.length && i < sorted.length; i++) {
             items[i].className = sorted[i].url === url ? "selected" : "";
@@ -371,16 +443,19 @@ export class MixingWebpage extends PhononWebpage {
 
     canMix(material1, material2) {
         /*
-        materials of the same structure family mix directly; a zinc blende can be
-        folded into the chalcopyrite cell when its force constants are available
-        (PhononDB), the Materials Project files only cover the band path
+        materials of the same structure family mix directly; a binary can be
+        folded into the cell of an ordered ternary on its lattice (zinc blende ->
+        chalcopyrite, wurtzite -> ternary wurtzites) when its force constants are
+        available (PhononDB), the Materials Project files only cover the band path
         */
         let family1 = material1 ? material1.family : "zincblende";
         if (family1 === material2.family) {
             return true;
         }
-        let zincblende = family1 === "zincblende" ? material1 : material2;
-        return !!zincblende && zincblende.source === "phonondb";
+        let binary = getParentFamily(material2.family) === family1 ? material1
+            : getParentFamily(family1) === material2.family ? material2
+            : null;
+        return !!binary && binary.source === "phonondb";
     }
 
     findMaterial(url) {
@@ -475,12 +550,13 @@ export class MixingWebpage extends PhononWebpage {
     getMixingTitle() {
         let percent = Math.round(this.character * 100);
         let mass = this.massLinked ? "" : ", mass " + Math.round(this.massCharacter * 100) + " %";
+        let family = this.pairCache && this.pairCache.sampled.endpoint1.family.indexOf("wurtzite") === 0 ? "wurtzite, " : "";
         return utils.format_formula_html(this.material1.name) +
             " + " + utils.format_formula_html(this.material2.name) +
-            " (" + percent + " % " + utils.format_formula_html(this.material2.name) + mass + ")";
+            " (" + family + percent + " % " + utils.format_formula_html(this.material2.name) + mass + ")";
     }
 
-    async refreshMixing(pairChanged, callback) {
+    async refreshMixing(pairChanged, callback, scheduled = false) {
         if (!this.material1) {
             return;
         }
@@ -490,6 +566,22 @@ export class MixingWebpage extends PhononWebpage {
             this.mixToken += 1;
             this.updateMixingNote(null);
             super.loadURL(this.material1.url_vars, callback);
+            return;
+        }
+
+        if (!pairChanged && !scheduled) {
+            // slider moves: computing a mixture blocks the page, so the moves made
+            // meanwhile queue up; run once, from a timer, with the latest values
+            // instead of once per move
+            if (!this.mixScheduled) {
+                this.mixScheduled = true;
+                setTimeout(() => {
+                    this.mixScheduled = false;
+                    if (this.material2) {
+                        this.refreshMixing(false, null, true);
+                    }
+                }, 0);
+            }
             return;
         }
 

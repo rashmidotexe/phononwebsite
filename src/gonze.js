@@ -49,11 +49,6 @@ function dot3(left, right) {
     return left[0] * right[0] + left[1] * right[1] + left[2] * right[2];
 }
 
-function complexAddAssign(target, sourceReal, sourceImag) {
-    target[0] += sourceReal;
-    target[1] += sourceImag;
-}
-
 function complexScaleAssign(target, scale) {
     target[0] *= scale;
     target[1] *= scale;
@@ -134,32 +129,52 @@ function getKKTensor(gVector, qCart, qDirectionCart, dielectric, lambda, toleran
 
 function getDdTensorPart(gList, qCart, qDirectionCart, dielectric, positionsCar, lambda, tolerance) {
     let natoms = positionsCar.length;
-    let ddPart = createComplexBlockTensor(natoms);
+    // sum over G of KK(G + q) exp(2 pi i G.(r_i - r_j)); the phase factorizes into
+    // exp(2 pi i G.r_i) exp(-2 pi i G.r_j), so only one cos/sin per atom and G
+    let sumReal = new Float64Array(natoms * natoms * 9);
+    let sumImag = new Float64Array(natoms * natoms * 9);
+    let cosAtom = new Float64Array(natoms);
+    let sinAtom = new Float64Array(natoms);
 
     for (let gIndex = 0; gIndex < gList.length; gIndex++) {
         let gVector = gList[gIndex];
         let kk = getKKTensor(gVector, qCart, qDirectionCart, dielectric, lambda, tolerance);
-
+        if (kk.every((row) => row.every((value) => value === 0))) {
+            continue;
+        }
+        for (let i = 0; i < natoms; i++) {
+            let phase = 2 * Math.PI * dot3(positionsCar[i], gVector);
+            cosAtom[i] = Math.cos(phase);
+            sinAtom[i] = Math.sin(phase);
+        }
         for (let i = 0; i < natoms; i++) {
             for (let j = 0; j < natoms; j++) {
-                let phase = 0;
-                for (let axis = 0; axis < 3; axis++) {
-                    phase += (positionsCar[i][axis] - positionsCar[j][axis]) * gVector[axis];
-                }
-                phase *= 2 * Math.PI;
-                let cosPhase = Math.cos(phase);
-                let sinPhase = Math.sin(phase);
-
+                let cosPhase = cosAtom[i] * cosAtom[j] + sinAtom[i] * sinAtom[j];
+                let sinPhase = sinAtom[i] * cosAtom[j] - cosAtom[i] * sinAtom[j];
+                let offset = (i * natoms + j) * 9;
                 for (let alpha = 0; alpha < 3; alpha++) {
                     for (let beta = 0; beta < 3; beta++) {
                         let value = kk[alpha][beta];
-                        complexAddAssign(ddPart[i][j][alpha][beta], value * cosPhase, value * sinPhase);
+                        sumReal[offset + alpha * 3 + beta] += value * cosPhase;
+                        sumImag[offset + alpha * 3 + beta] += value * sinPhase;
                     }
                 }
             }
         }
     }
 
+    let ddPart = createComplexBlockTensor(natoms);
+    for (let i = 0; i < natoms; i++) {
+        for (let j = 0; j < natoms; j++) {
+            let offset = (i * natoms + j) * 9;
+            for (let alpha = 0; alpha < 3; alpha++) {
+                for (let beta = 0; beta < 3; beta++) {
+                    ddPart[i][j][alpha][beta][0] = sumReal[offset + alpha * 3 + beta];
+                    ddPart[i][j][alpha][beta][1] = sumImag[offset + alpha * 3 + beta];
+                }
+            }
+        }
+    }
     return ddPart;
 }
 

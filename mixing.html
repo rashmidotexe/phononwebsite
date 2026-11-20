@@ -51,7 +51,11 @@
             display: block;
             font-size: 0.9em;
         }
-        #mixing_note {
+        .family-tag {
+            font-size: 0.75em;
+            opacity: 0.65;
+        }
+        #mixing_note, #mat2_note {
             font-size: 0.8em;
             opacity: 0.8;
             margin-top: 0.3rem;
@@ -84,6 +88,7 @@
                     <h3>Choose material 2:</h3>
                     <input id="materials_filter2" type="text" placeholder="Filter materials or elements, e.g. Be C">
                     <ul id="mat2"></ul>
+                    <div id="mat2_note"></div>
 
                     <h3>Character %:</h3>
                     <input id="character_range" type="range" min="0" max="100" step="1" value="0">

@@ -12,6 +12,7 @@ import {
     computeMixedPhonon,
     computeReferenceEigenvalues,
     zincblendeAsChalcopyrite,
+    wurtziteAsSuperstructure,
 } from '../src/mixingphonons.js';
 import { solveComplexHermitianWithEigenWasm } from '../src/eigenwasm.js';
 import * as utils from '../src/utils.js';
@@ -485,5 +486,258 @@ describe('chalcopyrite dynamical-matrix mixing', () => {
         // a -> b and b -> a use the same q-points
         let reverse = buildCommonPath(zngep2, cugas2);
         assert.deepEqual(reverse.map((s) => s.labelA + '-' + s.labelB), path.map((s) => s.labelA + '-' + s.labelB));
+    });
+});
+
+describe('wurtzite dynamical-matrix mixing', () => {
+    let gammaIndices = (phonon) => phonon.highsym_qpts.filter((point) => point[1] === 'GAMMA').map((point) => point[0]);
+    let opticalDiff = (a, b) => {
+        let worst = 0;
+        a.forEach((row, k) => row.forEach((v, n) => {
+            if (Math.abs(v) > 1) {
+                worst = Math.max(worst, Math.abs(v - b[k][n]));
+            }
+        }));
+        return worst;
+    };
+    let relative = (a, b) => {
+        let num = 0;
+        let den = 0;
+        for (let i = 0; i < a.real.length; i++) {
+            for (let j = 0; j < a.real.length; j++) {
+                num += (a.real[i][j] - b.real[i][j]) ** 2 + (a.imag[i][j] - b.imag[i][j]) ** 2;
+                den += a.real[i][j] ** 2 + a.imag[i][j] ** 2;
+            }
+        }
+        return Math.sqrt(num / den);
+    };
+    let median = (values) => values.slice().sort((p, q) => p - q)[values.length >> 1];
+
+    function mpAlN() {
+        let rows = JSON.parse(readFileSync(join(__dirname, 'fixtures', 'mixing', 'mp-dfpt-dielectric-AlN-wurtzite.json')));
+        let dielectric = indexDielectricRows(rows).get(661);
+        return buildMixingEndpoint(loadFixture('mpdb-AlN-wurtzite-mp-661-trimmed.json.gz'), { name: 'AlN' }, dielectric);
+    }
+
+    it('matches 4-atom cells onto the P6_3mc template, with either polarity', () => {
+        let gan = endpoint('phonondb-GaN-wurtzite-mp-804.json.gz', 'GaN');
+        let aln = endpoint('phonondb-AlN-wurtzite-mp-661.json.gz', 'AlN');
+        let alnMP = mpAlN();
+        for (let e of [gan, aln, alnMP]) {
+            assert.equal(e.family, 'wurtzite');
+            assert.equal(e.siteTypes[0], e.siteTypes[1]);
+            assert.equal(e.siteTypes[2], e.siteTypes[3]);
+        }
+        // the GaN file lists N first and has the opposite polarity
+        assert.deepEqual(gan.siteTypes, ['Ga', 'Ga', 'N', 'N']);
+        assert.equal(gan.invert, true);
+        assert.equal(aln.invert, false);
+        assert.ok(Math.abs(aln.structure.u - 0.382) < 1e-3);
+        assert.ok(Math.abs(aln.structure.c / aln.structure.a - 1.600) < 1e-3);
+        // Materials Project stores a1 at -60 degrees from x: rotated onto the PhononDB axes
+        assert.equal(aln.rotation, null);
+        assert.ok(alnMP.rotation);
+        assert.ok(alnMP.nac);
+        let labels = aln.segments.map((s) => s.labelA + '-' + s.labelB);
+        assert.deepEqual(labels, ['GAMMA-M', 'M-K', 'K-GAMMA', 'GAMMA-A', 'A-L', 'L-H', 'H-A', 'L-M', 'H-K']);
+    });
+
+    it('maps the Materials Project setting of a compound onto the PhononDB one', () => {
+        let pdb = endpoint('phonondb-AlN-wurtzite-mp-661.json.gz', 'AlN');
+        let mp = mpAlN();
+        let differences = (sampled) => sampled.matrices1.map((m, k) => relative(m, sampled.matrices2[k]));
+
+        // two DFT data sets of the same AlN agree to a few per cent
+        let good = differences(sampleMixingPair(pdb, mp));
+        assert.ok(median(good) < 0.03, 'median ' + median(good));
+        // the opposite polarity is a different crystal orientation and does not
+        mp.invert = !mp.invert;
+        assert.ok(median(differences(sampleMixingPair(pdb, mp))) > 0.3);
+    });
+
+    it('keeps end-members exact, acoustic modes at zero and mirror symmetry', async () => {
+        let gan = endpoint('phonondb-GaN-wurtzite-mp-804.json.gz', 'GaN');
+        let aln = endpoint('phonondb-AlN-wurtzite-mp-661.json.gz', 'AlN');
+        let sampled = sampleMixingPair(gan, aln);
+        assert.equal(sampled.recomputeNac, true);
+
+        let end0 = await computeMixedPhonon(sampled, 0);
+        assert.equal(end0.natoms, 4);
+        assert.equal(end0.family, 'wurtzite');
+        assert.ok(opticalDiff(end0.eigenvalues, await computeReferenceEigenvalues(sampled)) < 1e-4);
+        let end1 = await computeMixedPhonon(sampled, 1);
+        let mirroredEnd = await computeMixedPhonon(sampleMixingPair(aln, gan), 0);
+        assert.ok(opticalDiff(end1.eigenvalues, mirroredEnd.eigenvalues) < 1e-4);
+
+        for (let x of [0.25, 0.5, 0.75]) {
+            let mixed = await computeMixedPhonon(sampled, x, 1 - x);
+            for (let k of gammaIndices(mixed)) {
+                for (let n = 0; n < 3; n++) {
+                    assert.ok(Math.abs(mixed.eigenvalues[k][n]) < 0.05, `x=${x} mode ${n}: ${mixed.eigenvalues[k][n]}`);
+                }
+            }
+        }
+
+        let forward = await computeMixedPhonon(sampled, 0.3, 0.6);
+        let mirrored = await computeMixedPhonon(sampleMixingPair(aln, gan), 0.7, 0.4);
+        assert.ok(opticalDiff(forward.eigenvalues, mirrored.eigenvalues) < 1e-6);
+    });
+
+    it('takes the same path whichever material is material 1', async () => {
+        // equal segment counts: the path must not follow material 1, the files run
+        // their last segment in opposite directions
+        let gan = endpoint('phonondb-GaN-wurtzite-mp-804.json.gz', 'GaN');
+        let alnMP = mpAlN();
+        let labels = (path) => path.map((s) => s.labelA + '-' + s.labelB);
+        assert.deepEqual(labels(buildCommonPath(gan, alnMP)), labels(buildCommonPath(alnMP, gan)));
+
+        let forward = await computeMixedPhonon(sampleMixingPair(gan, alnMP), 0.4);
+        let mirrored = await computeMixedPhonon(sampleMixingPair(alnMP, gan), 0.6);
+        assert.ok(opticalDiff(forward.eigenvalues, mirrored.eigenvalues) < 1e-6);
+    });
+
+    it('does not mix a wurtzite with a zinc blende', () => {
+        let gan = endpoint('phonondb-GaN-wurtzite-mp-804.json.gz', 'GaN');
+        let gap = endpoint('phonondb-GaP-mp-2490.json.gz', 'GaP');
+        assert.throws(() => sampleMixingPair(gan, gap), /Cannot mix/);
+        assert.throws(() => sampleMixingPair(gap, gan), /Cannot mix/);
+    });
+});
+
+describe('ternary wurtzite dynamical-matrix mixing', () => {
+    let gammaIndices = (phonon) => phonon.highsym_qpts.filter((point) => point[1] === 'GAMMA').map((point) => point[0]);
+    let opticalDiff = (a, b) => {
+        let worst = 0;
+        a.forEach((row, k) => row.forEach((v, n) => {
+            if (Math.abs(v) > 1) {
+                worst = Math.max(worst, Math.abs(v - b[k][n]));
+            }
+        }));
+        return worst;
+    };
+    let eigen = async (m) => (await solveComplexHermitianWithEigenWasm(m.real, m.imag)).values.sort((p, q) => p - q);
+    const ORTHORHOMBIC_PATH = ['GAMMA-X', 'X-S', 'S-Y', 'Y-GAMMA', 'GAMMA-Z', 'Z-U', 'U-R', 'R-T', 'T-Z', 'Y-T', 'U-X', 'S-R'];
+
+    it('matches beta-NaFeO2 type cells onto the Pna2_1 template', () => {
+        let zngen2 = endpoint('phonondb-ZnGeN2-mp-2979.json.gz', 'ZnGeN2');
+        let ligas2 = endpoint('phonondb-LiGaS2-mp-3647.json.gz', 'LiGaS2');
+        for (let e of [zngen2, ligas2]) {
+            assert.equal(e.family, 'wurtzite-ABX2');
+            assert.ok(e.sampleAtQ);
+            // the canonical cell lies along the axes: 2a x sqrt(3)a x c of the wurtzite
+            let lattice = e.structure.lattice;
+            lattice.forEach((row, i) => row.forEach((v, j) => {
+                if (i !== j) {
+                    assert.ok(Math.abs(v) < 1e-9);
+                }
+            }));
+            assert.ok(Math.abs(lattice[0][0] / lattice[1][1] - 2 / Math.sqrt(3)) < 0.08);
+        }
+        assert.deepEqual(zngen2.siteTypes, ['Zn', 'Zn', 'Zn', 'Zn', 'Ge', 'Ge', 'Ge', 'Ge', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N']);
+        assert.deepEqual(ligas2.siteTypes.slice(0, 8), ['Li', 'Li', 'Li', 'Li', 'Ga', 'Ga', 'Ga', 'Ga']);
+        // one of the two needs an improper rotation onto the template: its image under inversion
+        assert.notEqual(zngen2.invert, ligas2.invert);
+    });
+
+    it('folds a binary wurtzite into the ternary cell', async () => {
+        // D of the 16-atom supercell at Q has the eigenvalues of GaN at the 4 points Q + g
+        let gan = endpoint('phonondb-GaN-wurtzite-mp-804.json.gz', 'GaN');
+        let folded = wurtziteAsSuperstructure(gan, 'wurtzite-ABX2');
+        assert.equal(folded.siteTypes.length, 16);
+        assert.equal(folded.siteTypes.filter((type) => type === 'Ga').length, 8);
+
+        let superReciprocal = utils.rec_lat(folded.lattice);
+        let toCart = (q) => [0, 1, 2].map((d) => q[0] * superReciprocal[0][d] + q[1] * superReciprocal[1][d] + q[2] * superReciprocal[2][d]);
+        let toPrimitive = (k) => gan.lattice.map((p) => p[0] * k[0] + p[1] * k[1] + p[2] * k[2]);
+        for (let Q of [[0.13, -0.07, 0.21], [0.5, 0.5, 0]]) {
+            let qCart = toCart(Q);
+            let expected = [];
+            // the supercell is 4 wurtzite cells: one g per class modulo the wurtzite
+            // reciprocal lattice, the shortest as in the folding (the truncated
+            // dipole-dipole sum makes D(k) periodic only to ~1e-5)
+            let candidates = [];
+            for (let a = -2; a <= 2; a++) {
+                for (let b = -2; b <= 2; b++) {
+                    for (let c = -2; c <= 2; c++) {
+                        candidates.push(toCart([a, b, c]));
+                    }
+                }
+            }
+            candidates.sort((g, h) => g.reduce((t, v) => t + v * v, 0) - h.reduce((t, v) => t + v * v, 0));
+            let seen = new Set();
+            for (let g of candidates) {
+                let key = toPrimitive(g).map((v) => Math.round((v - Math.floor(v + 1e-9)) * 1e6) % 1000000).join(',');
+                if (seen.has(key)) {
+                    continue;
+                }
+                seen.add(key);
+                let k = toPrimitive([0, 1, 2].map((d) => qCart[d] + g[d]));
+                expected.push(...await eigen(gan.evaluate(k, null)));
+            }
+            assert.equal(seen.size, 4);
+            expected.sort((p, q) => p - q);
+            let actual = await eigen(folded.sampleAtQ(Q, null));
+            actual.forEach((v, i) => assert.ok(Math.abs(v - expected[i]) < 1e-9 * (1 + Math.abs(expected[i]))));
+        }
+    });
+
+    it('keeps end-members exact, acoustic modes at zero and mirror symmetry', async () => {
+        // the two files run their paths along different (equivalent) axes: both are
+        // evaluated on the standard path of the canonical cell
+        let zngen2 = endpoint('phonondb-ZnGeN2-mp-2979.json.gz', 'ZnGeN2');
+        let ligas2 = endpoint('phonondb-LiGaS2-mp-3647.json.gz', 'LiGaS2');
+        let sampled = sampleMixingPair(zngen2, ligas2);
+        assert.equal(sampled.recomputeNac, true);
+        assert.deepEqual(sampled.labels.map((l) => l.join('-')), ORTHORHOMBIC_PATH);
+
+        let end0 = await computeMixedPhonon(sampled, 0);
+        assert.equal(end0.natoms, 16);
+        assert.ok(opticalDiff(end0.eigenvalues, await computeReferenceEigenvalues(sampled)) < 1e-4);
+        let end1 = await computeMixedPhonon(sampled, 1);
+        let mirroredEnd = await computeMixedPhonon(sampleMixingPair(ligas2, zngen2), 0);
+        assert.ok(opticalDiff(end1.eigenvalues, mirroredEnd.eigenvalues) < 1e-4);
+
+        let mixed = await computeMixedPhonon(sampled, 0.5, 0.3);
+        for (let k of gammaIndices(mixed)) {
+            for (let n = 0; n < 3; n++) {
+                assert.ok(Math.abs(mixed.eigenvalues[k][n]) < 0.05, `mode ${n}: ${mixed.eigenvalues[k][n]}`);
+            }
+        }
+        let mirrored = await computeMixedPhonon(sampleMixingPair(ligas2, zngen2), 0.5, 0.7);
+        assert.ok(opticalDiff(mixed.eigenvalues, mirrored.eigenvalues) < 1e-6);
+    });
+
+    it('mixes a PhononDB wurtzite with a ternary wurtzite', async () => {
+        let gan = endpoint('phonondb-GaN-wurtzite-mp-804.json.gz', 'GaN');
+        let zngen2 = endpoint('phonondb-ZnGeN2-mp-2979.json.gz', 'ZnGeN2');
+        let sampled = sampleMixingPair(gan, zngen2);
+        assert.equal(sampled.endpoint1.family, 'wurtzite-ABX2');
+        assert.deepEqual(sampled.labels.map((l) => l.join('-')), ORTHORHOMBIC_PATH);
+
+        // GaN end: the folded GaN; ZnGeN2 end: ZnGeN2 itself
+        let end0 = await computeMixedPhonon(sampled, 0);
+        assert.ok(opticalDiff(end0.eigenvalues, await computeReferenceEigenvalues(sampled)) < 1e-4);
+        let end1 = await computeMixedPhonon(sampled, 1);
+        let own = await computeReferenceEigenvalues(sampleMixingPair(zngen2, gan));
+        assert.ok(opticalDiff(end1.eigenvalues, own) < 1e-4);
+
+        let mixed = await computeMixedPhonon(sampled, 0.5);
+        for (let k of gammaIndices(mixed)) {
+            for (let n = 0; n < 3; n++) {
+                assert.ok(Math.abs(mixed.eigenvalues[k][n]) < 0.05);
+            }
+        }
+    });
+
+    it('refuses pairs on different lattices', () => {
+        let zngen2 = endpoint('phonondb-ZnGeN2-mp-2979.json.gz', 'ZnGeN2');
+        let gap = endpoint('phonondb-GaP-mp-2490.json.gz', 'GaP');
+        let cugas2 = endpoint('phonondb-CuGaS2-mp-5238.json.gz', 'CuGaS2');
+        assert.throws(() => sampleMixingPair(zngen2, gap), /Cannot mix/);
+        assert.throws(() => sampleMixingPair(cugas2, zngen2), /Cannot mix/);
+        // a Materials Project wurtzite is only known on its band path
+        let rows = JSON.parse(readFileSync(join(__dirname, 'fixtures', 'mixing', 'mp-dfpt-dielectric-AlN-wurtzite.json')));
+        let alnMP = buildMixingEndpoint(loadFixture('mpdb-AlN-wurtzite-mp-661-trimmed.json.gz'), { name: 'AlN' }, indexDielectricRows(rows).get(661));
+        assert.throws(() => sampleMixingPair(alnMP, zngen2), /force constants/);
     });
 });

@@ -1,7 +1,11 @@
 /*
  * mixingphonons.js — virtual-crystal mixing of two materials of the same
- * structure family on the mixing page: 2-atom zinc blende / diamond, or 8-atom
- * chalcopyrite (I-42d). Force constants and site masses are mixed separately:
+ * structure family on the mixing page: 2-atom zinc blende / diamond, 4-atom
+ * wurtzite / lonsdaleite (P6_3mc), 8-atom chalcopyrite (I-42d), or a ternary
+ * wurtzite (beta-NaFeO2 type Pna2_1, enargite type Pmn2_1, Cu2SiS3 type
+ * Cmc2_1; WURTZITE_SUPERSTRUCTURES). A binary with force constants can also be
+ * folded into the cell of an ordered ternary on its lattice. Force constants
+ * and site masses are mixed separately:
  *
  *     Phi_k(q)   = M_k^1/2 D_k(q) M_k^1/2
  *     M_x        = (1 - x) M_1 + x M_2
@@ -31,17 +35,28 @@
  *   sites  : zinc blende: canonical order [cation, anion] with the anion at
  *            +(1/4,1/4,1/4) from the cation. Chalcopyrite: the 8 sites of the
  *            I-42d template (lower-valence cation on 4a, the other on 4b, anions
- *            on 8d), matched with any origin. A structure stored as the
- *            inversion image of the template is handled in the atom gauge by
- *            D(q) -> D(q)^*; every other setting of the same lattice differs
- *            from these by a symmetry of the crystal.
+ *            on 8d), matched with any origin. Wurtzite: [cation, cation, anion,
+ *            anion], cations at (1/3,2/3,0) and (2/3,1/3,1/2) with each anion
+ *            u c above its cation, matched with any origin after rotating the
+ *            cell onto a1 || x. A structure stored as the inversion image of
+ *            the template (the opposite polarity in wurtzite) is handled in the
+ *            atom gauge by D(q) -> D(q)^*; every other setting of the same
+ *            lattice differs from these by a symmetry of the crystal.
+ *            Ternary wurtzite: the cell is read as a supercell of wurtzite and
+ *            its sites matched, role by role, onto a template on that supercell
+ *            (any basis, origin and orientation; an improper rotation is again
+ *            handled as the inversion image).
  *   q-path : the high-symmetry segments of the end-member with the fewer
  *            segments, kept where the other end-member has a segment on the
  *            same line (in either direction) and cut to the stretch both cover.
- *            For zinc blende the segments coincide; for chalcopyrite the zone-
+ *            For zinc blende and wurtzite the segments coincide (the hexagonal
+ *            special points do not move with c/a); for chalcopyrite the zone-
  *            boundary points Sigma, Y, ... move with c/a, so segments ending
  *            there are cut at the nearer of the two and segments whose line
- *            itself moves are dropped. Both end-members are sampled at the same
+ *            itself moves are dropped. Ternary wurtzites with force constants
+ *            are evaluated directly on the standard path of the canonical cell,
+ *            since the files run their paths along different but equivalent
+ *            axes. Both end-members are sampled at the same
  *            reduced q. All files of a family share the same primitive vectors,
  *            so reduced coordinates compare directly.
  *
@@ -385,6 +400,508 @@ function getChalcopyriteSpecialPoints(a, c) {
     ];
 }
 
+// wurtzite P6_3mc (No. 186) in the hexagonal cell wurtziteLattice(a, c): cations
+// at (1/3, 2/3, 0) and (2/3, 1/3, 1/2), each anion u c above its cation. Listed
+// relative to the first cation, in canonical order.
+const WURTZITE_SITES = [
+    { role: 'C', red: [0, 0, 0] },
+    { role: 'C', red: [1 / 3, -1 / 3, 0.5] },
+    { role: 'X', red: [0, 0, 0] },
+    { role: 'X', red: [1 / 3, -1 / 3, 0.5] },
+];
+
+export function wurtziteLattice(a, c) {
+    return [[a, 0, 0], [-a / 2, (a * Math.sqrt(3)) / 2, 0], [0, 0, c]];
+}
+
+export function wurtzitePositions(u) {
+    /*
+    reduced coordinates of the canonical 4 sites in wurtziteLattice(a, c)
+    */
+    return WURTZITE_SITES.map((site) => {
+        let f = [site.red[0] + 1 / 3, site.red[1] + 2 / 3, site.red[2] + (site.role === 'X' ? u : 0)];
+        return f.map((v) => v - Math.floor(v + 1e-9));
+    });
+}
+
+function getHexagonalFrame(lattice) {
+    /*
+    rotation onto the axes of wurtziteLattice: a1 along x, a3 along z and a2 at
+    120 degrees from a1 in a right-handed frame (the setting of PhononDB and of
+    the Materials Project, up to a rotation about z)
+    */
+    let a = Math.sqrt(mat.vec_dot(lattice[0], lattice[0]));
+    let c = Math.sqrt(mat.vec_dot(lattice[2], lattice[2]));
+    let ex = mat.vec_scale(lattice[0], 1 / a);
+    let ez = mat.vec_scale(lattice[2], 1 / c);
+    let ey = [
+        ez[1] * ex[2] - ez[2] * ex[1],
+        ez[2] * ex[0] - ez[0] * ex[2],
+        ez[0] * ex[1] - ez[1] * ex[0],
+    ];
+    let expected = [0, 1, 2].map((k) => a * (-0.5 * ex[k] + (Math.sqrt(3) / 2) * ey[k]));
+    let mismatch = Math.max.apply(null, [0, 1, 2].map((k) => Math.abs(lattice[1][k] - expected[k])));
+    if (mismatch > 1e-3 * a || Math.abs(mat.vec_dot(ex, ez)) > 1e-4) {
+        throw new Error('Unsupported setting: not the standard hexagonal cell with a1 and a2 at 120 degrees');
+    }
+    return { a: a, c: c, axes: [ex, ey, ez] };
+}
+
+function matchWurtziteSites(atomTypes, positionsRed, lattice, cationSymbol) {
+    /*
+    map the atoms of a 4-atom wurtzite cell onto WURTZITE_SITES, with any origin
+    and either polarity; a cell of the opposite polarity is the inversion image of
+    the template, handled like in zinc blende by D -> D^*. The other cation as
+    origin covers the other stacking in the plane. Returns the file atom index of
+    every canonical site, the inversion flag, the rotation to the axes of
+    wurtziteLattice and the structural parameters a, c, u.
+    */
+    let elemental = atomTypes.every((type) => type === atomTypes[0]);
+    let role = (type) => (elemental ? null : type === cationSymbol ? 'C' : 'X');
+    if (atomTypes.length !== 4 || (!elemental && atomTypes.filter((type) => type === cationSymbol).length !== 2)) {
+        throw new Error('Not a 4-atom wurtzite cell: ' + atomTypes.join(' '));
+    }
+    let frame = getHexagonalFrame(lattice);
+    const tol = 2e-2;
+
+    for (let sign of [1, -1]) {
+        for (let origin = 0; origin < 4; origin++) {
+            if (role(atomTypes[origin]) === 'X') {
+                continue;
+            }
+            // the rotation keeps the lattice vectors, so reduced coordinates carry over
+            let order = new Array(4).fill(-1);
+            let uValues = [];
+            for (let i = 0; i < 4; i++) {
+                let f = [0, 1, 2].map((k) => sign * (positionsRed[i][k] - positionsRed[origin][k]));
+                for (let s = 0; s < 4; s++) {
+                    let site = WURTZITE_SITES[s];
+                    let siteRole = role(atomTypes[i]);
+                    if (order[s] >= 0 || (siteRole && siteRole !== site.role)) {
+                        continue;
+                    }
+                    let d = f.map((v, k) => wrapFraction(v - site.red[k]));
+                    if (Math.abs(d[0]) > tol || Math.abs(d[1]) > tol) {
+                        continue;
+                    }
+                    if (site.role === 'C' ? Math.abs(d[2]) > tol : d[2] < 0.3 || d[2] > 0.45) {
+                        continue;
+                    }
+                    if (site.role === 'X') {
+                        uValues.push(d[2]);
+                    }
+                    order[s] = i;
+                    break;
+                }
+            }
+            if (order.every((i) => i >= 0) && Math.abs(uValues[0] - uValues[1]) < 1e-2) {
+                let identity = frame.axes.every((axis, k) => Math.abs(axis[k] - 1) < 1e-6);
+                return {
+                    order: order,
+                    invert: sign < 0,
+                    rotation: identity ? null : frame.axes,
+                    structure: { a: frame.a, c: frame.c, u: (uValues[0] + uValues[1]) / 2 },
+                };
+            }
+        }
+    }
+    throw new Error('Could not match the cell onto the wurtzite (P6_3mc) template');
+}
+
+// hexagonal special points, in reduced coordinates of wurtziteLattice(a, c);
+// unlike the body-centred tetragonal ones they do not depend on c/a
+const HEXAGONAL_SPECIAL_POINTS = [
+    { label: 'GAMMA', q: [0, 0, 0] },
+    { label: 'M', q: [0.5, 0, 0] },
+    { label: 'K', q: [1 / 3, 1 / 3, 0] },
+    { label: 'A', q: [0, 0, 0.5] },
+    { label: 'L', q: [0.5, 0, 0.5] },
+    { label: 'H', q: [1 / 3, 1 / 3, 0.5] },
+];
+
+// ---------------------------------------------------------------------------
+// ternary wurtzite derivatives: cation orderings on a supercell of wurtzite
+// ---------------------------------------------------------------------------
+
+// simple orthorhombic special points, reduced coordinates of an orthogonal cell
+const ORTHORHOMBIC_SPECIAL_POINTS = [
+    { label: 'GAMMA', q: [0, 0, 0] },
+    { label: 'X', q: [0.5, 0, 0] },
+    { label: 'Y', q: [0, 0.5, 0] },
+    { label: 'Z', q: [0, 0, 0.5] },
+    { label: 'S', q: [0.5, 0.5, 0] },
+    { label: 'U', q: [0.5, 0, 0.5] },
+    { label: 'T', q: [0, 0.5, 0.5] },
+    { label: 'R', q: [0.5, 0.5, 0.5] },
+];
+
+// seekpath path of a simple orthorhombic cell
+const ORTHORHOMBIC_PATH = [
+    ['GAMMA', 'X'], ['X', 'S'], ['S', 'Y'], ['Y', 'GAMMA'], ['GAMMA', 'Z'], ['Z', 'U'],
+    ['U', 'R'], ['R', 'T'], ['T', 'Z'], ['Y', 'T'], ['U', 'X'], ['S', 'R'],
+];
+
+// Each structure is a supercell of the wurtzite cell wurtziteLattice(a, c):
+// `supercell` holds its lattice vectors in the wurtzite basis, and every site sits
+// on wurtzite sublattice `sub` (WURTZITE_SITES) translated by the wurtzite lattice
+// vector `n`. Roles: A = the cation listed first (more atoms, then lower valence),
+// B = the other cation, X = anion. Derived from PhononDB mp-2979 (ZnGeN2),
+// mp-3934 (Cu3PS4) and mp-9248 (Cu2SiS3) with analyzeWurtziteDerivative.
+const superstructureSites = (list) => list.map((site) => ({ role: site[0], sub: site[1], n: site.slice(2) }));
+export const WURTZITE_SUPERSTRUCTURES = {
+    'wurtzite-ABX2': {
+        title: 'beta-NaFeO2 type A B X2 (Pna2_1)',
+        supercell: [[2, 0, 0], [1, 2, 0], [0, 0, 1]],
+        sites: superstructureSites([
+            ['A', 0, 0, 0, 0], ['A', 0, 2, 1, 0], ['A', 1, 0, 0, 0], ['A', 1, 1, 1, 0],
+            ['B', 0, 1, 0, 0], ['B', 0, 1, 1, 0], ['B', 1, 1, 0, 0], ['B', 1, 2, 1, 0],
+            ['X', 2, 0, 0, 0], ['X', 2, 1, 0, 0], ['X', 2, 1, 1, 0], ['X', 2, 2, 1, 0],
+            ['X', 3, 0, 0, 0], ['X', 3, 1, 0, 0], ['X', 3, 1, 1, 0], ['X', 3, 2, 1, 0],
+        ]),
+        specialPoints: ORTHORHOMBIC_SPECIAL_POINTS,
+        path: ORTHORHOMBIC_PATH,
+    },
+    'wurtzite-A3BX4': {
+        title: 'enargite type A3 B X4 (Pmn2_1)',
+        supercell: [[2, 0, 0], [1, 2, 0], [0, 0, 1]],
+        sites: superstructureSites([
+            ['A', 0, 0, 0, 0], ['A', 0, 1, 0, 0], ['A', 0, 2, 1, 0], ['A', 1, 0, 0, 0], ['A', 1, 1, 1, 0], ['A', 1, 2, 1, 0],
+            ['B', 0, 1, 1, 0], ['B', 1, 1, 0, 0],
+            ['X', 2, 0, 0, 0], ['X', 2, 1, 0, 0], ['X', 2, 1, 1, 0], ['X', 2, 2, 1, 0],
+            ['X', 3, 0, 0, 0], ['X', 3, 1, 0, 0], ['X', 3, 1, 1, 0], ['X', 3, 2, 1, 0],
+        ]),
+        specialPoints: ORTHORHOMBIC_SPECIAL_POINTS,
+        path: ORTHORHOMBIC_PATH,
+    },
+    'wurtzite-A2BX3': {
+        title: 'A2 B X3 (Cmc2_1)',
+        // C-centred: the primitive cell is not orthogonal and its special points
+        // depend on the cell shape, the labels of the file are kept
+        supercell: [[1, -1, 0], [2, 1, 0], [0, 0, 1]],
+        sites: superstructureSites([
+            ['A', 0, 0, 0, 0], ['A', 0, 1, 0, 0], ['A', 1, 1, 0, 0], ['A', 1, 2, 0, 0],
+            ['B', 0, 2, 0, 0], ['B', 1, 0, 0, 0],
+            ['X', 2, 0, 0, 0], ['X', 2, 1, 0, 0], ['X', 2, 2, 0, 0],
+            ['X', 3, 0, 0, 0], ['X', 3, 1, 0, 0], ['X', 3, 2, 0, 0],
+        ]),
+        specialPoints: null,
+        path: null,
+    },
+};
+
+function rowTimesMatrix(v, m) {
+    return [0, 1, 2].map((j) => v[0] * m[0][j] + v[1] * m[1][j] + v[2] * m[2][j]);
+}
+
+function matrixTimesVector(m, v) {
+    return m.map((row) => row[0] * v[0] + row[1] * v[1] + row[2] * v[2]);
+}
+
+function getSuperstructureRoles(atomTypes) {
+    /*
+    species -> role for a ternary A_p B_q X_(p+q) cell: the species with half of
+    the atoms is the anion, the cations are ordered by number of atoms, then
+    valence, then atomic number
+    */
+    let counts = {};
+    atomTypes.forEach((type) => { counts[type] = (counts[type] || 0) + 1; });
+    let species = Object.keys(counts);
+    let anions = species.filter((type) => 2 * counts[type] === atomTypes.length);
+    let cations = species.filter((type) => 2 * counts[type] !== atomTypes.length);
+    if (anions.length !== 1 || cations.length !== 2) {
+        throw new Error('Not a ternary tetrahedral A B X cell: ' + JSON.stringify(counts));
+    }
+    let key = (type) => [-counts[type], CATION_VALENCE[type] || 9, atomic_data.atomic_number[type]];
+    cations.sort((p, q) => {
+        let kp = key(p);
+        let kq = key(q);
+        return kp[0] - kq[0] || kp[1] - kq[1] || kp[2] - kq[2];
+    });
+    let roles = {};
+    roles[cations[0]] = 'A';
+    roles[cations[1]] = 'B';
+    roles[anions[0]] = 'X';
+    return roles;
+}
+
+function getNearestBonds(origin, targets, positionsCar, lattice, count) {
+    // the `count` shortest vectors from atom `origin` to atoms in `targets` (any image)
+    let bonds = [];
+    for (let j of targets) {
+        for (let n0 = -1; n0 <= 1; n0++) {
+            for (let n1 = -1; n1 <= 1; n1++) {
+                for (let n2 = -1; n2 <= 1; n2++) {
+                    let v = [0, 1, 2].map((d) => positionsCar[j][d] + n0 * lattice[0][d] + n1 * lattice[1][d] + n2 * lattice[2][d] - positionsCar[origin][d]);
+                    bonds.push(v);
+                }
+            }
+        }
+    }
+    bonds.sort((p, q) => mat.vec_dot(p, p) - mat.vec_dot(q, q));
+    return bonds.slice(0, count);
+}
+
+function* wurtziteDescriptions(atomTypes, positionsRed, lattice, isAnion) {
+    /*
+    every way of reading the cell as a supercell of an ideal wurtzite: an
+    orthogonal frame T (rows: canonical x, y, z in the cartesian frame of the file,
+    z along the cation -> anion bond parallel to c, a basal bond at -30 degrees
+    from x as in wurtziteLattice) and a cation as origin. Yields T, the origin, the
+    wurtzite lattice H, the supercell matrix M (file lattice = M H in the frame T)
+    and, for every atom, its wurtzite sublattice and lattice vector.
+    */
+    let natoms = atomTypes.length;
+    let positionsCar = utils.red_car_list(positionsRed, lattice);
+    let cations = [];
+    let anions = [];
+    for (let i = 0; i < natoms; i++) {
+        (isAnion(atomTypes[i]) ? anions : cations).push(i);
+    }
+    if (2 * cations.length !== natoms) {
+        return;
+    }
+    let unit = (v) => mat.vec_scale(v, 1 / Math.sqrt(mat.vec_dot(v, v)));
+    let bonds0 = getNearestBonds(cations[0], anions, positionsCar, lattice, 4).map(unit);
+    let cosTol = Math.cos(20 * Math.PI / 180);
+    let polar = bonds0.findIndex((v) => cations.every((i) =>
+        getNearestBonds(i, anions, positionsCar, lattice, 4).some((b) => mat.vec_dot(unit(b), v) > cosTol)
+    ));
+    if (polar < 0) {
+        return;
+    }
+    let ez = bonds0[polar];
+
+    // c of the parent: the shortest lattice vector along z; a from the volume
+    let c = Infinity;
+    for (let n0 = -2; n0 <= 2; n0++) {
+        for (let n1 = -2; n1 <= 2; n1++) {
+            for (let n2 = -2; n2 <= 2; n2++) {
+                let v = [0, 1, 2].map((d) => n0 * lattice[0][d] + n1 * lattice[1][d] + n2 * lattice[2][d]);
+                let length = Math.sqrt(mat.vec_dot(v, v));
+                if (length > 1e-6 && mat.vec_dot(v, ez) > length * Math.cos(5 * Math.PI / 180)) {
+                    c = Math.min(c, length);
+                }
+            }
+        }
+    }
+    if (!isFinite(c)) {
+        return;
+    }
+    let volume = Math.abs(mat.matrix_determinant(lattice));
+    let a = Math.sqrt((2 * volume) / (cations.length * (Math.sqrt(3) / 2) * c));
+    let H = wurtziteLattice(a, c);
+    let Hinverse = mat.matrix_inverse(H);
+    let wurtziteOffsets = WURTZITE_SITES.map((site) => [site.red[0], site.red[1], site.red[2] + (site.role === 'X' ? 0.375 : 0)]);
+
+    for (let b = 0; b < 4; b++) {
+        if (b === polar) {
+            continue;
+        }
+        let basal = [0, 1, 2].map((d) => bonds0[b][d] - mat.vec_dot(bonds0[b], ez) * ez[d]);
+        basal = unit(basal);
+        let cross = [ez[1] * basal[2] - ez[2] * basal[1], ez[2] * basal[0] - ez[0] * basal[2], ez[0] * basal[1] - ez[1] * basal[0]];
+        for (let handedness of [1, -1]) {
+            // the basal bond lies at -30 degrees from x: x = cos30 basal + sin30 (z x basal)
+            let ex = [0, 1, 2].map((d) => (Math.sqrt(3) / 2) * basal[d] + 0.5 * handedness * cross[d]);
+            let ey = [ez[1] * ex[2] - ez[2] * ex[1], ez[2] * ex[0] - ez[0] * ex[2], ez[0] * ex[1] - ez[1] * ex[0]];
+            ey = mat.vec_scale(ey, handedness);
+            let T = [ex, ey, ez];
+            let rotated = lattice.map((row) => matrixTimesVector(T, row));
+            let Mraw = rotated.map((row) => rowTimesMatrix(row, Hinverse));
+            let M = Mraw.map((row) => row.map(Math.round));
+            if (Mraw.some((row, i) => row.some((v, j) => Math.abs(v - M[i][j]) > 0.2)) ||
+                Math.round(Math.abs(mat.matrix_determinant(M))) * 2 !== cations.length) {
+                continue;
+            }
+            for (let origin of cations) {
+                let sites = [];
+                for (let i = 0; i < natoms; i++) {
+                    let d = [0, 1, 2].map((k) => positionsCar[i][k] - positionsCar[origin][k]);
+                    let f = rowTimesMatrix(matrixTimesVector(T, d), Hinverse);
+                    let found = null;
+                    for (let sub = 0; sub < 4 && !found; sub++) {
+                        if ((WURTZITE_SITES[sub].role === 'X') !== isAnion(atomTypes[i])) {
+                            continue;
+                        }
+                        let r = f.map((v, k) => v - wurtziteOffsets[sub][k]);
+                        let n = r.map(Math.round);
+                        if (Math.abs(r[0] - n[0]) < 0.15 && Math.abs(r[1] - n[1]) < 0.15 && Math.abs(r[2] - n[2]) < 0.12) {
+                            found = { sub: sub, n: n };
+                        }
+                    }
+                    if (!found) {
+                        break;
+                    }
+                    sites.push(found);
+                }
+                if (sites.length === natoms) {
+                    yield { T: T, origin: origin, H: H, M: M, sites: sites, a: a, c: c };
+                }
+            }
+        }
+    }
+}
+
+export function analyzeWurtziteDerivative(atomTypes, positionsRed, lattice, supercell = null) {
+    /*
+    template of a ternary cell, as in WURTZITE_SUPERSTRUCTURES: a wurtzite reading
+    with an A cation as origin (and, if given, the supercell in that basis), the
+    sites with their roles, lattice vectors reduced into the supercell, ordered
+    by role, sublattice and position
+    */
+    let roles = getSuperstructureRoles(atomTypes);
+    for (let d of wurtziteDescriptions(atomTypes, positionsRed, lattice, (type) => roles[type] === 'X')) {
+        if (roles[atomTypes[d.origin]] !== 'A') {
+            continue;
+        }
+        let M = d.M;
+        if (supercell) {
+            let U = mat.matrix_multiply(M, mat.matrix_inverse(supercell));
+            if (!isIntegerMatrix(U) || Math.abs(Math.abs(mat.matrix_determinant(U)) - 1) > 1e-6) {
+                continue;
+            }
+            M = supercell;
+        }
+        let inverse = mat.matrix_inverse(M);
+        let sites = d.sites.map((site, i) => {
+            // reduce n into the supercell: n - floor(n M^-1) M
+            let f = rowTimesMatrix(site.n, inverse).map((v) => Math.floor(v + 1e-6));
+            let back = rowTimesMatrix(f, M);
+            return { role: roles[atomTypes[i]], sub: site.sub, n: site.n.map((v, k) => Math.round(v - back[k])) };
+        });
+        let rank = { A: 0, B: 1, X: 2 };
+        sites.sort((p, q) => rank[p.role] - rank[q.role] || p.sub - q.sub ||
+            p.n[2] - q.n[2] || p.n[1] - q.n[1] || p.n[0] - q.n[0]);
+        return { supercell: M, sites: sites, a: d.a, c: d.c };
+    }
+    return null;
+}
+
+function orthogonalPolarFactor(K) {
+    /*
+    the orthogonal factor Q of K = Q P (P symmetric positive), by Newton's
+    iteration X <- (X + X^-T) / 2; it keeps the sign of det K
+    */
+    let X = K.map((row) => row.slice());
+    for (let iteration = 0; iteration < 50; iteration++) {
+        let inverseT = mat.matrix_transpose(mat.matrix_inverse(X));
+        let next = X.map((row, i) => row.map((v, j) => (v + inverseT[i][j]) / 2));
+        let change = Math.max.apply(null, next.map((row, i) => Math.max.apply(null, row.map((v, j) => Math.abs(v - X[i][j])))));
+        X = next;
+        if (change < 1e-14) {
+            break;
+        }
+    }
+    return X;
+}
+
+function isIntegerMatrix(m, tol = 1e-6) {
+    return m.every((row) => row.every((v) => Math.abs(v - Math.round(v)) < tol));
+}
+
+function matchWurtziteSuperstructure(atomTypes, positionsRed, lattice, template) {
+    /*
+    map a ternary cell onto the sites of a WURTZITE_SUPERSTRUCTURES template:
+    the same supercell of wurtzite (any basis) with the same roles on the same
+    sublattice sites modulo the supercell. The frame may need an improper
+    rotation; then the canonical cell is the inversion image, D -> D^*.
+    Returns the file atom of every site, the inversion flag, the proper rotation
+    to the canonical axes, the canonical lattice and reduced positions, and the
+    map of reduced q from the file basis to the canonical one.
+    */
+    let roles = getSuperstructureRoles(atomTypes);
+    let templateInverse = mat.matrix_inverse(template.supercell);
+    let reciprocal = utils.rec_lat(lattice);
+    let positionsCar = utils.red_car_list(positionsRed, lattice);
+    for (let d of wurtziteDescriptions(atomTypes, positionsRed, lattice, (type) => roles[type] === 'X')) {
+        if (roles[atomTypes[d.origin]] !== template.sites[0].role) {
+            continue;
+        }
+        let U = mat.matrix_multiply(d.M, templateInverse);
+        if (!isIntegerMatrix(U) || Math.abs(Math.abs(mat.matrix_determinant(U)) - 1) > 1e-6) {
+            continue;
+        }
+        let order = template.sites.map((site) => {
+            for (let i = 0; i < atomTypes.length; i++) {
+                if (d.sites[i].sub !== site.sub || roles[atomTypes[i]] !== site.role) {
+                    continue;
+                }
+                let shift = [0, 1, 2].map((k) => d.sites[i].n[k] - site.n[k]);
+                if (rowTimesMatrix(shift, templateInverse).every((v) => Math.abs(v - Math.round(v)) < 1e-6)) {
+                    return i;
+                }
+            }
+            return -1;
+        });
+        if (order.some((i) => i < 0) || new Set(order).size !== order.length) {
+            continue;
+        }
+
+        // refine the frame: the orthogonal T (same handedness as the one from the
+        // bonds) that best maps the cell, in the template basis, onto the ideal
+        // supercell of wurtzite (orthogonal Procrustes), so that e.g. an
+        // orthorhombic cell lies exactly along the canonical axes
+        let inverseU = mat.matrix_inverse(U).map((row) => row.map(Math.round));
+        let basis = mat.matrix_multiply(inverseU, lattice);
+        let ideal = mat.matrix_multiply(template.supercell, wurtziteLattice(d.a, d.c));
+        let T = orthogonalPolarFactor(mat.matrix_multiply(mat.matrix_transpose(ideal), basis));
+        if (T.some((row, i) => mat.vec_dot(row, d.T[i]) < Math.cos(15 * Math.PI / 180))) {
+            continue;
+        }
+        let invert = mat.matrix_determinant(T) < 0;
+        let R = invert ? T.map((row) => row.map((v) => -v)) : T;
+        let rotated = lattice.map((row) => matrixTimesVector(T, row));
+        let canonicalLattice = mat.matrix_multiply(inverseU, rotated);
+        let canonicalInverse = mat.matrix_inverse(canonicalLattice);
+        let positions = template.sites.map((site, s) => {
+            let i = order[s];
+            let cartesian = matrixTimesVector(T, [0, 1, 2].map((k) => positionsCar[i][k] - positionsCar[d.origin][k]));
+            let reduced = rowTimesMatrix(cartesian, canonicalInverse);
+            let ideal = rowTimesMatrix(templateParentPosition(site, 0.375), templateInverse);
+            return reduced.map((v, k) => v - Math.round(v - ideal[k]));
+        });
+        let identity = R.every((row, k) => Math.abs(row[k] - 1) < 1e-9);
+        // reduced q: file basis -> cartesian -> rotated by R -> canonical basis
+        let qMap = (q) => {
+            let qCart = rowTimesMatrix(q, reciprocal);
+            let rotatedQ = matrixTimesVector(R, qCart);
+            return canonicalLattice.map((row) => mat.vec_dot(rotatedQ, row));
+        };
+        // the map is linear, q_canonical = q_file Q: rows of Q are the images of the unit vectors
+        let qMapInverse = mat.matrix_inverse([[1, 0, 0], [0, 1, 0], [0, 0, 1]].map(qMap));
+        return {
+            order: order,
+            invert: invert,
+            rotation: identity ? null : R,
+            structure: { lattice: canonicalLattice, positionsRed: positions },
+            qMap: qMap,
+            qMapInverse: qMapInverse,
+        };
+    }
+    throw new Error('Could not match the cell onto the ' + template.title + ' template');
+}
+
+function getSuperstructureFamily(atomTypes) {
+    // the WURTZITE_SUPERSTRUCTURES entry with the same number of atoms per role
+    let roles;
+    try {
+        roles = getSuperstructureRoles(atomTypes);
+    } catch (error) {
+        return null;
+    }
+    let count = (list) => ['A', 'B', 'X'].map((role) => list.filter((r) => r === role).length).join(',');
+    let key = count(atomTypes.map((type) => roles[type]));
+    return Object.keys(WURTZITE_SUPERSTRUCTURES).find((family) =>
+        count(WURTZITE_SUPERSTRUCTURES[family].sites.map((site) => site.role)) === key
+    ) || null;
+}
+
+function templateParentPosition(site, u) {
+    // wurtzite-basis coordinates of a template site for the anion parameter u
+    let base = WURTZITE_SITES[site.sub].red;
+    return [0, 1, 2].map((k) => site.n[k] + base[k] + (k === 2 && site.role === 'X' ? u : 0));
+}
+
 function relabelSegments(segments, specialPoints) {
     /*
     name segment ends by their coordinates; the PhononDB files carry seekpath
@@ -394,6 +911,14 @@ function relabelSegments(segments, specialPoints) {
         for (let point of specialPoints) {
             if (point.q.every((v, i) => Math.abs(v - q[i]) < 2e-3)) {
                 return point.label;
+            }
+        }
+        // an equivalent point: the same modulo the reciprocal lattice, or its inverse
+        for (let point of specialPoints) {
+            for (let sign of [1, -1]) {
+                if (point.q.every((v, i) => Math.abs(wrapFraction(v - sign * q[i])) < 2e-3)) {
+                    return point.label;
+                }
             }
         }
         return fallback;
@@ -523,6 +1048,9 @@ function buildPhononDBEndpoint(raw, entry) {
             let atGamma = q.every((v) => Math.abs(v - Math.round(v)) < QTOL);
             return scaleMatrix(buildDynamicalMatrixBlocks(payload, q, atGamma ? direction : null), factorSq);
         },
+        evaluateShortRange: shortRangePayload ? function(q) {
+            return scaleMatrix(buildDynamicalMatrixBlocks(shortRangePayload, q), factorSq);
+        } : null,
     };
 }
 
@@ -615,13 +1143,13 @@ function buildMaterialsProjectEndpoint(raw, dielectric) {
     let sameSites = dielectric && dielectric.labels.length === atomTypes.length &&
         dielectric.labels.every((label, i) => label === atomTypes[i]);
     let uniqueSpecies = new Set(atomTypes).size === atomTypes.length;
-    if (dielectric && !sameSites && !uniqueSpecies && atomTypes[0] !== atomTypes[1]) {
+    if (dielectric && !sameSites && !uniqueSpecies) {
         console.log("Materials Project Born charges listed in another site order, interpolating the LO-TO term");
         dielectric = null;
     }
     if (dielectric) {
         let born = atomTypes.map((type, i) => {
-            let index = sameSites || atomTypes[0] === atomTypes[1] ? i : dielectric.labels.indexOf(type);
+            let index = sameSites ? i : dielectric.labels.indexOf(type);
             if (index < 0) {
                 throw new Error('No Born charge for ' + type);
             }
@@ -715,6 +1243,13 @@ export function buildMixingEndpoint(raw, entry, dielectric = null) {
         canonical = getCanonicalSites(endpoint.atomTypes, endpoint.positionsRed, cationSymbol);
         endpoint.family = 'zincblende';
         endpoint.rotation = null;
+    } else if (endpoint.atomTypes.length === 4) {
+        let cationSymbol = getCationSymbol(entry && entry.name, endpoint.atomTypes);
+        canonical = matchWurtziteSites(endpoint.atomTypes, endpoint.positionsRed, endpoint.lattice, cationSymbol);
+        endpoint.family = 'wurtzite';
+        endpoint.rotation = canonical.rotation;
+        endpoint.structure = canonical.structure;
+        relabelSegments(endpoint.segments, HEXAGONAL_SPECIAL_POINTS);
     } else if (endpoint.atomTypes.length === 8) {
         canonical = matchChalcopyriteSites(endpoint.atomTypes, endpoint.positionsRed, endpoint.lattice);
         endpoint.family = 'chalcopyrite';
@@ -722,7 +1257,36 @@ export function buildMixingEndpoint(raw, entry, dielectric = null) {
         endpoint.structure = canonical.structure;
         relabelSegments(endpoint.segments, getChalcopyriteSpecialPoints(canonical.structure.a, canonical.structure.c));
     } else {
-        throw new Error('Mixing supports 2-atom zinc blende and 8-atom chalcopyrite cells');
+        let family = getSuperstructureFamily(endpoint.atomTypes);
+        if (!family) {
+            throw new Error('Mixing supports 2-atom zinc blende, 4-atom wurtzite, 8-atom chalcopyrite ' +
+                'and ternary wurtzite cells');
+        }
+        let template = WURTZITE_SUPERSTRUCTURES[family];
+        canonical = matchWurtziteSuperstructure(endpoint.atomTypes, endpoint.positionsRed, endpoint.lattice, template);
+        endpoint.family = family;
+        endpoint.rotation = canonical.rotation;
+        endpoint.structure = canonical.structure;
+        // the canonical cell may use another basis than the file: path in canonical reduced q
+        endpoint.segments.forEach((segment) => {
+            segment.qA = canonical.qMap(segment.qA);
+            segment.qB = canonical.qMap(segment.qB);
+        });
+        if (template.specialPoints) {
+            relabelSegments(endpoint.segments, template.specialPoints);
+        }
+        if (endpoint.evaluate) {
+            // force constants: D (file frame, see toCanonical) at any canonical reduced q,
+            // so that both materials are sampled on the same canonical path; the files
+            // run their paths along different but equivalent directions
+            let toFile = (q) => rowTimesMatrix(q, canonical.qMapInverse);
+            let evaluate = endpoint.evaluate;
+            let evaluateShortRange = endpoint.evaluateShortRange;
+            endpoint.sampleAtQ = (q, direction) => evaluate(toFile(q), direction ? toFile(direction) : null);
+            if (evaluateShortRange) {
+                endpoint.sampleShortRangeAtQ = (q) => evaluateShortRange(toFile(q));
+            }
+        }
     }
     endpoint.name = entry && entry.name ? entry.name : utils.get_formula(endpoint.atomTypes);
     endpoint.order = canonical.order;
@@ -796,46 +1360,34 @@ function toCanonical(endpoint, matrix) {
     return out;
 }
 
-export function zincblendeAsChalcopyrite(zb) {
+function foldIntoSupercell(primitive, family, superLattice, superPositionsRed, sublattice, structure) {
     /*
-    A zinc blende expressed in the 8-atom chalcopyrite cell, so it can be mixed
-    with a chalcopyrite. With c = 2a and u = 1/4 the chalcopyrite template is
-    zinc blende: the A and B sites lie on the cation sublattice, the anion sites
-    on the anion sublattice, and the body-centred tetragonal primitive cell holds
-    4 zinc blende primitive cells. D of this supercell follows from band folding,
+    D of a supercell of `primitive` by band folding, so that a binary can be
+    mixed with an ordered ternary on the same lattice:
 
-        D^S_IJ(Q) = 1/4 sum_g D_ij(Q + g) exp(-2 pi i g.(r_J - r_I))
+        D^S_IJ(Q) = 1/N sum_g D_ij(Q + g) exp(-2 pi i g.(r_J - r_I))
 
-    over the 4 supercell reciprocal vectors g that differ modulo the zinc blende
+    over the N supercell reciprocal vectors g that differ modulo the primitive
     reciprocal lattice (i, j: sublattices of the supercell sites I, J; atom gauge,
     D_ij(k) = sum_R Phi_ij(R) exp(2 pi i k.(R + tau_j - tau_i))). With this sign
     the sum does not depend on which representative g of each class is used.
-    Q + g leaves the band path, so this needs force constants (PhononDB).
+    The primitive cell is taken in its canonical frame (no rotation): the file
+    lattice is the canonical one. Q + g leaves the band path, so this needs
+    force constants (PhononDB).
     */
-    if (!zb.evaluate) {
-        throw new Error('Mixing a zinc blende with a chalcopyrite needs its force constants (PhononDB); ' +
-            'the Materials Project files only cover the band path');
-    }
-    let primitive = zb.lattice;
-    let a = Math.SQRT2 * Math.sqrt(mat.vec_dot(primitive[0], primitive[0]));
-    let fcc = [[0, a / 2, a / 2], [a / 2, 0, a / 2], [a / 2, a / 2, 0]];
-    if (!primitive.every((row, i) => row.every((v, j) => Math.abs(v - fcc[i][j]) < 1e-6 * a))) {
-        throw new Error('Unsupported zinc blende setting: not the standard fcc primitive cell');
-    }
-    let c = 2 * a;
-    let u = 0.25;
-    let lattice = chalcopyriteLattice(a, c);
-    let positionsCar = utils.red_car_list(chalcopyritePositions(a, c, u), lattice);
-    // template sites 0-3 (A, B) are cations, 4-7 anions
-    let sublattice = CHALCOPYRITE_SITES.map((site) => (site.role === 'X' ? 1 : 0));
-    let superReciprocal = utils.rec_lat(lattice);
+    let natoms = sublattice.length;
+    let size = natoms * 3;
+    let count = Math.round(natoms / primitive.siteTypes.length);
+    let primitiveLattice = primitive.lattice;
+    let positionsCar = utils.red_car_list(superPositionsRed, superLattice);
+    let superReciprocal = utils.rec_lat(superLattice);
 
-    // folding vectors: supercell reciprocal vectors, distinct modulo the fcc reciprocal
-    // lattice; the shortest of each class, so that Q = 0 maps onto k = 0 exactly
+    // folding vectors: supercell reciprocal vectors, distinct modulo the primitive
+    // reciprocal lattice; the shortest of each class, so that Q = 0 maps onto k = 0 exactly
     let candidates = [];
-    for (let n0 = -2; n0 <= 2; n0++) {
-        for (let n1 = -2; n1 <= 2; n1++) {
-            for (let n2 = -2; n2 <= 2; n2++) {
+    for (let n0 = -3; n0 <= 3; n0++) {
+        for (let n1 = -3; n1 <= 3; n1++) {
+            for (let n2 = -3; n2 <= 3; n2++) {
                 candidates.push([0, 1, 2].map((d) => n0 * superReciprocal[0][d] + n1 * superReciprocal[1][d] + n2 * superReciprocal[2][d]));
             }
         }
@@ -844,7 +1396,7 @@ export function zincblendeAsChalcopyrite(zb) {
     let folding = [];
     let seen = new Set();
     for (let g of candidates) {
-        let key = primitive.map((p) => {
+        let key = primitiveLattice.map((p) => {
             let f = mat.vec_dot(g, p);
             return Math.round((f - Math.floor(f + 1e-9)) * 1e6) % 1000000;
         }).join(',');
@@ -853,29 +1405,29 @@ export function zincblendeAsChalcopyrite(zb) {
             folding.push(g);
         }
     }
-    if (folding.length !== 4) {
-        throw new Error('Expected 4 folding vectors, found ' + folding.length);
+    if (folding.length !== count) {
+        throw new Error('Expected ' + count + ' folding vectors, found ' + folding.length);
     }
 
     let toCartesian = (q) => [0, 1, 2].map((d) => q[0] * superReciprocal[0][d] + q[1] * superReciprocal[1][d] + q[2] * superReciprocal[2][d]);
-    let toPrimitive = (k) => primitive.map((p) => mat.vec_dot(k, p));
+    let toPrimitive = (k) => primitiveLattice.map((p) => mat.vec_dot(k, p));
 
     let sampleAtQ = function(q, direction) {
         let qCart = toCartesian(q);
         let directionPrimitive = direction ? toPrimitive(toCartesian(direction)) : null;
-        let out = zeroMatrix(24);
+        let out = zeroMatrix(size);
         for (let g of folding) {
             let k = [0, 1, 2].map((d) => qCart[d] + g[d]);
-            let block = toCanonical(zb, zb.evaluate(toPrimitive(k), directionPrimitive));
-            for (let I = 0; I < 8; I++) {
-                for (let J = 0; J < 8; J++) {
+            let block = toCanonical(primitive, primitive.evaluate(toPrimitive(k), directionPrimitive));
+            for (let I = 0; I < natoms; I++) {
+                for (let J = 0; J < natoms; J++) {
                     let phase = -2 * Math.PI * (
                         g[0] * (positionsCar[J][0] - positionsCar[I][0]) +
                         g[1] * (positionsCar[J][1] - positionsCar[I][1]) +
                         g[2] * (positionsCar[J][2] - positionsCar[I][2])
                     );
-                    let cos = Math.cos(phase) / 4;
-                    let sin = Math.sin(phase) / 4;
+                    let cos = Math.cos(phase) / count;
+                    let sin = Math.sin(phase) / count;
                     for (let p = 0; p < 3; p++) {
                         for (let r = 0; r < 3; r++) {
                             let re = block.real[sublattice[I] * 3 + p][sublattice[J] * 3 + r];
@@ -890,22 +1442,22 @@ export function zincblendeAsChalcopyrite(zb) {
         return out;
     };
 
-    let siteTypes = sublattice.map((s) => zb.siteTypes[s]);
-    let siteMasses = sublattice.map((s) => zb.siteMasses[s]);
+    let siteTypes = sublattice.map((s) => primitive.siteTypes[s]);
+    let siteMasses = sublattice.map((s) => primitive.siteMasses[s]);
     let nac = null;
     let sampleShortRangeAtQ = null;
-    if (zb.nac) {
+    if (primitive.nac) {
         nac = {
-            siteBorn: sublattice.map((s) => zb.nac.siteBorn[s]),
-            siteDielectric: zb.nac.siteDielectric,
-            unitConversion: zb.nac.unitConversion,
-            tolerance: zb.nac.tolerance,
+            siteBorn: sublattice.map((s) => primitive.nac.siteBorn[s]),
+            siteDielectric: primitive.nac.siteDielectric,
+            unitConversion: primitive.nac.unitConversion,
+            tolerance: primitive.nac.tolerance,
         };
         // short-range part: folded D minus the dipole-dipole term of the supercell built
         // with the same rules as the mixture's, so the end-member is reproduced exactly
         let ownPayload = buildNacPayload(nac.siteBorn, nac.siteDielectric, nac.unitConversion,
-            lattice, siteMasses, positionsCar, nac.tolerance);
-        let factorSq = zb.frequencyFactor * zb.frequencyFactor;
+            superLattice, siteMasses, positionsCar, nac.tolerance);
+        let factorSq = primitive.frequencyFactor * primitive.frequencyFactor;
         sampleShortRangeAtQ = function(q, direction) {
             let matrix = sampleAtQ(q, direction);
             let dd = getGonzeReciprocalCorrection(ownPayload, q, isGamma(q) ? direction : null);
@@ -915,22 +1467,71 @@ export function zincblendeAsChalcopyrite(zb) {
     }
 
     return {
-        family: 'chalcopyrite',
+        family: family,
         anyQ: true,
-        name: zb.name,
-        lattice: lattice,
-        structure: { a: a, c: c, u: u },
+        name: primitive.name,
+        lattice: superLattice,
+        structure: structure,
         siteTypes: siteTypes,
         siteMasses: siteMasses,
         order: siteTypes.map((_, i) => i),
         invert: false,
         rotation: null,
         nac: nac,
-        frequencyFactor: zb.frequencyFactor,
+        frequencyFactor: primitive.frequencyFactor,
         segments: [],
         sampleAtQ: sampleAtQ,
         sampleShortRangeAtQ: sampleShortRangeAtQ,
     };
+}
+
+export function zincblendeAsChalcopyrite(zb) {
+    /*
+    A zinc blende expressed in the 8-atom chalcopyrite cell, so it can be mixed
+    with a chalcopyrite. With c = 2a and u = 1/4 the chalcopyrite template is
+    zinc blende: the A and B sites lie on the cation sublattice, the anion sites
+    on the anion sublattice, and the body-centred tetragonal primitive cell holds
+    4 zinc blende primitive cells (see foldIntoSupercell).
+    */
+    if (!zb.evaluate) {
+        throw new Error('Mixing a zinc blende with a chalcopyrite needs its force constants (PhononDB); ' +
+            'the Materials Project files only cover the band path');
+    }
+    let primitive = zb.lattice;
+    let a = Math.SQRT2 * Math.sqrt(mat.vec_dot(primitive[0], primitive[0]));
+    let fcc = [[0, a / 2, a / 2], [a / 2, 0, a / 2], [a / 2, a / 2, 0]];
+    if (!primitive.every((row, i) => row.every((v, j) => Math.abs(v - fcc[i][j]) < 1e-6 * a))) {
+        throw new Error('Unsupported zinc blende setting: not the standard fcc primitive cell');
+    }
+    let c = 2 * a;
+    let u = 0.25;
+    // template sites 0-3 (A, B) are cations, 4-7 anions
+    let sublattice = CHALCOPYRITE_SITES.map((site) => (site.role === 'X' ? 1 : 0));
+    return foldIntoSupercell(zb, 'chalcopyrite', chalcopyriteLattice(a, c), chalcopyritePositions(a, c, u),
+        sublattice, { a: a, c: c, u: u });
+}
+
+export function wurtziteAsSuperstructure(wz, family) {
+    /*
+    A binary wurtzite expressed in the cell of a ternary wurtzite derivative
+    (WURTZITE_SUPERSTRUCTURES), every site on its own wurtzite sublattice, so it
+    can be mixed with that ternary (see foldIntoSupercell)
+    */
+    if (!wz.evaluate) {
+        throw new Error('Mixing a wurtzite with a ternary wurtzite needs its force constants (PhononDB); ' +
+            'the Materials Project files only cover the band path');
+    }
+    let template = WURTZITE_SUPERSTRUCTURES[family];
+    let { a, c, u } = wz.structure;
+    let hexagonal = wurtziteLattice(a, c);
+    if (wz.rotation || !wz.lattice.every((row, i) => row.every((v, j) => Math.abs(v - hexagonal[i][j]) < 1e-6 * a))) {
+        throw new Error('Unsupported wurtzite setting: not the standard hexagonal cell');
+    }
+    let lattice = mat.matrix_multiply(template.supercell, hexagonal);
+    let inverse = mat.matrix_inverse(template.supercell);
+    let positionsRed = template.sites.map((site) => rowTimesMatrix(templateParentPosition(site, u), inverse));
+    return foldIntoSupercell(wz, family, lattice, positionsRed, template.sites.map((site) => site.sub),
+        { lattice: lattice, positionsRed: positionsRed });
 }
 
 function lineParameter(segment, q) {
@@ -974,19 +1575,61 @@ function findOverlap(segment, others) {
     return best;
 }
 
+function buildTemplatePath(endpoint1, endpoint2, template) {
+    /*
+    the standard path of a ternary wurtzite cell, both end-members evaluated at
+    the same canonical q; points per segment from its length in the average of
+    the two cells, so the path is the same whichever material comes first
+    */
+    let lattice = endpoint1.structure.lattice.map((row, i) => row.map((v, j) => (v + endpoint2.structure.lattice[i][j]) / 2));
+    let reciprocal = utils.rec_lat(lattice);
+    let point = (label) => template.specialPoints.find((p) => p.label === label).q;
+    return template.path.map(([labelA, labelB]) => {
+        let qA = point(labelA);
+        let qB = point(labelB);
+        let direction = [0, 1, 2].map((d) => qB[d] - qA[d]);
+        let length = Math.sqrt(mat.vec_dot(rowTimesMatrix(direction, reciprocal), rowTimesMatrix(direction, reciprocal)));
+        let atQ = (sampler) => sampler && ((t) => sampler(lerpQ(qA, qB, t), direction));
+        return {
+            qA: qA,
+            qB: qB,
+            labelA: labelA,
+            labelB: labelB,
+            npoints: Math.max(5, Math.round(length * 250) + 1),
+            sample1: atQ(endpoint1.sampleAtQ),
+            sample2: atQ(endpoint2.sampleAtQ),
+            sampleShortRange1: atQ(endpoint1.sampleShortRangeAtQ),
+            sampleShortRange2: atQ(endpoint2.sampleShortRangeAtQ),
+        };
+    });
+}
+
 export function buildCommonPath(endpoint1, endpoint2) {
     /*
-    the segments of the end-member with the fewer segments (endpoint1 on a tie),
+    the segments of the end-member with the fewer segments (on a tie the PhononDB
+    one, then endpoint1),
     each kept where the other end-member has a segment on the same line, in
     either direction, and cut to the stretch both cover. For zinc blende the
     segments coincide; for chalcopyrite the zone-boundary points Sigma, Y, ...
     move with c/a, so a segment ending there is cut at the nearer of the two.
     */
-    if (endpoint1.anyQ || endpoint2.anyQ) {
-        // a zinc blende folded into the chalcopyrite cell can be evaluated at any q:
-        // the path is the whole path of the chalcopyrite
-        let real = endpoint1.anyQ ? endpoint2 : endpoint1;
-        let folded = endpoint1.anyQ ? endpoint1 : endpoint2;
+    let template = WURTZITE_SUPERSTRUCTURES[endpoint1.family];
+    if (endpoint1.sampleAtQ && endpoint2.sampleAtQ && template && template.path) {
+        // both known at any q: the standard path of the canonical cell
+        return buildTemplatePath(endpoint1, endpoint2, template);
+    }
+    if (endpoint1.sampleAtQ || endpoint2.sampleAtQ) {
+        // one end-member can be evaluated at any q (a binary folded into the cell of
+        // the ternary, or force constants): the path is the whole path of the other
+        let real;
+        if (!endpoint1.sampleAtQ) {
+            real = endpoint1;
+        } else if (!endpoint2.sampleAtQ) {
+            real = endpoint2;
+        } else {
+            real = endpoint1.segments.length ? endpoint1 : endpoint2;
+        }
+        let folded = real === endpoint1 ? endpoint2 : endpoint1;
         return real.segments.map((segment) => {
             let direction = [0, 1, 2].map((d) => segment.qB[d] - segment.qA[d]);
             let atQ = (sampler) => sampler && ((t) => sampler(lerpQ(segment.qA, segment.qB, t), direction));
@@ -1006,7 +1649,14 @@ export function buildCommonPath(endpoint1, endpoint2) {
         });
     }
 
-    let lesser = endpoint2.segments.length < endpoint1.segments.length ? endpoint2 : endpoint1;
+    // on a tie the path must not depend on which material is material 1 (segments
+    // can run in opposite directions, e.g. H-K and K-H): prefer the PhononDB one
+    let lesser;
+    if (endpoint1.segments.length !== endpoint2.segments.length) {
+        lesser = endpoint2.segments.length < endpoint1.segments.length ? endpoint2 : endpoint1;
+    } else {
+        lesser = !endpoint1.evaluate && endpoint2.evaluate ? endpoint2 : endpoint1;
+    }
     let other = lesser === endpoint1 ? endpoint2 : endpoint1;
 
     let path = [];
@@ -1045,6 +1695,14 @@ export function buildCommonPath(endpoint1, endpoint2) {
     return path;
 }
 
+export function getParentFamily(family) {
+    // the binary family an ordered ternary family is a supercell of
+    if (family === 'chalcopyrite') {
+        return 'zincblende';
+    }
+    return WURTZITE_SUPERSTRUCTURES[family] ? 'wurtzite' : null;
+}
+
 export function sampleMixingPair(endpoint1, endpoint2) {
     /*
     canonical D_1 and D_2 at every q-point of the common path; independent of x.
@@ -1053,15 +1711,16 @@ export function sampleMixingPair(endpoint1, endpoint2) {
     recomputed for the mixed crystal instead of being interpolated.
     */
     if (endpoint1.family !== endpoint2.family) {
-        let families = [endpoint1.family, endpoint2.family].sort().join('+');
-        if (families !== 'chalcopyrite+zincblende') {
-            throw new Error('Cannot mix a ' + endpoint1.family + ' cell with a ' + endpoint2.family + ' cell');
-        }
-        // the zinc blende goes into the chalcopyrite cell
-        if (endpoint1.family === 'zincblende') {
-            endpoint1 = zincblendeAsChalcopyrite(endpoint1);
+        // a binary goes into the cell of an ordered ternary on the same lattice
+        let fold = (binary, family) => (family === 'chalcopyrite'
+            ? zincblendeAsChalcopyrite(binary)
+            : wurtziteAsSuperstructure(binary, family));
+        if (getParentFamily(endpoint2.family) === endpoint1.family) {
+            endpoint1 = fold(endpoint1, endpoint2.family);
+        } else if (getParentFamily(endpoint1.family) === endpoint2.family) {
+            endpoint2 = fold(endpoint2, endpoint1.family);
         } else {
-            endpoint2 = zincblendeAsChalcopyrite(endpoint2);
+            throw new Error('Cannot mix a ' + endpoint1.family + ' cell with a ' + endpoint2.family + ' cell');
         }
     }
     let recomputeNac = !!(endpoint1.nac && endpoint2.nac);
@@ -1388,14 +2047,26 @@ export async function computeMixedPhonon(sampled, x, massFraction = x) {
 
     let lattice;
     let positionsRed;
-    if (endpoint1.family === 'chalcopyrite') {
+    if (endpoint1.structure && endpoint1.structure.lattice) {
+        // ternary wurtzite: canonical lattice and reduced positions mixed linearly
+        let s1 = endpoint1.structure;
+        let s2 = endpoint2.structure;
+        lattice = s1.lattice.map((row, i) => row.map((v, j) => (1 - x) * v + x * s2.lattice[i][j]));
+        positionsRed = s1.positionsRed.map((row, i) => row.map((v, j) => (1 - x) * v + x * s2.positionsRed[i][j]));
+    } else if (endpoint1.family === 'chalcopyrite' || endpoint1.family === 'wurtzite') {
         // virtual crystal: a, c and the anion parameter u mixed linearly
         let s1 = endpoint1.structure;
         let s2 = endpoint2.structure;
         let a = (1 - x) * s1.a + x * s2.a;
         let c = (1 - x) * s1.c + x * s2.c;
-        lattice = chalcopyriteLattice(a, c);
-        positionsRed = chalcopyritePositions(a, c, (1 - x) * s1.u + x * s2.u);
+        let u = (1 - x) * s1.u + x * s2.u;
+        if (endpoint1.family === 'wurtzite') {
+            lattice = wurtziteLattice(a, c);
+            positionsRed = wurtzitePositions(u);
+        } else {
+            lattice = chalcopyriteLattice(a, c);
+            positionsRed = chalcopyritePositions(a, c, u);
+        }
     } else {
         lattice = [0, 1, 2].map((i) => [0, 1, 2].map((j) =>
             (1 - x) * endpoint1.lattice[i][j] + x * endpoint2.lattice[i][j]
@@ -1468,7 +2139,7 @@ export async function computeMixedPhonon(sampled, x, massFraction = x) {
         highsym_qpts: getHighSymmetryPoints(sampled.lineBreaks, sampled.labels),
         eigenvalues: eigenvalues,
         vectors: vectors,
-        repetitions: natoms > 2 ? [2, 2, 2] : [3, 3, 3],
+        repetitions: natoms > 4 ? [2, 2, 2] : [3, 3, 3],
         family: endpoint1.family,
         // 'recomputed': dipole-dipole term from mixed Born charges and dielectric tensor
         // 'interpolated': the long-range term is mixed along with the force constants
