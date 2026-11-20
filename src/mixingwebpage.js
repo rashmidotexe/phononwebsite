@@ -77,13 +77,14 @@ export class MixingHighcharts extends PhononHighcharts {
 export class MixingWebpage extends PhononWebpage {
     /*
     Phonon page restricted to the curated list of 2-atom zinc blende / diamond,
-    4-atom wurtzite / lonsdaleite, 8-atom chalcopyrite and ternary wurtzite
-    (beta-NaFeO2, enargite and Cu2SiS3 type) materials in
-    data/mixing/models.json, drawn from the PhononDB (A. Togo) and Materials
-    Project (G. Petretto et al.) databases. Materials mix within their family; a
-    binary with force constants (PhononDB) can also be mixed with an ordered
-    ternary on its lattice (zinc blende with chalcopyrite, wurtzite with the
-    ternary wurtzites), folded into the cell of the ternary.
+    2-atom rocksalt, 4-atom wurtzite / lonsdaleite, 8-atom chalcopyrite,
+    ternary wurtzite (beta-NaFeO2, enargite and Cu2SiS3 type) and cation-
+    ordered ternary rocksalt (alpha-NaFeO2, gamma-LiFeO2, Li2ZrO3 type, ...)
+    materials in data/mixing/models.json, drawn from the PhononDB (A. Togo) and
+    Materials Project (G. Petretto et al.) databases. Materials mix within their
+    family; a binary with force constants (PhononDB) can also be mixed with an
+    ordered ternary on its lattice (zinc blende with chalcopyrite, wurtzite and
+    rocksalt with their ternaries), folded into the cell of the ternary.
 
     Material 1 is picked in the regular list, material 2 in the second list and
     the character slider sets the fraction x of material 2 in the virtual
@@ -120,15 +121,23 @@ export class MixingWebpage extends PhononWebpage {
 
     setMixingNote(dom_note) { this.dom_mixing_note = dom_note; }
 
-    updateMixingNote(nacMode) {
+    updateMixingNote(nacMode, sampled = null) {
         if (!this.dom_mixing_note) {
             return;
         }
         // the dipole-dipole term is normally recomputed from the mixed Born charges and
-        // dielectric tensor; only the fallback, where it is interpolated, is flagged
-        let note = nacMode === 'interpolated' && this.material2
-            ? "LO–TO splitting interpolated: the Materials Project Born charges could not be loaded."
-            : "";
+        // dielectric tensor; only the fallback, where it is interpolated, is flagged,
+        // with its cause: a PhononDB file without Born charges, or Materials Project
+        // charges that could not be loaded
+        let note = "";
+        if (nacMode === 'interpolated' && this.material2) {
+            let missing = sampled ? [sampled.endpoint1, sampled.endpoint2].filter((endpoint) => !endpoint.nac) : [];
+            let phonondb = missing.filter((endpoint) => endpoint.evaluate || endpoint.anyQ);
+            note = phonondb.length && phonondb.length === missing.length
+                ? "LO–TO splitting interpolated: no Born charges in the PhononDB file of " +
+                    phonondb.map((endpoint) => endpoint.name).join(" and ") + "."
+                : "LO–TO splitting interpolated: the Materials Project Born charges could not be loaded.";
+        }
         this.dom_mixing_note.text(note);
     }
 
@@ -253,6 +262,7 @@ export class MixingWebpage extends PhononWebpage {
                 link: "https://materialsproject.org/materials/mp-"+entry.id,
                 // only materials of the same structure family can be mixed
                 family: entry.family || "zincblende",
+                spacegroup: entry.spacegroup,
             };
             if (entry.source === phonondb.name) {
                 m.source = phonondb.name;
@@ -296,8 +306,8 @@ export class MixingWebpage extends PhononWebpage {
         if (materialsHeading && this.dom_mat) {
             materialsHeading.textContent = "Choose material 1 (" + this.dom_mat.children().length + "):";
         }
-        // the base list shows the formula only: tag the wurtzites, the same
-        // compound is often listed as a zinc blende too
+        // the base list shows the formula only: tag the wurtzites and rocksalts,
+        // the same compound is often listed as a zinc blende too
         let materials = this.getMenuMaterials();
         let items = this.dom_mat ? this.dom_mat.children() : [];
         for (let i = 0; i < items.length && i < materials.length; i++) {
@@ -319,9 +329,22 @@ export class MixingWebpage extends PhononWebpage {
     }
 
     getFamilyTag(material) {
-        return material && material.family && material.family.indexOf("wurtzite") === 0
-            ? ' <span class="family-tag">wurtzite</span>'
-            : "";
+        /*
+        the structure family; ternary rocksalts also name their space group,
+        e.g. LiDyS2 is listed in the alpha-NaFeO2 (R-3m) and gamma-LiFeO2
+        (I4_1/amd) orderings
+        */
+        let family = material && material.family ? material.family : "";
+        let tag = "";
+        if (family.indexOf("wurtzite") === 0) {
+            tag = "wurtzite";
+        } else if (family === "rocksalt") {
+            tag = "rocksalt";
+        } else if (family.indexOf("rocksalt-") === 0) {
+            let spacegroup = (material.spacegroup || "").replace(/_(\d)/g, "<sub>$1</sub>");
+            tag = "rocksalt" + (spacegroup ? " " + spacegroup : "");
+        }
+        return tag ? ' <span class="family-tag">' + tag + '</span>' : "";
     }
 
     materialMatchesFilter(material, tokens) {
@@ -394,6 +417,7 @@ export class MixingWebpage extends PhononWebpage {
         let FAMILY_NAMES = {
             zincblende: ["zinc blende", "Chalcopyrites"],
             wurtzite: ["wurtzite", "Ternary wurtzites"],
+            rocksalt: ["rocksalt", "Ternary rocksalts"],
         };
         let family1 = material1 ? material1.family : "zincblende";
         let parent = FAMILY_NAMES[family1] ? family1 : getParentFamily(family1);
@@ -492,6 +516,16 @@ export class MixingWebpage extends PhononWebpage {
         this.refreshMixing(true, callback);
     }
 
+    loadCallback() {
+        super.loadCallback();
+        if (!this.material2 && this.material1 && this.material1.name) {
+            // the menu name (cation first: NaCl, PbTe) rather than the formula stored
+            // in the file (ClNa, TePb)
+            this.name = utils.format_formula_html(this.material1.name);
+            this.updatePage();
+        }
+    }
+
     selectMaterial2(material) {
         this.material2 = material ? { url: material.url, name: material.name } : null;
         this.renderMaterial2Menu();
@@ -550,7 +584,9 @@ export class MixingWebpage extends PhononWebpage {
     getMixingTitle() {
         let percent = Math.round(this.character * 100);
         let mass = this.massLinked ? "" : ", mass " + Math.round(this.massCharacter * 100) + " %";
-        let family = this.pairCache && this.pairCache.sampled.endpoint1.family.indexOf("wurtzite") === 0 ? "wurtzite, " : "";
+        let familyName = this.pairCache ? this.pairCache.sampled.endpoint1.family : "";
+        let family = ["wurtzite", "rocksalt"].find((name) => familyName.indexOf(name) === 0);
+        family = family ? family + ", " : "";
         return utils.format_formula_html(this.material1.name) +
             " + " + utils.format_formula_html(this.material2.name) +
             " (" + family + percent + " % " + utils.format_formula_html(this.material2.name) + mass + ")";
@@ -617,7 +653,7 @@ export class MixingWebpage extends PhononWebpage {
                 this.update();
             }
             this.name = this.getMixingTitle();
-            this.updateMixingNote(data.nac_mode);
+            this.updateMixingNote(data.nac_mode, pair.sampled);
             this.updateMassLabel();
             this.updatePage();
             if (callback) {

@@ -13,6 +13,7 @@ import {
     computeReferenceEigenvalues,
     zincblendeAsChalcopyrite,
     wurtziteAsSuperstructure,
+    binaryAsSuperstructure,
 } from '../src/mixingphonons.js';
 import { solveComplexHermitianWithEigenWasm } from '../src/eigenwasm.js';
 import * as utils from '../src/utils.js';
@@ -739,5 +740,239 @@ describe('ternary wurtzite dynamical-matrix mixing', () => {
         let rows = JSON.parse(readFileSync(join(__dirname, 'fixtures', 'mixing', 'mp-dfpt-dielectric-AlN-wurtzite.json')));
         let alnMP = buildMixingEndpoint(loadFixture('mpdb-AlN-wurtzite-mp-661-trimmed.json.gz'), { name: 'AlN' }, indexDielectricRows(rows).get(661));
         assert.throws(() => sampleMixingPair(alnMP, zngen2), /force constants/);
+    });
+});
+
+describe('rocksalt dynamical-matrix mixing', () => {
+    let gammaIndices = (sampled) => sampled.qpoints
+        .map((q, k) => (q.every((v) => Math.abs(v - Math.round(v)) < 1e-9) ? k : -1))
+        .filter((k) => k >= 0);
+    let opticalDiff = (a, b) => {
+        let worst = 0;
+        a.forEach((row, k) => row.forEach((v, n) => {
+            if (Math.abs(v) > 1) {
+                worst = Math.max(worst, Math.abs(v - b[k][n]));
+            }
+        }));
+        return worst;
+    };
+    let caoMP = () => {
+        let rows = JSON.parse(readFileSync(join(__dirname, 'fixtures', 'mixing', 'mp-dfpt-dielectric-CaO.json')));
+        return buildMixingEndpoint(loadFixture('mpdb-CaO-mp-2605-trimmed.json.gz'), { name: 'CaO' }, indexDielectricRows(rows).get(2605));
+    };
+
+    it('matches 2-atom cells with the anion at (1/2,1/2,1/2) as rocksalt', () => {
+        let nacl = endpoint('phonondb-NaCl-mp-22862.json.gz', 'NaCl');
+        assert.equal(nacl.family, 'rocksalt');
+        assert.deepEqual(nacl.siteTypes, ['Na', 'Cl']);
+        assert.equal(nacl.invert, false);
+        // the cation is the species that is not a usual anion, whatever the name order (TePb)
+        let named = buildMixingEndpoint(loadFixture('phonondb-NaCl-mp-22862.json.gz'), { name: 'ClNa' });
+        assert.deepEqual(named.siteTypes, ['Na', 'Cl']);
+        let cao = caoMP();
+        assert.equal(cao.family, 'rocksalt');
+        assert.deepEqual(cao.siteTypes, ['Ca', 'O']);
+        assert.ok(cao.nac);
+        // zinc blende stays zinc blende
+        assert.equal(endpoint('phonondb-GaP-mp-2490.json.gz', 'GaP').family, 'zincblende');
+    });
+
+    it('keeps end-members exact, acoustic modes at zero and mirror symmetry', async () => {
+        let nacl = endpoint('phonondb-NaCl-mp-22862.json.gz', 'NaCl');
+        let kcl = endpoint('phonondb-KCl-mp-23193.json.gz', 'KCl');
+        let sampled = sampleMixingPair(nacl, kcl);
+        assert.equal(sampled.recomputeNac, true);
+        let end0 = await computeMixedPhonon(sampled, 0);
+        assert.ok(opticalDiff(end0.eigenvalues, await computeReferenceEigenvalues(sampled)) < 1e-6);
+        let end1 = await computeMixedPhonon(sampled, 1);
+        assert.ok(opticalDiff(end1.eigenvalues, await computeReferenceEigenvalues(sampleMixingPair(kcl, nacl))) < 1e-6);
+
+        let mixed = await computeMixedPhonon(sampled, 0.4, 0.7);
+        let gamma = gammaIndices(sampled);
+        assert.ok(gamma.length >= 2);
+        for (let k of gamma) {
+            for (let n = 0; n < 3; n++) {
+                assert.ok(Math.abs(mixed.eigenvalues[k][n]) < 0.05);
+            }
+        }
+        let mirrored = await computeMixedPhonon(sampleMixingPair(kcl, nacl), 0.6, 0.3);
+        assert.ok(maxAbsDiff(mixed.eigenvalues, mirrored.eigenvalues) < 1e-4);
+    });
+
+    it('recomputes the dipole-dipole term with a Materials Project rocksalt', async () => {
+        let nacl = endpoint('phonondb-NaCl-mp-22862.json.gz', 'NaCl');
+        let caoRaw = loadFixture('mpdb-CaO-mp-2605-trimmed.json.gz');
+        let sampled = sampleMixingPair(nacl, caoMP());
+        assert.equal(sampled.recomputeNac, true);
+
+        // at x = 1, on the q-points of the CaO file away from Gamma, the file frequencies come back
+        let mixed = await computeMixedPhonon(sampled, 1);
+        let matched = 0;
+        for (let k = 0; k < mixed.qpoints.length; k++) {
+            if (gammaIndices(sampled).includes(k)) {
+                continue;
+            }
+            let i = caoRaw.qpoints.findIndex((q) => q.every((v, d) => Math.abs(v - mixed.qpoints[k][d]) < 1e-6));
+            if (i < 0) {
+                continue;
+            }
+            matched += 1;
+            let expected = caoRaw.frequencies.map((band) => band[i] * 33.35641).sort((a, b) => a - b);
+            for (let n = 0; n < expected.length; n++) {
+                assert.ok(Math.abs(expected[n] - mixed.eigenvalues[k][n]) < 1e-2, `${expected[n]} vs ${mixed.eigenvalues[k][n]}`);
+            }
+        }
+        assert.ok(matched >= sampled.lineBreaks.length);
+
+        let half = await computeMixedPhonon(sampled, 0.5);
+        for (let k of gammaIndices(sampled)) {
+            for (let n = 0; n < 3; n++) {
+                assert.ok(Math.abs(half.eigenvalues[k][n]) < 0.05);
+            }
+        }
+    });
+
+    it('does not mix a rocksalt with a zinc blende', () => {
+        let nacl = endpoint('phonondb-NaCl-mp-22862.json.gz', 'NaCl');
+        let gap = endpoint('phonondb-GaP-mp-2490.json.gz', 'GaP');
+        assert.throws(() => sampleMixingPair(nacl, gap), /Cannot mix/);
+    });
+});
+
+describe('ternary rocksalt dynamical-matrix mixing', () => {
+    let gammaIndices = (sampled) => sampled.qpoints
+        .map((q, k) => (q.every((v) => Math.abs(v - Math.round(v)) < 1e-9) ? k : -1))
+        .filter((k) => k >= 0);
+    let opticalDiff = (a, b) => {
+        let worst = 0;
+        a.forEach((row, k) => row.forEach((v, n) => {
+            if (Math.abs(v) > 1) {
+                worst = Math.max(worst, Math.abs(v - b[k][n]));
+            }
+        }));
+        return worst;
+    };
+    let eigen = async (m) => (await solveComplexHermitianWithEigenWasm(m.real, m.imag)).values.sort((p, q) => p - q);
+
+    it('matches cation-ordered cells onto their template', () => {
+        let nains2 = endpoint('phonondb-NaInS2-mp-20289.json.gz', 'NaInS2');
+        assert.equal(nains2.family, 'rocksalt-ABX2-R3m');
+        assert.deepEqual(nains2.siteTypes, ['Na', 'In', 'S', 'S']);
+        assert.ok(nains2.sampleAtQ);
+        // charge balance: Tl+ next to Dy3+ takes the A site of Na+
+        let dytls2 = endpoint('phonondb-DyTlS2-mp-31166.json.gz', 'DyTlS2');
+        assert.equal(dytls2.family, 'rocksalt-ABX2-R3m');
+        assert.deepEqual(dytls2.siteTypes, ['Tl', 'Dy', 'S', 'S']);
+        // same composition and cell size as a chalcopyrite: the gamma-LiFeO2 ordering
+        let lisco2 = endpoint('phonondb-LiScO2-mp-5840.json.gz', 'LiScO2');
+        assert.equal(lisco2.family, 'rocksalt-ABX2-I41amd');
+        assert.deepEqual(lisco2.siteTypes, ['Li', 'Li', 'Sc', 'Sc', 'O', 'O', 'O', 'O']);
+        // the menu entry may name the family; the Materials Project file of the same compound
+        let nains2MP = buildMixingEndpoint(loadFixture('mpdb-NaInS2-mp-20289-trimmed.json.gz'),
+            { name: 'NaInS2', family: 'rocksalt-ABX2-R3m' });
+        assert.equal(nains2MP.family, 'rocksalt-ABX2-R3m');
+        assert.ok(!nains2MP.sampleAtQ);
+        assert.throws(() => buildMixingEndpoint(loadFixture('phonondb-NaInS2-mp-20289.json.gz'),
+            { name: 'NaInS2', family: 'rocksalt-ABX2-I41amd' }), /Could not match/);
+    });
+
+    it('labels Gamma only at reciprocal lattice vectors', () => {
+        // the LiScO2 file has "X" at q = 0 and "G" off Gamma
+        let lisco2 = endpoint('phonondb-LiScO2-mp-5840.json.gz', 'LiScO2');
+        let isLatticeVector = (q) => q.every((v) => Math.abs(v - Math.round(v)) < 1e-5);
+        for (let segment of lisco2.segments) {
+            for (let [label, q] of [[segment.labelA, segment.qA], [segment.labelB, segment.qB]]) {
+                assert.equal(label === 'GAMMA', isLatticeVector(q), label + ' ' + q);
+            }
+        }
+    });
+
+    it('folds a binary rocksalt into the ternary cell', async () => {
+        // D of the 4-atom supercell at Q has the eigenvalues of NaCl at the 2 points Q + g
+        let nacl = endpoint('phonondb-NaCl-mp-22862.json.gz', 'NaCl');
+        let folded = binaryAsSuperstructure(nacl, 'rocksalt-ABX2-R3m');
+        assert.deepEqual(folded.siteTypes, ['Na', 'Na', 'Cl', 'Cl']);
+
+        let superReciprocal = utils.rec_lat(folded.lattice);
+        let toCart = (q) => [0, 1, 2].map((d) => q[0] * superReciprocal[0][d] + q[1] * superReciprocal[1][d] + q[2] * superReciprocal[2][d]);
+        let toPrimitive = (k) => nacl.lattice.map((p) => p[0] * k[0] + p[1] * k[1] + p[2] * k[2]);
+        for (let Q of [[0.13, -0.07, 0.21], [0.5, 0, 0]]) {
+            let qCart = toCart(Q);
+            let candidates = [];
+            for (let a = -2; a <= 2; a++) {
+                for (let b = -2; b <= 2; b++) {
+                    for (let c = -2; c <= 2; c++) {
+                        candidates.push(toCart([a, b, c]));
+                    }
+                }
+            }
+            candidates.sort((g, h) => g.reduce((t, v) => t + v * v, 0) - h.reduce((t, v) => t + v * v, 0));
+            let seen = new Set();
+            let expected = [];
+            for (let g of candidates) {
+                let key = toPrimitive(g).map((v) => Math.round((v - Math.floor(v + 1e-9)) * 1e6) % 1000000).join(',');
+                if (seen.has(key)) {
+                    continue;
+                }
+                seen.add(key);
+                expected.push(...await eigen(nacl.evaluate(toPrimitive([0, 1, 2].map((d) => qCart[d] + g[d])), null)));
+            }
+            assert.equal(seen.size, 2);
+            expected.sort((p, q) => p - q);
+            let actual = await eigen(folded.sampleAtQ(Q, null));
+            actual.forEach((v, i) => assert.ok(Math.abs(v - expected[i]) < 1e-9 * (1 + Math.abs(expected[i]))));
+        }
+    });
+
+    it('keeps end-members exact, acoustic modes at zero and mirror symmetry', async () => {
+        let nacl = endpoint('phonondb-NaCl-mp-22862.json.gz', 'NaCl');
+        let nains2 = endpoint('phonondb-NaInS2-mp-20289.json.gz', 'NaInS2');
+        let dytls2 = endpoint('phonondb-DyTlS2-mp-31166.json.gz', 'DyTlS2');
+        for (let [a, b] of [[nacl, nains2], [nains2, dytls2]]) {
+            let sampled = sampleMixingPair(a, b);
+            let reversed = sampleMixingPair(b, a);
+            assert.equal(sampled.recomputeNac, true);
+            // the path does not depend on which material comes first
+            assert.deepEqual(sampled.labels, reversed.labels);
+            let end0 = await computeMixedPhonon(sampled, 0);
+            assert.ok(opticalDiff(end0.eigenvalues, await computeReferenceEigenvalues(sampled)) < 1e-4);
+            let end1 = await computeMixedPhonon(sampled, 1);
+            assert.ok(opticalDiff(end1.eigenvalues, await computeReferenceEigenvalues(reversed)) < 1e-4);
+
+            let mixed = await computeMixedPhonon(sampled, 0.5, 0.3);
+            for (let k of gammaIndices(sampled)) {
+                for (let n = 0; n < 3; n++) {
+                    assert.ok(Math.abs(mixed.eigenvalues[k][n]) < 0.05, `mode ${n}: ${mixed.eigenvalues[k][n]}`);
+                }
+            }
+            let mirrored = await computeMixedPhonon(reversed, 0.5, 0.7);
+            assert.ok(opticalDiff(mixed.eigenvalues, mirrored.eigenvalues) < 1e-6);
+        }
+    });
+
+    it('lines up the paths of two Materials Project files', () => {
+        // the two files run the rhombohedral path in orientations related by a
+        // symmetry of the crystal; the canonical cells are chosen so they coincide
+        let nains2 = buildMixingEndpoint(loadFixture('mpdb-NaInS2-mp-20289-trimmed.json.gz'), { name: 'NaInS2' });
+        let klas2 = buildMixingEndpoint(loadFixture('mpdb-KLaS2-mp-15781-trimmed.json.gz'), { name: 'KLaS2' });
+        let points = (e) => e.segments.reduce((total, segment) => total + segment.npoints, 0);
+        let sampled = sampleMixingPair(nains2, klas2);
+        assert.ok(sampled.qpoints.length >= 0.9 * Math.min(points(nains2), points(klas2)));
+        for (let label of ['L', 'Z', 'F']) {
+            assert.ok(sampled.labels.some((pair) => pair.includes(label)), label);
+        }
+    });
+
+    it('refuses pairs on different lattices or without force constants', () => {
+        let nains2 = endpoint('phonondb-NaInS2-mp-20289.json.gz', 'NaInS2');
+        let lisco2 = endpoint('phonondb-LiScO2-mp-5840.json.gz', 'LiScO2');
+        let zngen2 = endpoint('phonondb-ZnGeN2-mp-2979.json.gz', 'ZnGeN2');
+        let gap = endpoint('phonondb-GaP-mp-2490.json.gz', 'GaP');
+        assert.throws(() => sampleMixingPair(nains2, lisco2), /Cannot mix/);
+        assert.throws(() => sampleMixingPair(zngen2, nains2), /Cannot mix/);
+        assert.throws(() => sampleMixingPair(gap, nains2), /Cannot mix/);
+        let rows = JSON.parse(readFileSync(join(__dirname, 'fixtures', 'mixing', 'mp-dfpt-dielectric-CaO.json')));
+        let cao = buildMixingEndpoint(loadFixture('mpdb-CaO-mp-2605-trimmed.json.gz'), { name: 'CaO' }, indexDielectricRows(rows).get(2605));
+        assert.throws(() => sampleMixingPair(cao, nains2), /force constants/);
     });
 });

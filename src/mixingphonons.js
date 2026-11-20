@@ -1,10 +1,13 @@
 /*
  * mixingphonons.js — virtual-crystal mixing of two materials of the same
- * structure family on the mixing page: 2-atom zinc blende / diamond, 4-atom
- * wurtzite / lonsdaleite (P6_3mc), 8-atom chalcopyrite (I-42d), or a ternary
- * wurtzite (beta-NaFeO2 type Pna2_1, enargite type Pmn2_1, Cu2SiS3 type
- * Cmc2_1; WURTZITE_SUPERSTRUCTURES). A binary with force constants can also be
- * folded into the cell of an ordered ternary on its lattice. Force constants
+ * structure family on the mixing page: 2-atom zinc blende / diamond, 2-atom
+ * rocksalt (Fm-3m), 4-atom wurtzite / lonsdaleite (P6_3mc), 8-atom
+ * chalcopyrite (I-42d), a ternary wurtzite (beta-NaFeO2 type Pna2_1, enargite
+ * type Pmn2_1, Cu2SiS3 type Cmc2_1; WURTZITE_SUPERSTRUCTURES) or a cation-
+ * ordered ternary rocksalt (alpha-NaFeO2 type R-3m, gamma-LiFeO2 type I4_1/amd,
+ * Li2ZrO3 type C2/c, ...; ROCKSALT_SUPERSTRUCTURES). A binary with force
+ * constants can also be folded into the cell of an ordered ternary on its
+ * lattice. Force constants
  * and site masses are mixed separately:
  *
  *     Phi_k(q)   = M_k^1/2 D_k(q) M_k^1/2
@@ -33,7 +36,8 @@
  *            eigendisplacements are in the "cell" gauge exp(2 pi i q.R) and are
  *            converted with the atomic positions of the file.
  *   sites  : zinc blende: canonical order [cation, anion] with the anion at
- *            +(1/4,1/4,1/4) from the cation. Chalcopyrite: the 8 sites of the
+ *            +(1/4,1/4,1/4) from the cation; rocksalt the same with the anion
+ *            at (1/2,1/2,1/2). Chalcopyrite: the 8 sites of the
  *            I-42d template (lower-valence cation on 4a, the other on 4b, anions
  *            on 8d), matched with any origin. Wurtzite: [cation, cation, anion,
  *            anion], cations at (1/3,2/3,0) and (2/3,1/3,1/2) with each anion
@@ -42,10 +46,12 @@
  *            the template (the opposite polarity in wurtzite) is handled in the
  *            atom gauge by D(q) -> D(q)^*; every other setting of the same
  *            lattice differs from these by a symmetry of the crystal.
- *            Ternary wurtzite: the cell is read as a supercell of wurtzite and
- *            its sites matched, role by role, onto a template on that supercell
- *            (any basis, origin and orientation; an improper rotation is again
- *            handled as the inversion image).
+ *            Ternary wurtzite / rocksalt: the cell is read as a supercell of the
+ *            parent and its sites matched, role by role, onto a template on that
+ *            supercell (any basis, origin and orientation; an improper rotation
+ *            is again handled as the inversion image). The cation roles follow
+ *            the number of atoms, then the formal valence that balances the
+ *            anion charge (Tl+ in DyTlS2, Tl3+ in NaTlO2).
  *   q-path : the high-symmetry segments of the end-member with the fewer
  *            segments, kept where the other end-member has a segment on the
  *            same line (in either direction) and cut to the stretch both cover.
@@ -182,7 +188,22 @@ function parseComplex(value) {
     return [Number(text.slice(0, splitIndex)), Number(text.slice(splitIndex, -1))];
 }
 
+// formal charge of the usual anions (the magnitude)
+const ANION_CHARGE = {
+    O: 2, S: 2, Se: 2, Te: 2,
+    N: 3, P: 3, As: 3,
+    F: 1, Cl: 1, Br: 1, I: 1, H: 1,
+};
+
 function getCationSymbol(name, atomTypes) {
+    // in a binary the species that is not a usual anion (PbTe is listed as TePb)
+    let species = atomTypes.filter((type, i) => atomTypes.indexOf(type) === i);
+    if (species.length === 2) {
+        let anions = species.filter((type) => ANION_CHARGE[type]);
+        if (anions.length === 1) {
+            return species.find((type) => type !== anions[0]);
+        }
+    }
     let match = /^([A-Z][a-z]?)/.exec(name || '');
     if (match && atomTypes.indexOf(match[1]) !== -1) {
         return match[1];
@@ -190,10 +211,20 @@ function getCationSymbol(name, atomTypes) {
     return atomTypes[0];
 }
 
-function getCanonicalSites(atomTypes, positionsRed, cationSymbol) {
+function isFccLattice(lattice) {
+    // three primitive vectors of equal length at 60 degrees
+    let length = lattice.map((row) => Math.sqrt(mat.vec_dot(row, row)));
+    return [[0, 1], [0, 2], [1, 2]].every(([i, j]) =>
+        Math.abs(length[i] - length[j]) < 1e-3 * length[0] &&
+        Math.abs(mat.vec_dot(lattice[i], lattice[j]) / (length[i] * length[j]) - 0.5) < 1e-3
+    );
+}
+
+function getCanonicalSites(atomTypes, positionsRed, cationSymbol, lattice = null) {
     /*
-    returns the original atom indices in [cation, anion] order and whether the
-    structure has to be inverted to put the anion at +(1/4,1/4,1/4)
+    returns the original atom indices in [cation, anion] order, whether the
+    structure has to be inverted to put the anion at +(1/4,1/4,1/4) and the
+    family: zinc blende, or rocksalt with the anion at (1/2,1/2,1/2)
     */
     let isElemental = atomTypes[0] === atomTypes[1];
     let cation = isElemental ? 0 : atomTypes.indexOf(cationSymbol);
@@ -203,16 +234,20 @@ function getCanonicalSites(atomTypes, positionsRed, cationSymbol) {
         let d = positionsRed[anion][i] - positionsRed[cation][i];
         return d - Math.floor(d + 1e-6);
     });
+    if (!isElemental && offset.every((d) => Math.abs(d - 0.5) < 1e-3) && (!lattice || isFccLattice(lattice))) {
+        // rocksalt is centrosymmetric: no inversion needed
+        return { order: [cation, anion], invert: false, family: 'rocksalt' };
+    }
     let isPlus = offset.every((d) => Math.abs(d - 0.25) < 1e-3);
     let isMinus = offset.every((d) => Math.abs(d - 0.75) < 1e-3);
     if (!isPlus && !isMinus) {
-        throw new Error('Not a 2-atom zinc blende / diamond structure: anion offset ' + JSON.stringify(offset));
+        throw new Error('Not a 2-atom zinc blende / diamond or rocksalt structure: anion offset ' + JSON.stringify(offset));
     }
     if (isMinus && isElemental) {
         // both sites are equivalent, relabel instead of inverting
-        return { order: [anion, cation], invert: false };
+        return { order: [anion, cation], invert: false, family: 'zincblende' };
     }
-    return { order: [cation, anion], invert: isMinus };
+    return { order: [cation, anion], invert: isMinus, family: 'zincblende' };
 }
 
 // usual cation valence, used to put the lower-valence cation of a chalcopyrite
@@ -222,6 +257,9 @@ const CATION_VALENCE = {
     Be: 2, Mg: 2, Ca: 2, Zn: 2, Cd: 2, Hg: 2,
     B: 3, Al: 3, Ga: 3, In: 3, Tl: 3,
     C: 4, Si: 4, Ge: 4, Sn: 4, Pb: 4,
+    Rb: 1, Cs: 1, Sr: 2, Ba: 2, Sc: 3, Y: 3, La: 3, Pr: 3, Nd: 3, Sm: 3, Tb: 3, Dy: 3,
+    Ho: 3, Er: 3, Tm: 3, Lu: 3, Cr: 3, Fe: 3, Rh: 3, Bi: 3, Ti: 4, Zr: 4, Hf: 4, Pd: 4,
+    Nb: 5, Ta: 5, P: 5, Sb: 5, U: 6, Re: 7,
 };
 
 // chalcopyrite I-42d (No. 122), conventional fractional coordinates: A on 4a,
@@ -550,6 +588,7 @@ const ORTHORHOMBIC_PATH = [
 const superstructureSites = (list) => list.map((site) => ({ role: site[0], sub: site[1], n: site.slice(2) }));
 export const WURTZITE_SUPERSTRUCTURES = {
     'wurtzite-ABX2': {
+        parent: 'wurtzite',
         title: 'beta-NaFeO2 type A B X2 (Pna2_1)',
         supercell: [[2, 0, 0], [1, 2, 0], [0, 0, 1]],
         sites: superstructureSites([
@@ -562,6 +601,7 @@ export const WURTZITE_SUPERSTRUCTURES = {
         path: ORTHORHOMBIC_PATH,
     },
     'wurtzite-A3BX4': {
+        parent: 'wurtzite',
         title: 'enargite type A3 B X4 (Pmn2_1)',
         supercell: [[2, 0, 0], [1, 2, 0], [0, 0, 1]],
         sites: superstructureSites([
@@ -574,6 +614,7 @@ export const WURTZITE_SUPERSTRUCTURES = {
         path: ORTHORHOMBIC_PATH,
     },
     'wurtzite-A2BX3': {
+        parent: 'wurtzite',
         title: 'A2 B X3 (Cmc2_1)',
         // C-centred: the primitive cell is not orthogonal and its special points
         // depend on the cell shape, the labels of the file are kept
@@ -589,12 +630,157 @@ export const WURTZITE_SUPERSTRUCTURES = {
     },
 };
 
+// cation orderings on a supercell of rocksalt (rocksaltLattice(a), sub 0 =
+// cation, 1 = anion), same encoding as WURTZITE_SUPERSTRUCTURES. Derived with
+// analyzeSuperstructure from PhononDB mp-15786 (KHoS2), mp-676360 (NaNdS2),
+// mp-11151 (NaPrTe2), mp-978844 (SrCa3O4), mp-755287
+// (Ca3CdO4), mp-4156 (Li2ZrO3), mp-7219 (Na2ZrSe3) and mp-3540 (Li2SnO3).
+// NaBiS2 (Fdd2) has the cation order of the gamma-LiFeO2 type, distorted. The
+// special points of these cells depend on their shape: the path of the file is
+// kept. referencePoints: where the Materials Project files of the family put the
+// special points fixed by symmetry (from mp-29678, mp-33526, mp-755287, mp-4156
+// and mp-7219), see referencePointScore.
+export const ROCKSALT_SUPERSTRUCTURES = {
+    'rocksalt-ABX2-R3m': {
+        parent: 'rocksalt',
+        title: 'alpha-NaFeO2 type A B X2 (R-3m)',
+        label: 'R-3m',
+        supercell: [[0, -1, 2], [-1, 0, 2], [-1, -1, 2]],
+        sites: superstructureSites([
+            ['A', 0, 0, 0, 0], ['B', 0, -1, -1, 3], ['X', 1, 0, 0, 0], ['X', 1, -1, -1, 3],
+        ]),
+        referencePoints: { L: [0.5, 0, 0], Z: [0.5, 0.5, 0.5], F: [0.5, 0.5, 0] },
+        specialPoints: null,
+        path: null,
+    },
+    'rocksalt-ABX2-I41amd': {
+        parent: 'rocksalt',
+        title: 'gamma-LiFeO2 type A B X2 (I4_1/amd)',
+        label: 'I4_1/amd',
+        supercell: [[0, -2, 1], [-2, 0, 1], [1, 1, -2]],
+        sites: superstructureSites([
+            ['A', 0, 0, -1, 0], ['A', 0, 0, 0, 0], ['B', 0, -1, 0, 0], ['B', 0, -1, -1, 1], ['X', 1, 0, -1, 0], ['X', 1, -1, 0, 0],
+            ['X', 1, 0, 0, 0], ['X', 1, -1, -1, 1],
+        ]),
+        referencePoints: { X: [0.5, 0.5, 0], Z: [0.5, 0.5, 0.5], N: [0, 0.5, 0], P: [0.25, 0.25, 0.25] },
+        specialPoints: null,
+        path: null,
+    },
+    'rocksalt-ABX2-Fd3m': {
+        parent: 'rocksalt',
+        title: 'A B X2 (Fd-3m)',
+        label: 'Fd-3m',
+        supercell: [[0, 0, 2], [-2, 0, 2], [0, -2, 2]],
+        sites: superstructureSites([
+            ['A', 0, 0, 0, 0], ['A', 0, 0, 0, 1], ['A', 0, 0, -1, 2], ['A', 0, -1, 0, 2], ['B', 0, 0, -1, 1], ['B', 0, -1, 0, 1],
+            ['B', 0, -1, -1, 2], ['B', 0, -1, -1, 3], ['X', 1, 0, 0, 0], ['X', 1, 0, -1, 1], ['X', 1, -1, 0, 1], ['X', 1, 0, 0, 1],
+            ['X', 1, -1, -1, 2], ['X', 1, 0, -1, 2], ['X', 1, -1, 0, 2], ['X', 1, -1, -1, 3],
+        ]),
+        specialPoints: null,
+        path: null,
+    },
+    'rocksalt-A3BX4-Pm3m': {
+        parent: 'rocksalt',
+        title: 'A3 B X4 (Pm-3m)',
+        label: 'Pm-3m',
+        supercell: [[1, -1, -1], [-1, 1, -1], [1, 1, -1]],
+        sites: superstructureSites([
+            ['A', 0, 0, 0, -1], ['A', 0, 1, 0, -1], ['A', 0, 0, 0, 0], ['B', 0, 0, 1, -1], ['X', 1, 0, 0, -1], ['X', 1, 1, 0, -1],
+            ['X', 1, 0, 1, -1], ['X', 1, 0, 0, 0],
+        ]),
+        specialPoints: null,
+        path: null,
+    },
+    'rocksalt-A3BX4-Cmmm': {
+        parent: 'rocksalt',
+        title: 'A3 B X4 (Cmmm)',
+        label: 'Cmmm',
+        supercell: [[0, -1, -1], [-2, 1, 1], [0, 1, -1]],
+        sites: superstructureSites([
+            ['A', 0, 0, 0, -1], ['A', 0, 0, 0, 0], ['A', 0, -1, 1, 0], ['B', 0, -1, 0, 0], ['X', 1, 0, 0, -1], ['X', 1, -1, 0, 0],
+            ['X', 1, 0, 0, 0], ['X', 1, -1, 1, 0],
+        ]),
+        referencePoints: { S: [0, 0.5, 0], R: [0, 0.5, 0.5], Z: [0, 0, 0.5], Y: [0.5, 0.5, 0], T: [0.5, 0.5, 0.5] },
+        specialPoints: null,
+        path: null,
+    },
+    'rocksalt-A2BX3-C2c': {
+        parent: 'rocksalt',
+        title: 'Li2ZrO3 type A2 B X3 (C2/c)',
+        label: 'C2/c',
+        supercell: [[1, 0, -2], [1, 0, 1], [0, -2, 1]],
+        sites: superstructureSites([
+            ['A', 0, 1, -1, -1], ['A', 0, 1, 0, -1], ['A', 0, 1, -1, 0], ['A', 0, 0, 0, 0], ['B', 0, 1, 0, 0], ['B', 0, 1, -1, 1],
+            ['X', 1, 1, -1, -1], ['X', 1, 1, 0, -1], ['X', 1, 1, -1, 0], ['X', 1, 0, 0, 0], ['X', 1, 1, 0, 0], ['X', 1, 1, -1, 1],
+        ]),
+        referencePoints: { Z: [0, 0, 0.5], I: [0.5, 0.5, 0.5], X: [0.5, 0.5, 0], N: [0, 0.5, 0], M: [0, 0.5, 0.5] },
+        specialPoints: null,
+        path: null,
+    },
+    'rocksalt-A2BX3-C2m': {
+        parent: 'rocksalt',
+        title: 'Li2MnO3 type A2 B X3 (C2/m)',
+        label: 'C2/m',
+        supercell: [[-1, -1, 0], [2, -1, 0], [-1, 0, 2]],
+        sites: superstructureSites([
+            ['A', 0, 0, 0, 0], ['A', 0, -1, -1, 1], ['A', 0, 0, -1, 1], ['A', 0, 1, -1, 1], ['B', 0, 0, -1, 0], ['B', 0, 1, -1, 0],
+            ['X', 1, 0, -1, 0], ['X', 1, 1, -1, 0], ['X', 1, 0, 0, 0], ['X', 1, -1, -1, 1], ['X', 1, 0, -1, 1], ['X', 1, 1, -1, 1],
+        ]),
+        referencePoints: { Z: [0, 0, 0.5], I: [0.5, 0.5, 0.5], X: [0.5, 0.5, 0], N: [0, 0.5, 0], M: [0, 0.5, 0.5] },
+        specialPoints: null,
+        path: null,
+    },
+    'rocksalt-A2BX3-C2c24': {
+        parent: 'rocksalt',
+        title: 'Li2SnO3 type A2 B X3 (C2/c)',
+        label: 'C2/c',
+        supercell: [[0, -1, 2], [0, 2, -1], [-4, 1, 1]],
+        sites: superstructureSites([
+            ['A', 0, 0, 0, 0], ['A', 0, 0, 1, 0], ['A', 0, -2, 2, 0], ['A', 0, -1, 0, 1], ['A', 0, 0, 0, 1], ['A', 0, -3, 1, 1],
+            ['A', 0, -2, 1, 1], ['A', 0, -2, 0, 2], ['B', 0, -1, 1, 0], ['B', 0, -1, 1, 1], ['B', 0, -3, 2, 1], ['B', 0, -3, 1, 2],
+            ['X', 1, 0, 0, 0], ['X', 1, -1, 1, 0], ['X', 1, 0, 1, 0], ['X', 1, -2, 2, 0], ['X', 1, -1, 0, 1], ['X', 1, 0, 0, 1],
+            ['X', 1, -3, 1, 1], ['X', 1, -2, 1, 1], ['X', 1, -1, 1, 1], ['X', 1, -3, 2, 1], ['X', 1, -2, 0, 2], ['X', 1, -3, 1, 2],
+        ]),
+        specialPoints: null,
+        path: null,
+    },
+};
+
+export const SUPERSTRUCTURES = Object.assign({}, WURTZITE_SUPERSTRUCTURES, ROCKSALT_SUPERSTRUCTURES);
+
 function rowTimesMatrix(v, m) {
     return [0, 1, 2].map((j) => v[0] * m[0][j] + v[1] * m[1][j] + v[2] * m[2][j]);
 }
 
 function matrixTimesVector(m, v) {
     return m.map((row) => row[0] * v[0] + row[1] * v[1] + row[2] * v[2]);
+}
+
+// cations whose usual valence depends on the compound (Tl+ in DyTlS2, Tl3+ in NaTlO2)
+const VARIABLE_VALENCE = { Tl: [1, 3], Pb: [2, 4], Sn: [2, 4], Cu: [1, 2], Ce: [3, 4] };
+
+function getCationValences(counts, cations, anion) {
+    /*
+    formal valence of the two cations of a ternary: the choice that balances the
+    anion charge, else the usual one
+    */
+    let options = cations.map((type) => VARIABLE_VALENCE[type] || [CATION_VALENCE[type] || 9]);
+    let charge = ANION_CHARGE[anion] ? counts[anion] * ANION_CHARGE[anion] : null;
+    let chosen = options.map((list) => list[0]);
+    if (charge !== null) {
+        search:
+        for (let v0 of options[0]) {
+            for (let v1 of options[1]) {
+                if (counts[cations[0]] * v0 + counts[cations[1]] * v1 === charge) {
+                    chosen = [v0, v1];
+                    break search;
+                }
+            }
+        }
+    }
+    let valence = {};
+    cations.forEach((type, i) => { valence[type] = chosen[i]; });
+    return valence;
 }
 
 function getSuperstructureRoles(atomTypes) {
@@ -609,9 +795,10 @@ function getSuperstructureRoles(atomTypes) {
     let anions = species.filter((type) => 2 * counts[type] === atomTypes.length);
     let cations = species.filter((type) => 2 * counts[type] !== atomTypes.length);
     if (anions.length !== 1 || cations.length !== 2) {
-        throw new Error('Not a ternary tetrahedral A B X cell: ' + JSON.stringify(counts));
+        throw new Error('Not a ternary A B X cell: ' + JSON.stringify(counts));
     }
-    let key = (type) => [-counts[type], CATION_VALENCE[type] || 9, atomic_data.atomic_number[type]];
+    let valence = getCationValences(counts, cations, anions[0]);
+    let key = (type) => [-counts[type], valence[type], atomic_data.atomic_number[type]];
     cations.sort((p, q) => {
         let kp = key(p);
         let kq = key(q);
@@ -742,15 +929,126 @@ function* wurtziteDescriptions(atomTypes, positionsRed, lattice, isAnion) {
     }
 }
 
-export function analyzeWurtziteDerivative(atomTypes, positionsRed, lattice, supercell = null) {
+// rocksalt (Fm-3m): the fcc primitive cell rocksaltLattice(a), cation at the
+// origin, anion at (1/2,1/2,1/2)
+const ROCKSALT_SITES = [
+    { role: 'C', red: [0, 0, 0] },
+    { role: 'X', red: [0.5, 0.5, 0.5] },
+];
+
+export function rocksaltLattice(a) {
+    return [[0, a / 2, a / 2], [a / 2, 0, a / 2], [a / 2, a / 2, 0]];
+}
+
+function* rocksaltDescriptions(atomTypes, positionsRed, lattice, isAnion) {
     /*
-    template of a ternary cell, as in WURTZITE_SUPERSTRUCTURES: a wurtzite reading
-    with an A cation as origin (and, if given, the supercell in that basis), the
-    sites with their roles, lattice vectors reduced into the supercell, ordered
-    by role, sublattice and position
+    every way of reading the cell as a supercell of rocksalt, as in
+    wurtziteDescriptions. The cubic axes are the three cation -> anion bond
+    directions of the octahedra, averaged over all cations; the cell is read in
+    the fcc basis they span (e_y + e_z, e_x + e_z, e_x + e_y), so a homogeneous
+    strain of the parent (the trigonal stretch of the layered alpha-NaFeO2 type
+    reaches c/a = 5.9 instead of 4.9) drops out and only the local differences
+    between the bonds remain. Every assignment of the three axes to x, y, z with
+    either sign is tried; T is the orthogonal frame closest to it.
+    */
+    let natoms = atomTypes.length;
+    let positionsCar = utils.red_car_list(positionsRed, lattice);
+    let cations = [];
+    let anions = [];
+    for (let i = 0; i < natoms; i++) {
+        (isAnion(atomTypes[i]) ? anions : cations).push(i);
+    }
+    if (2 * cations.length !== natoms) {
+        return;
+    }
+    let cosine = (p, q) => mat.vec_dot(p, q) / Math.sqrt(mat.vec_dot(p, p) * mat.vec_dot(q, q));
+    let axes = [];
+    for (let bond of getNearestBonds(cations[0], anions, positionsCar, lattice, 6)) {
+        if (!axes.some((axis) => Math.abs(cosine(axis, bond)) > 0.7)) {
+            axes.push(bond);
+        }
+    }
+    if (axes.length !== 3) {
+        return;
+    }
+    let sums = axes.map(() => [0, 0, 0]);
+    for (let cation of cations) {
+        for (let bond of getNearestBonds(cation, anions, positionsCar, lattice, 6)) {
+            let cosines = axes.map((axis) => cosine(axis, bond));
+            let k = [0, 1, 2].reduce((best, j) => (Math.abs(cosines[j]) > Math.abs(cosines[best]) ? j : best), 0);
+            let sign = cosines[k] > 0 ? 1 : -1;
+            sums[k] = sums[k].map((v, d) => v + sign * bond[d]);
+        }
+    }
+    let average = sums.map((v) => mat.vec_scale(v, 1 / (2 * cations.length)));
+    let volume = Math.abs(mat.matrix_determinant(lattice));
+    let a = Math.cbrt((4 * volume) / cations.length);
+    let H = rocksaltLattice(a);
+    let permutations = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]];
+
+    for (let permutation of permutations) {
+        for (let signs = 0; signs < 8; signs++) {
+            let e = permutation.map((k, i) => mat.vec_scale(average[k], (signs >> i) & 1 ? -1 : 1));
+            let add = (p, q) => p.map((v, d) => v + q[d]);
+            let basis = [add(e[1], e[2]), add(e[0], e[2]), add(e[0], e[1])];
+            let inverse = mat.matrix_inverse(basis);
+            let Mraw = lattice.map((row) => rowTimesMatrix(row, inverse));
+            let M = Mraw.map((row) => row.map(Math.round));
+            if (Mraw.some((row, r) => row.some((v, k) => Math.abs(v - M[r][k]) > 0.1)) ||
+                Math.round(Math.abs(mat.matrix_determinant(M))) !== cations.length) {
+                continue;
+            }
+            let T = orthogonalPolarFactor(e.map((v) => mat.vec_scale(v, 1 / Math.sqrt(mat.vec_dot(v, v)))));
+            for (let origin of cations) {
+                let sites = [];
+                for (let n = 0; n < natoms; n++) {
+                    let d = [0, 1, 2].map((k) => positionsCar[n][k] - positionsCar[origin][k]);
+                    let f = rowTimesMatrix(d, inverse);
+                    let sub = isAnion(atomTypes[n]) ? 1 : 0;
+                    let r = f.map((v, k) => v - ROCKSALT_SITES[sub].red[k]);
+                    let rounded = r.map(Math.round);
+                    if (r.some((v, k) => Math.abs(v - rounded[k]) > 0.25)) {
+                        break;
+                    }
+                    sites.push({ sub: sub, n: rounded });
+                }
+                if (sites.length === natoms) {
+                    yield { T: T, origin: origin, H: H, M: M, sites: sites, a: a };
+                }
+            }
+        }
+    }
+}
+
+// the parent lattices of the ordered ternaries: how to read a cell as a
+// supercell of the parent, where a template site sits in the parent basis, and
+// how far the frame from the bonds may be from the refined one
+const PARENT_STRUCTURES = {
+    wurtzite: {
+        describe: wurtziteDescriptions,
+        sitePosition: (site) => templateParentPosition(site, 0.375),
+        frameTolerance: 15,
+    },
+    rocksalt: {
+        describe: rocksaltDescriptions,
+        sitePosition: (site) => site.n.map((v, k) => v + ROCKSALT_SITES[site.sub].red[k]),
+        frameTolerance: 25,
+    },
+};
+
+export function analyzeWurtziteDerivative(atomTypes, positionsRed, lattice, supercell = null) {
+    return analyzeSuperstructure('wurtzite', atomTypes, positionsRed, lattice, supercell);
+}
+
+export function analyzeSuperstructure(parent, atomTypes, positionsRed, lattice, supercell = null) {
+    /*
+    template of a ternary cell, as in SUPERSTRUCTURES: a reading as a supercell
+    of the parent (wurtzite or rocksalt) with an A cation as origin (and, if
+    given, the supercell in that basis), the sites with their roles, lattice
+    vectors reduced into the supercell, ordered by role, sublattice and position
     */
     let roles = getSuperstructureRoles(atomTypes);
-    for (let d of wurtziteDescriptions(atomTypes, positionsRed, lattice, (type) => roles[type] === 'X')) {
+    for (let d of PARENT_STRUCTURES[parent].describe(atomTypes, positionsRed, lattice, (type) => roles[type] === 'X')) {
         if (roles[atomTypes[d.origin]] !== 'A') {
             continue;
         }
@@ -799,21 +1097,26 @@ function isIntegerMatrix(m, tol = 1e-6) {
     return m.every((row) => row.every((v) => Math.abs(v - Math.round(v)) < tol));
 }
 
-function matchWurtziteSuperstructure(atomTypes, positionsRed, lattice, template) {
+function matchSuperstructure(atomTypes, positionsRed, lattice, template, score = null) {
     /*
-    map a ternary cell onto the sites of a WURTZITE_SUPERSTRUCTURES template:
-    the same supercell of wurtzite (any basis) with the same roles on the same
+    map a ternary cell onto the sites of a SUPERSTRUCTURES template: the same
+    supercell of the parent (any basis) with the same roles on the same
     sublattice sites modulo the supercell. The frame may need an improper
     rotation; then the canonical cell is the inversion image, D -> D^*.
     Returns the file atom of every site, the inversion flag, the proper rotation
     to the canonical axes, the canonical lattice and reduced positions, and the
     map of reduced q from the file basis to the canonical one.
+    A cell matches in several equivalent ways (symmetries of the template);
+    with `score` the best scoring match is returned, else the first.
     */
+    let best = null;
+    let bestScore = -Infinity;
     let roles = getSuperstructureRoles(atomTypes);
     let templateInverse = mat.matrix_inverse(template.supercell);
     let reciprocal = utils.rec_lat(lattice);
     let positionsCar = utils.red_car_list(positionsRed, lattice);
-    for (let d of wurtziteDescriptions(atomTypes, positionsRed, lattice, (type) => roles[type] === 'X')) {
+    let parent = PARENT_STRUCTURES[template.parent];
+    for (let d of parent.describe(atomTypes, positionsRed, lattice, (type) => roles[type] === 'X')) {
         if (roles[atomTypes[d.origin]] !== template.sites[0].role) {
             continue;
         }
@@ -839,13 +1142,13 @@ function matchWurtziteSuperstructure(atomTypes, positionsRed, lattice, template)
 
         // refine the frame: the orthogonal T (same handedness as the one from the
         // bonds) that best maps the cell, in the template basis, onto the ideal
-        // supercell of wurtzite (orthogonal Procrustes), so that e.g. an
+        // supercell of the parent (orthogonal Procrustes), so that e.g. an
         // orthorhombic cell lies exactly along the canonical axes
         let inverseU = mat.matrix_inverse(U).map((row) => row.map(Math.round));
         let basis = mat.matrix_multiply(inverseU, lattice);
-        let ideal = mat.matrix_multiply(template.supercell, wurtziteLattice(d.a, d.c));
+        let ideal = mat.matrix_multiply(template.supercell, d.H);
         let T = orthogonalPolarFactor(mat.matrix_multiply(mat.matrix_transpose(ideal), basis));
-        if (T.some((row, i) => mat.vec_dot(row, d.T[i]) < Math.cos(15 * Math.PI / 180))) {
+        if (T.some((row, i) => mat.vec_dot(row, d.T[i]) < Math.cos(parent.frameTolerance * Math.PI / 180))) {
             continue;
         }
         let invert = mat.matrix_determinant(T) < 0;
@@ -857,7 +1160,7 @@ function matchWurtziteSuperstructure(atomTypes, positionsRed, lattice, template)
             let i = order[s];
             let cartesian = matrixTimesVector(T, [0, 1, 2].map((k) => positionsCar[i][k] - positionsCar[d.origin][k]));
             let reduced = rowTimesMatrix(cartesian, canonicalInverse);
-            let ideal = rowTimesMatrix(templateParentPosition(site, 0.375), templateInverse);
+            let ideal = rowTimesMatrix(parent.sitePosition(site), templateInverse);
             return reduced.map((v, k) => v - Math.round(v - ideal[k]));
         });
         let identity = R.every((row, k) => Math.abs(row[k] - 1) < 1e-9);
@@ -869,7 +1172,7 @@ function matchWurtziteSuperstructure(atomTypes, positionsRed, lattice, template)
         };
         // the map is linear, q_canonical = q_file Q: rows of Q are the images of the unit vectors
         let qMapInverse = mat.matrix_inverse([[1, 0, 0], [0, 1, 0], [0, 0, 1]].map(qMap));
-        return {
+        let result = {
             order: order,
             invert: invert,
             rotation: identity ? null : R,
@@ -877,23 +1180,63 @@ function matchWurtziteSuperstructure(atomTypes, positionsRed, lattice, template)
             qMap: qMap,
             qMapInverse: qMapInverse,
         };
+        if (!score) {
+            return result;
+        }
+        let value = score(result);
+        if (value > bestScore) {
+            best = result;
+            bestScore = value;
+        }
+    }
+    if (best) {
+        return best;
     }
     throw new Error('Could not match the cell onto the ' + template.title + ' template');
 }
 
-function getSuperstructureFamily(atomTypes) {
-    // the WURTZITE_SUPERSTRUCTURES entry with the same number of atoms per role
+function referencePointScore(segments, template) {
+    /*
+    files without force constants can only be sampled on their own path, and two
+    files may run the same path in orientations related by a symmetry of the
+    crystal (L at (0,-1/2,0) in one, (0,0,1/2) in the other). Of the equivalent
+    matches, prefer the one that puts the labelled points of the file where the
+    template has them (modulo the reciprocal lattice), so the paths line up.
+    */
+    if (!template.referencePoints || !segments.length) {
+        return null;
+    }
+    return (match) => {
+        let count = 0;
+        for (let segment of segments) {
+            for (let [label, q] of [[segment.labelA, segment.qA], [segment.labelB, segment.qB]]) {
+                let reference = template.referencePoints[normalizeLabel(label)];
+                if (!reference) {
+                    continue;
+                }
+                let mapped = match.qMap(q);
+                if (mapped.every((v, k) => Math.abs(v - reference[k] - Math.round(v - reference[k])) < 1e-3)) {
+                    count += 1;
+                }
+            }
+        }
+        return count;
+    };
+}
+
+function getSuperstructureFamilies(atomTypes) {
+    // the SUPERSTRUCTURES entries with the same number of atoms per role
     let roles;
     try {
         roles = getSuperstructureRoles(atomTypes);
     } catch (error) {
-        return null;
+        return [];
     }
     let count = (list) => ['A', 'B', 'X'].map((role) => list.filter((r) => r === role).length).join(',');
     let key = count(atomTypes.map((type) => roles[type]));
-    return Object.keys(WURTZITE_SUPERSTRUCTURES).find((family) =>
-        count(WURTZITE_SUPERSTRUCTURES[family].sites.map((site) => site.role)) === key
-    ) || null;
+    return Object.keys(SUPERSTRUCTURES).filter((family) =>
+        count(SUPERSTRUCTURES[family].sites.map((site) => site.role)) === key
+    );
 }
 
 function templateParentPosition(site, u) {
@@ -1238,32 +1581,58 @@ export function buildMixingEndpoint(raw, entry, dielectric = null) {
         throw new Error('No dynamical matrix available for ' + (entry && entry.name));
     }
     let canonical;
-    if (endpoint.atomTypes.length === 2) {
+    let natoms = endpoint.atomTypes.length;
+    let nspecies = new Set(endpoint.atomTypes).size;
+    // the menu entry names the family of an ordered ternary; several share the
+    // composition and cell size (e.g. 8-atom chalcopyrite and gamma-LiFeO2 type)
+    let hint = entry && SUPERSTRUCTURES[entry.family] ? entry.family : null;
+    let chalcopyriteError = null;
+    if (natoms === 8 && !hint) {
+        try {
+            canonical = matchChalcopyriteSites(endpoint.atomTypes, endpoint.positionsRed, endpoint.lattice);
+        } catch (error) {
+            chalcopyriteError = error;
+        }
+    }
+    if (natoms === 2) {
         let cationSymbol = getCationSymbol(entry && entry.name, endpoint.atomTypes);
-        canonical = getCanonicalSites(endpoint.atomTypes, endpoint.positionsRed, cationSymbol);
-        endpoint.family = 'zincblende';
+        canonical = getCanonicalSites(endpoint.atomTypes, endpoint.positionsRed, cationSymbol, endpoint.lattice);
+        endpoint.family = canonical.family;
         endpoint.rotation = null;
-    } else if (endpoint.atomTypes.length === 4) {
+        if (canonical.family === 'rocksalt') {
+            endpoint.structure = { a: Math.SQRT2 * Math.sqrt(mat.vec_dot(endpoint.lattice[0], endpoint.lattice[0])) };
+        }
+    } else if (natoms === 4 && nspecies <= 2) {
         let cationSymbol = getCationSymbol(entry && entry.name, endpoint.atomTypes);
         canonical = matchWurtziteSites(endpoint.atomTypes, endpoint.positionsRed, endpoint.lattice, cationSymbol);
         endpoint.family = 'wurtzite';
         endpoint.rotation = canonical.rotation;
         endpoint.structure = canonical.structure;
         relabelSegments(endpoint.segments, HEXAGONAL_SPECIAL_POINTS);
-    } else if (endpoint.atomTypes.length === 8) {
-        canonical = matchChalcopyriteSites(endpoint.atomTypes, endpoint.positionsRed, endpoint.lattice);
+    } else if (canonical) {
         endpoint.family = 'chalcopyrite';
         endpoint.rotation = canonical.rotation;
         endpoint.structure = canonical.structure;
         relabelSegments(endpoint.segments, getChalcopyriteSpecialPoints(canonical.structure.a, canonical.structure.c));
     } else {
-        let family = getSuperstructureFamily(endpoint.atomTypes);
-        if (!family) {
-            throw new Error('Mixing supports 2-atom zinc blende, 4-atom wurtzite, 8-atom chalcopyrite ' +
-                'and ternary wurtzite cells');
+        let families = hint ? [hint] : getSuperstructureFamilies(endpoint.atomTypes);
+        let family = null;
+        let lastError = chalcopyriteError;
+        for (let candidate of families) {
+            try {
+                canonical = matchSuperstructure(endpoint.atomTypes, endpoint.positionsRed, endpoint.lattice,
+                    SUPERSTRUCTURES[candidate], referencePointScore(endpoint.segments, SUPERSTRUCTURES[candidate]));
+                family = candidate;
+                break;
+            } catch (error) {
+                lastError = error;
+            }
         }
-        let template = WURTZITE_SUPERSTRUCTURES[family];
-        canonical = matchWurtziteSuperstructure(endpoint.atomTypes, endpoint.positionsRed, endpoint.lattice, template);
+        if (!family) {
+            throw lastError || new Error('Mixing supports 2-atom zinc blende and rocksalt, 4-atom wurtzite, ' +
+                '8-atom chalcopyrite and ternary wurtzite and rocksalt cells');
+        }
+        let template = SUPERSTRUCTURES[family];
         endpoint.family = family;
         endpoint.rotation = canonical.rotation;
         endpoint.structure = canonical.structure;
@@ -1288,6 +1657,15 @@ export function buildMixingEndpoint(raw, entry, dielectric = null) {
             }
         }
     }
+    // some files put a label on the wrong point (PhononDB mp-5840 has "X" at q = 0
+    // and "G" off Gamma): a reciprocal lattice vector is Gamma, and Gamma is
+    // nowhere else
+    let isLatticeVector = (q) => q.every((v) => Math.abs(v - Math.round(v)) < QTOL);
+    let fixLabel = (label, q) => (isLatticeVector(q) ? 'GAMMA' : label === 'GAMMA' ? '' : label);
+    endpoint.segments.forEach((segment) => {
+        segment.labelA = fixLabel(segment.labelA, segment.qA);
+        segment.labelB = fixLabel(segment.labelB, segment.qB);
+    });
     endpoint.name = entry && entry.name ? entry.name : utils.get_formula(endpoint.atomTypes);
     endpoint.order = canonical.order;
     endpoint.invert = canonical.invert;
@@ -1512,16 +1890,33 @@ export function zincblendeAsChalcopyrite(zb) {
 }
 
 export function wurtziteAsSuperstructure(wz, family) {
+    return binaryAsSuperstructure(wz, family);
+}
+
+export function binaryAsSuperstructure(binary, family) {
     /*
-    A binary wurtzite expressed in the cell of a ternary wurtzite derivative
-    (WURTZITE_SUPERSTRUCTURES), every site on its own wurtzite sublattice, so it
-    can be mixed with that ternary (see foldIntoSupercell)
+    A binary wurtzite or rocksalt expressed in the cell of an ordered ternary on
+    its lattice (SUPERSTRUCTURES), every site on its own sublattice of the
+    parent, so it can be mixed with that ternary (see foldIntoSupercell)
     */
-    if (!wz.evaluate) {
-        throw new Error('Mixing a wurtzite with a ternary wurtzite needs its force constants (PhononDB); ' +
-            'the Materials Project files only cover the band path');
+    let template = SUPERSTRUCTURES[family];
+    if (!binary.evaluate) {
+        throw new Error('Mixing a ' + template.parent + ' with a ternary ' + template.parent +
+            ' needs its force constants (PhononDB); the Materials Project files only cover the band path');
     }
-    let template = WURTZITE_SUPERSTRUCTURES[family];
+    if (template.parent === 'rocksalt') {
+        let a = binary.structure.a;
+        let fcc = rocksaltLattice(a);
+        if (binary.rotation || !binary.lattice.every((row, i) => row.every((v, j) => Math.abs(v - fcc[i][j]) < 1e-6 * a))) {
+            throw new Error('Unsupported rocksalt setting: not the standard fcc primitive cell');
+        }
+        let lattice = mat.matrix_multiply(template.supercell, fcc);
+        let inverse = mat.matrix_inverse(template.supercell);
+        let positionsRed = template.sites.map((site) => rowTimesMatrix(PARENT_STRUCTURES.rocksalt.sitePosition(site), inverse));
+        return foldIntoSupercell(binary, family, lattice, positionsRed, template.sites.map((site) => site.sub),
+            { lattice: lattice, positionsRed: positionsRed });
+    }
+    let wz = binary;
     let { a, c, u } = wz.structure;
     let hexagonal = wurtziteLattice(a, c);
     if (wz.rotation || !wz.lattice.every((row, i) => row.every((v, j) => Math.abs(v - hexagonal[i][j]) < 1e-6 * a))) {
@@ -1613,7 +2008,7 @@ export function buildCommonPath(endpoint1, endpoint2) {
     segments coincide; for chalcopyrite the zone-boundary points Sigma, Y, ...
     move with c/a, so a segment ending there is cut at the nearer of the two.
     */
-    let template = WURTZITE_SUPERSTRUCTURES[endpoint1.family];
+    let template = SUPERSTRUCTURES[endpoint1.family];
     if (endpoint1.sampleAtQ && endpoint2.sampleAtQ && template && template.path) {
         // both known at any q: the standard path of the canonical cell
         return buildTemplatePath(endpoint1, endpoint2, template);
@@ -1627,7 +2022,12 @@ export function buildCommonPath(endpoint1, endpoint2) {
         } else if (!endpoint2.sampleAtQ) {
             real = endpoint2;
         } else {
-            real = endpoint1.segments.length ? endpoint1 : endpoint2;
+            // both known at any q, no standard path: the path of the file of one of
+            // them, the same one whichever material comes first
+            let hasPath = [endpoint1, endpoint2].filter((endpoint) => endpoint.segments.length);
+            real = hasPath.length === 2
+                ? (endpoint2.name < endpoint1.name ? endpoint2 : endpoint1)
+                : hasPath[0] || endpoint1;
         }
         let folded = real === endpoint1 ? endpoint2 : endpoint1;
         return real.segments.map((segment) => {
@@ -1700,7 +2100,7 @@ export function getParentFamily(family) {
     if (family === 'chalcopyrite') {
         return 'zincblende';
     }
-    return WURTZITE_SUPERSTRUCTURES[family] ? 'wurtzite' : null;
+    return SUPERSTRUCTURES[family] ? SUPERSTRUCTURES[family].parent : null;
 }
 
 export function sampleMixingPair(endpoint1, endpoint2) {
@@ -1714,7 +2114,7 @@ export function sampleMixingPair(endpoint1, endpoint2) {
         // a binary goes into the cell of an ordered ternary on the same lattice
         let fold = (binary, family) => (family === 'chalcopyrite'
             ? zincblendeAsChalcopyrite(binary)
-            : wurtziteAsSuperstructure(binary, family));
+            : binaryAsSuperstructure(binary, family));
         if (getParentFamily(endpoint2.family) === endpoint1.family) {
             endpoint1 = fold(endpoint1, endpoint2.family);
         } else if (getParentFamily(endpoint1.family) === endpoint2.family) {
@@ -2048,7 +2448,7 @@ export async function computeMixedPhonon(sampled, x, massFraction = x) {
     let lattice;
     let positionsRed;
     if (endpoint1.structure && endpoint1.structure.lattice) {
-        // ternary wurtzite: canonical lattice and reduced positions mixed linearly
+        // ternary wurtzite or rocksalt: canonical lattice and reduced positions mixed linearly
         let s1 = endpoint1.structure;
         let s2 = endpoint2.structure;
         lattice = s1.lattice.map((row, i) => row.map((v, j) => (1 - x) * v + x * s2.lattice[i][j]));
@@ -2071,7 +2471,7 @@ export async function computeMixedPhonon(sampled, x, massFraction = x) {
         lattice = [0, 1, 2].map((i) => [0, 1, 2].map((j) =>
             (1 - x) * endpoint1.lattice[i][j] + x * endpoint2.lattice[i][j]
         ));
-        positionsRed = [[0, 0, 0], [0.25, 0.25, 0.25]];
+        positionsRed = endpoint1.family === 'rocksalt' ? [[0, 0, 0], [0.5, 0.5, 0.5]] : [[0, 0, 0], [0.25, 0.25, 0.25]];
     }
     let masses = endpoint1.siteMasses.map((_, s) => (1 - massFraction) * endpoint1.siteMasses[s] + massFraction * endpoint2.siteMasses[s]);
     let atomTypes = x < 0.5 ? endpoint1.siteTypes.slice() : endpoint2.siteTypes.slice();

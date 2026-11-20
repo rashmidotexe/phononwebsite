@@ -1222,5 +1222,1797 @@
         "source": "mpdb",
         "spacegroup": "Pna2_1",
         "family": "wurtzite-ABX2"
+    },
+    {
+        "id": "1000",
+        "name": "BaTe",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1784",
+        "name": "CsF",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "23268",
+        "name": "NaI",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "571102",
+        "name": "TlI",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1253",
+        "name": "BaSe",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "15786",
+        "name": "KHoS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "22922",
+        "name": "AgCl",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "8584",
+        "name": "NaErSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "15796",
+        "name": "LiHoSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "4156",
+        "name": "Li2ZrO3",
+        "source": "phonondb",
+        "spacegroup": "C2/c",
+        "family": "rocksalt-A2BX3-C2c"
+    },
+    {
+        "id": "756034",
+        "name": "NaSmO2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "568062",
+        "name": "DyTlSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "978844",
+        "name": "SrCa3O4",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "rocksalt-A3BX4-Pm3m"
+    },
+    {
+        "id": "9367",
+        "name": "RbErS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "675531",
+        "name": "NaBiS2",
+        "source": "phonondb",
+        "spacegroup": "Fdd2",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "1265",
+        "name": "MgO",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "23295",
+        "name": "RbCl",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "20289",
+        "name": "NaInS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "1779",
+        "name": "YbTe",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "22450",
+        "name": "Li2PbO3",
+        "source": "phonondb",
+        "spacegroup": "C2/c",
+        "family": "rocksalt-A2BX3-C2c"
+    },
+    {
+        "id": "22898",
+        "name": "KI",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "36864",
+        "name": "Li2TiO3",
+        "source": "phonondb",
+        "spacegroup": "C2/c",
+        "family": "rocksalt-A2BX3-C2c"
+    },
+    {
+        "id": "22905",
+        "name": "LiCl",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "11742",
+        "name": "CsNdTe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "9366",
+        "name": "RbHoS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "1216",
+        "name": "YbO",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "755287",
+        "name": "Ca3CdO4",
+        "source": "phonondb",
+        "spacegroup": "Cmmm",
+        "family": "rocksalt-A3BX4-Cmmm"
+    },
+    {
+        "id": "13313",
+        "name": "ScTlSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "19717",
+        "name": "PbTe",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1672",
+        "name": "CaS",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "5273",
+        "name": "KPrTe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "22899",
+        "name": "LiI",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "11739",
+        "name": "KLaTe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "2175",
+        "name": "TlF",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "981103",
+        "name": "Sr3CdO4",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "rocksalt-A3BX4-Pm3m"
+    },
+    {
+        "id": "3613",
+        "name": "NaErS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "3056",
+        "name": "NaTlO2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "676360",
+        "name": "NaNdS2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "1315",
+        "name": "MgS",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "37605",
+        "name": "LiNdSe2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "1087",
+        "name": "SrS",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "569639",
+        "name": "TlCl",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "9036",
+        "name": "KSmTe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "2605",
+        "name": "CaO",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "15797",
+        "name": "LiErSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "5808",
+        "name": "RbNdTe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "22566",
+        "name": "TlInS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "7017",
+        "name": "NaNbN2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "7219",
+        "name": "Na2ZrSe3",
+        "source": "phonondb",
+        "spacegroup": "C2/m",
+        "family": "rocksalt-A2BX3-C2m"
+    },
+    {
+        "id": "9364",
+        "name": "RbSmS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "1958",
+        "name": "SrTe",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "11740",
+        "name": "KNdTe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "1820",
+        "name": "YbS",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "10779",
+        "name": "RbNdSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "2472",
+        "name": "SrO",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "5693",
+        "name": "NaCrS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "675230",
+        "name": "NaLaS2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "5175",
+        "name": "NaInO2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "7176",
+        "name": "RbLaSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "3332",
+        "name": "NaCrSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "10760",
+        "name": "MgSe",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "34477",
+        "name": "LiSmS2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "35015",
+        "name": "NaBiSe2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "570117",
+        "name": "ErTlSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "8175",
+        "name": "KTlO2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "23870",
+        "name": "NaH",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "15785",
+        "name": "KDyS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "15795",
+        "name": "LiDySe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "1415",
+        "name": "CaSe",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "10784",
+        "name": "RbErSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "24721",
+        "name": "RbH",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "35717",
+        "name": "LiDySe2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "11151",
+        "name": "NaPrTe2",
+        "source": "phonondb",
+        "spacegroup": "Fd-3m",
+        "family": "rocksalt-ABX2-Fd3m"
+    },
+    {
+        "id": "22867",
+        "name": "RbBr",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "37879",
+        "name": "LiYSe2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "755311",
+        "name": "NaLuO2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "15794",
+        "name": "LiYSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "9035",
+        "name": "NaLuS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "33322",
+        "name": "LiHoSe2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "10785",
+        "name": "RbLuSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "568588",
+        "name": "NdTlSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "573697",
+        "name": "CsCl",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "14115",
+        "name": "LiRhO2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "9365",
+        "name": "RbTbS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "10778",
+        "name": "RbPrSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "2758",
+        "name": "SrSe",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "571222",
+        "name": "CsBr",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "22916",
+        "name": "NaBr",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "753315",
+        "name": "Mg3ZnO4",
+        "source": "phonondb",
+        "spacegroup": "Cmmm",
+        "family": "rocksalt-A3BX4-Cmmm"
+    },
+    {
+        "id": "30041",
+        "name": "RbBiS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "1342",
+        "name": "BaO",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "23193",
+        "name": "KCl",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "3540",
+        "name": "Li2SnO3",
+        "source": "phonondb",
+        "spacegroup": "C2/c",
+        "family": "rocksalt-A2BX3-C2c24"
+    },
+    {
+        "id": "23259",
+        "name": "LiBr",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "675199",
+        "name": "NaPrS2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "760483",
+        "name": "Li2PdO3",
+        "source": "phonondb",
+        "spacegroup": "C2/m",
+        "family": "rocksalt-A2BX3-C2m"
+    },
+    {
+        "id": "754825",
+        "name": "NaTmO2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "15788",
+        "name": "LiYS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "33526",
+        "name": "LiBiS2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "33363",
+        "name": "LiYS2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "22903",
+        "name": "RbI",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "15781",
+        "name": "KLaS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "15791",
+        "name": "LiErS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "568560",
+        "name": "TlBr",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "4123",
+        "name": "ErTlS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "10780",
+        "name": "RbSmSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "22862",
+        "name": "NaCl",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "9263",
+        "name": "KErTe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "33667",
+        "name": "LiDyS2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "14476",
+        "name": "LiRhO2",
+        "source": "phonondb",
+        "spacegroup": "Fd-3m",
+        "family": "rocksalt-ABX2-Fd3m"
+    },
+    {
+        "id": "7914",
+        "name": "NaScO2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "15790",
+        "name": "LiHoS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "7046",
+        "name": "RbDyS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "23251",
+        "name": "KBr",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "5475",
+        "name": "NaTaN2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "756597",
+        "name": "Li2HfO3",
+        "source": "phonondb",
+        "spacegroup": "C2/m",
+        "family": "rocksalt-A2BX3-C2m"
+    },
+    {
+        "id": "9368",
+        "name": "RbTmS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "682",
+        "name": "NaF",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "754777",
+        "name": "NaLaO2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "11718",
+        "name": "RbF",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "36234",
+        "name": "NaTlO2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "569178",
+        "name": "HoTlSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "5488",
+        "name": "LiInO2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "8001",
+        "name": "LiAlO2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "31166",
+        "name": "DyTlS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "5840",
+        "name": "LiScO2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "15789",
+        "name": "LiDyS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "36791",
+        "name": "LiNdS2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "9361",
+        "name": "RbLaS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "10783",
+        "name": "RbHoSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "8830",
+        "name": "NaRhO2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "286",
+        "name": "YbSe",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "23231",
+        "name": "AgBr",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "15782",
+        "name": "KPrS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "4519",
+        "name": "KPrO2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "569507",
+        "name": "TbTlSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "10226",
+        "name": "NaYS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "3664",
+        "name": "NdTlS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "29678",
+        "name": "AgBiS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "38695",
+        "name": "LiTbSe2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "1138",
+        "name": "LiF",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "463",
+        "name": "KF",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "5694",
+        "name": "NaHoS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "9363",
+        "name": "RbNdS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "35205",
+        "name": "LiErSe2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "2931",
+        "name": "Li2TiO3",
+        "source": "phonondb",
+        "spacegroup": "C2/c",
+        "family": "rocksalt-A2BX3-C2c24"
+    },
+    {
+        "id": "16763",
+        "name": "KYTe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "24084",
+        "name": "KH",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "984729",
+        "name": "BaSr3O4",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "rocksalt-A3BX4-Pm3m"
+    },
+    {
+        "id": "35591",
+        "name": "LiErS2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "755352",
+        "name": "Li2HfO3",
+        "source": "phonondb",
+        "spacegroup": "C2/c",
+        "family": "rocksalt-A2BX3-C2c"
+    },
+    {
+        "id": "35388",
+        "name": "LiSmSe2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "11601",
+        "name": "NaErO2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "614603",
+        "name": "CsI",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "36029",
+        "name": "ErAgS2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "1500",
+        "name": "BaS",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "4326",
+        "name": "KErS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "9362",
+        "name": "RbPrS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "9076",
+        "name": "NaTmS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "10782",
+        "name": "RbTbSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "1519",
+        "name": "CaTe",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "15793",
+        "name": "LiTbSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "15783",
+        "name": "KSmS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "23703",
+        "name": "LiH",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "11178",
+        "name": "SrCeN2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "22473",
+        "name": "NaInSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "29678",
+        "name": "AgBiS2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "30041",
+        "name": "RbBiS2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "33526",
+        "name": "LiBiS2",
+        "source": "mpdb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "35015",
+        "name": "NaBiSe2",
+        "source": "mpdb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "568560",
+        "name": "TlBr",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "569639",
+        "name": "TlCl",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "570354",
+        "name": "CuBr",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "571102",
+        "name": "TlI",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "571222",
+        "name": "CsBr",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "571386",
+        "name": "CuCl",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "573697",
+        "name": "CsCl",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "614603",
+        "name": "CsI",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "675230",
+        "name": "NaLaS2",
+        "source": "mpdb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "675531",
+        "name": "NaBiS2",
+        "source": "mpdb",
+        "spacegroup": "Fdd2",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "755287",
+        "name": "Ca3CdO4",
+        "source": "mpdb",
+        "spacegroup": "Cmmm",
+        "family": "rocksalt-A3BX4-Cmmm"
+    },
+    {
+        "id": "1008786",
+        "name": "MgTe",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "370",
+        "name": "CdS",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "463",
+        "name": "KF",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "682",
+        "name": "NaF",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1000",
+        "name": "BaTe",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1087",
+        "name": "SrS",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1138",
+        "name": "LiF",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1253",
+        "name": "BaSe",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1265",
+        "name": "MgO",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1315",
+        "name": "MgS",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1330",
+        "name": "AlN",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1342",
+        "name": "BaO",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1415",
+        "name": "CaSe",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1500",
+        "name": "BaS",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1519",
+        "name": "CaTe",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1672",
+        "name": "CaS",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1784",
+        "name": "CsF",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1794",
+        "name": "BeO",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1958",
+        "name": "SrTe",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "2175",
+        "name": "TlF",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "2201",
+        "name": "PbSe",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "2229",
+        "name": "ZnO",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "2472",
+        "name": "SrO",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "2605",
+        "name": "CaO",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "2693",
+        "name": "SnSe",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "2758",
+        "name": "SrSe",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "2853",
+        "name": "GaN",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "3056",
+        "name": "NaTlO2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "4156",
+        "name": "Li2ZrO3",
+        "source": "mpdb",
+        "spacegroup": "C2/c",
+        "family": "rocksalt-A2BX3-C2c"
+    },
+    {
+        "id": "5175",
+        "name": "NaInO2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "5475",
+        "name": "NaTaN2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "5488",
+        "name": "LiInO2",
+        "source": "mpdb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "5840",
+        "name": "LiScO2",
+        "source": "mpdb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "7017",
+        "name": "NaNbN2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "7176",
+        "name": "RbLaSe2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "7219",
+        "name": "Na2ZrSe3",
+        "source": "mpdb",
+        "spacegroup": "C2/m",
+        "family": "rocksalt-A2BX3-C2m"
+    },
+    {
+        "id": "7914",
+        "name": "NaScO2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "8175",
+        "name": "KTlO2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "8830",
+        "name": "NaRhO2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "9361",
+        "name": "RbLaS2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "9382",
+        "name": "SrZrN2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "9383",
+        "name": "SrHfN2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "10226",
+        "name": "NaYS2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "10760",
+        "name": "MgSe",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "11718",
+        "name": "RbF",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "11739",
+        "name": "KLaTe2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "14115",
+        "name": "LiRhO2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "15781",
+        "name": "KLaS2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "15788",
+        "name": "LiYS2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "15794",
+        "name": "LiYSe2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "16763",
+        "name": "KYTe2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "19717",
+        "name": "PbTe",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "20289",
+        "name": "NaInS2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "21276",
+        "name": "PbS",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "22450",
+        "name": "Li2PbO3",
+        "source": "mpdb",
+        "spacegroup": "C2/c",
+        "family": "rocksalt-A2BX3-C2c"
+    },
+    {
+        "id": "22473",
+        "name": "NaInSe2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "22862",
+        "name": "NaCl",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "22867",
+        "name": "RbBr",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "22898",
+        "name": "KI",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "22899",
+        "name": "LiI",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "22903",
+        "name": "RbI",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "22905",
+        "name": "LiCl",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "22916",
+        "name": "NaBr",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "22919",
+        "name": "AgI",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "22922",
+        "name": "AgCl",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "23193",
+        "name": "KCl",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "23231",
+        "name": "AgBr",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "23251",
+        "name": "KBr",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "23259",
+        "name": "LiBr",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "23268",
+        "name": "NaI",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "23295",
+        "name": "RbCl",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "23703",
+        "name": "LiH",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "23870",
+        "name": "NaH",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "24084",
+        "name": "KH",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "24721",
+        "name": "RbH",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
     }
 ]
