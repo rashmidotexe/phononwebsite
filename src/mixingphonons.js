@@ -11,7 +11,8 @@
  * antiperovskite: the 5-atom cell (cubic or polar) or a supercell of the
  * octahedral tilts (Pnma, R-3c, ...; PEROVSKITE_SUPERSTRUCTURES). A binary (a
  * 5-atom perovskite) with force constants can also be folded into the cell of
- * an ordered ternary (a tilted perovskite) on its lattice. Force constants
+ * an ordered ternary (a tilted perovskite) on its lattice. Transition-metal
+ * dichalcogenides mix within their polytype (2H, 1T, 3R; TMD_SUPERSTRUCTURES). Force constants
  * and site masses are mixed separately:
  *
  *     Phi_k(q)   = M_k^1/2 D_k(q) M_k^1/2
@@ -259,6 +260,15 @@ function getCanonicalSites(atomTypes, positionsRed, cationSymbol, lattice = null
 // species on the tetrahedral sites of a fluorite (CaF2, CoSi2); on the fcc site
 // they make an antifluorite (Li2O, Mg2Si, Be2C)
 const ANION_LIKE = new Set(Object.keys(ANION_CHARGE).concat(['C', 'Si', 'Ge', 'Sn', 'Pb', 'Sb', 'Bi']));
+
+function isFluoriteCell(endpoint) {
+    try {
+        getFluoriteSites(endpoint.atomTypes, endpoint.positionsRed, endpoint.lattice);
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
 
 function getFluoriteSites(atomTypes, positionsRed, lattice) {
     /*
@@ -1098,8 +1108,66 @@ export const PEROVSKITE_SUPERSTRUCTURES = {
     },
 };
 
+// layered MX2 (transition-metal dichalcogenides): every polytype is its own
+// family, matched as a single cell. Sites relative to the first metal, in the
+// hexagonal cell wurtziteLattice(a, c) (1T: CdI2 type P-3m1; 2H: MoS2 type
+// P6_3/mmc, two layers) or the rhombohedral primitive cell rhombohedralLattice(a,
+// c) (3R: R3m, three layers, every atom on the 3-fold axis); the heights of the
+// chalcogens are the usual ones, a cell is matched to the nearest site.
+const LAYERED_POLYTYPES = {
+    'tmd-1T': {
+        cell: 'hexagonal',
+        sites: [
+            { role: 'A', red: [0, 0, 0] },
+            { role: 'X', red: [1 / 3, 2 / 3, 0.25] },
+            { role: 'X', red: [2 / 3, 1 / 3, -0.25] },
+        ],
+    },
+    'tmd-2H': {
+        cell: 'hexagonal',
+        sites: [
+            { role: 'A', red: [0, 0, 0] },
+            { role: 'A', red: [1 / 3, -1 / 3, 0.5] },
+            { role: 'X', red: [1 / 3, -1 / 3, -0.125] },
+            { role: 'X', red: [1 / 3, -1 / 3, 0.125] },
+            { role: 'X', red: [0, 0, 0.375] },
+            { role: 'X', red: [0, 0, 0.625] },
+        ],
+    },
+    'tmd-3R': {
+        cell: 'rhombohedral',
+        sites: [
+            { role: 'A', red: [0, 0, 0] },
+            { role: 'X', red: [0.25, 0.25, 0.25] },
+            { role: 'X', red: [0.417, 0.417, 0.417] },
+        ],
+    },
+};
+
+// transition-metal dichalcogenides: the cell of each polytype (LAYERED_POLYTYPES)
+// is its own template; no ordered ternaries are in the databases
+const layeredTemplate = (name, title, extra = {}) => Object.assign({
+    parent: name,
+    title: title,
+    supercell: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+    sites: superstructureSites(LAYERED_POLYTYPES[name].sites.map((site, sub) => [site.role, sub, 0, 0, 0])),
+    specialPoints: null,
+    path: null,
+}, extra);
+export const TMD_SUPERSTRUCTURES = {
+    'tmd-1T': layeredTemplate('tmd-1T', '1T (CdI2 type, P-3m1)', {
+        specialPoints: HEXAGONAL_SPECIAL_POINTS,
+        referencePoints: { M: [0.5, 0, 0], K: [1 / 3, 1 / 3, 0], L: [0.5, 0, 0.5], H: [1 / 3, 1 / 3, 0.5] },
+    }),
+    'tmd-2H': layeredTemplate('tmd-2H', '2H (MoS2 type, P6_3/mmc)', {
+        specialPoints: HEXAGONAL_SPECIAL_POINTS,
+        referencePoints: { M: [0.5, 0, 0], K: [1 / 3, 1 / 3, 0], L: [0.5, 0, 0.5], H: [1 / 3, 1 / 3, 0.5] },
+    }),
+    'tmd-3R': layeredTemplate('tmd-3R', '3R (R3m)'),
+};
+
 export const SUPERSTRUCTURES = Object.assign({}, WURTZITE_SUPERSTRUCTURES, ROCKSALT_SUPERSTRUCTURES,
-    FLUORITE_SUPERSTRUCTURES, PEROVSKITE_SUPERSTRUCTURES);
+    FLUORITE_SUPERSTRUCTURES, PEROVSKITE_SUPERSTRUCTURES, TMD_SUPERSTRUCTURES);
 
 function rowTimesMatrix(v, m) {
     return [0, 1, 2].map((j) => v[0] * m[0][j] + v[1] * m[1][j] + v[2] * m[2][j]);
@@ -1561,6 +1629,125 @@ function* perovskiteDescriptions(atomTypes, positionsRed, lattice, isAnion, role
     }
 }
 
+export function rhombohedralLattice(a, c) {
+    // primitive vectors of the rhombohedral lattice with hexagonal axes a, c
+    let r = a / Math.sqrt(3);
+    return [[a / 2, r / 2, c / 3], [-a / 2, r / 2, c / 3], [0, -r, c / 3]];
+}
+
+function getLayeredRoles(atomTypes) {
+    // species -> role of an M X2 cell: X the chalcogen (2/3 of the atoms), A the metal
+    let counts = {};
+    atomTypes.forEach((type) => { counts[type] = (counts[type] || 0) + 1; });
+    let species = Object.keys(counts);
+    let x = species.filter((type) => ['S', 'Se', 'Te'].indexOf(type) !== -1 && 3 * counts[type] === 2 * atomTypes.length);
+    if (species.length !== 2 || x.length !== 1) {
+        throw new Error('Not an M X2 dichalcogenide cell: ' + JSON.stringify(counts));
+    }
+    let roles = {};
+    roles[species.find((type) => type !== x[0])] = 'A';
+    roles[x[0]] = 'X';
+    return roles;
+}
+
+function* layeredDescriptions(polytype, atomTypes, positionsRed, lattice, isAnion) {
+    /*
+    every way of reading a layered M X2 cell as the polytype's cell: the in-plane
+    axis x along one of the six shortest lattice vectors (in the layers), z along
+    either normal, either handedness; a and c from the cell (c from the volume, so
+    the interlayer distance is the file's own). The origin is a metal atom.
+    */
+    let natoms = atomTypes.length;
+    if (natoms !== polytype.sites.length) {
+        return;
+    }
+    let positionsCar = utils.red_car_list(positionsRed, lattice);
+    let cross = (p, q) => [p[1] * q[2] - p[2] * q[1], p[2] * q[0] - p[0] * q[2], p[0] * q[1] - p[1] * q[0]];
+    let unit = (v) => mat.vec_scale(v, 1 / Math.sqrt(mat.vec_dot(v, v)));
+    let vectors = [];
+    for (let n0 = -2; n0 <= 2; n0++) {
+        for (let n1 = -2; n1 <= 2; n1++) {
+            for (let n2 = -2; n2 <= 2; n2++) {
+                let v = [0, 1, 2].map((d) => n0 * lattice[0][d] + n1 * lattice[1][d] + n2 * lattice[2][d]);
+                if (mat.vec_dot(v, v) > 1e-6) {
+                    vectors.push(v);
+                }
+            }
+        }
+    }
+    vectors.sort((p, q) => mat.vec_dot(p, p) - mat.vec_dot(q, q));
+    let a = Math.sqrt(mat.vec_dot(vectors[0], vectors[0]));
+    let inPlane = vectors.filter((v) => Math.sqrt(mat.vec_dot(v, v)) < 1.02 * a);
+    if (inPlane.length !== 6) {
+        return;
+    }
+    let other = inPlane.find((v) => Math.abs(mat.vec_dot(unit(v), unit(inPlane[0]))) < 0.9);
+    let normal = unit(cross(inPlane[0], other));
+    let volume = Math.abs(mat.matrix_determinant(lattice));
+    let hexagonalVolume = (a * a * Math.sqrt(3)) / 2;
+    let c = polytype.cell === 'hexagonal' ? volume / hexagonalVolume : (3 * volume) / hexagonalVolume;
+    let H = polytype.cell === 'hexagonal' ? wurtziteLattice(a, c) : rhombohedralLattice(a, c);
+    let Hinverse = mat.matrix_inverse(H);
+
+    for (let axis of inPlane) {
+        for (let sign of [1, -1]) {
+            for (let handedness of [1, -1]) {
+                let ex = unit(axis);
+                let ez = mat.vec_scale(normal, sign);
+                let ey = mat.vec_scale(cross(ez, ex), handedness);
+                let T = [ex, ey, ez];
+                let rotated = lattice.map((row) => matrixTimesVector(T, row));
+                let Mraw = rotated.map((row) => rowTimesMatrix(row, Hinverse));
+                let M = Mraw.map((row) => row.map(Math.round));
+                if (Mraw.some((row, r) => row.some((v, k) => Math.abs(v - M[r][k]) > 0.1)) ||
+                    Math.round(Math.abs(mat.matrix_determinant(M))) !== 1) {
+                    continue;
+                }
+                for (let origin = 0; origin < natoms; origin++) {
+                    if (isAnion(atomTypes[origin])) {
+                        continue;
+                    }
+                    let sites = [];
+                    for (let n = 0; n < natoms; n++) {
+                        let d = [0, 1, 2].map((k) => positionsCar[n][k] - positionsCar[origin][k]);
+                        let f = rowTimesMatrix(matrixTimesVector(T, d), Hinverse);
+                        let found = null;
+                        let best = 0.12;
+                        polytype.sites.forEach((site, sub) => {
+                            if ((site.role === 'X') !== isAnion(atomTypes[n])) {
+                                return;
+                            }
+                            let r = f.map((v, k) => v - site.red[k]);
+                            let rounded = r.map(Math.round);
+                            let deviation = Math.max.apply(null, r.map((v, k) => Math.abs(v - rounded[k])));
+                            if (deviation < best) {
+                                best = deviation;
+                                found = { sub: sub, n: rounded };
+                            }
+                        });
+                        if (!found) {
+                            break;
+                        }
+                        sites.push(found);
+                    }
+                    if (sites.length === natoms && new Set(sites.map((site) => site.sub)).size === natoms) {
+                        yield { T: T, origin: origin, H: H, M: M, sites: sites, a: a, c: c };
+                    }
+                }
+            }
+        }
+    }
+}
+
+const layeredParent = (name) => ({
+    describe: (...args) => layeredDescriptions(LAYERED_POLYTYPES[name], ...args),
+    sitePosition: (site) => site.n.map((v, k) => v + LAYERED_POLYTYPES[name].sites[site.sub].red[k]),
+    frameTolerance: 15,
+    xFraction: 2 / 3,
+    originRole: 'A',
+    getRoles: getLayeredRoles,
+});
+
 const perovskiteParent = (anti) => ({
     describe: perovskiteDescriptions,
     sitePosition: (site) => site.n.map((v, k) => v + PEROVSKITE_SITES[site.sub].red[k]),
@@ -1594,6 +1781,9 @@ const PARENT_STRUCTURES = {
     antifluorite: fccParent('antifluorite'),
     perovskite: perovskiteParent(false),
     antiperovskite: perovskiteParent(true),
+    'tmd-1T': layeredParent('tmd-1T'),
+    'tmd-2H': layeredParent('tmd-2H'),
+    'tmd-3R': layeredParent('tmd-3R'),
 };
 
 function getParentRoles(parent, atomTypes, positionsRed, lattice) {
@@ -1828,14 +2018,14 @@ function matchScore(segments, template) {
     };
 }
 
-function getSuperstructureFamilies(atomTypes) {
+function getSuperstructureFamilies(atomTypes, positionsRed, lattice) {
     // the SUPERSTRUCTURES entries with the same number of atoms per role
     let count = (list) => ['A', 'B', 'X'].map((role) => list.filter((r) => r === role).length).join(',');
     return Object.keys(SUPERSTRUCTURES).filter((family) => {
         let template = SUPERSTRUCTURES[family];
         let roles;
         try {
-            roles = getSuperstructureRoles(atomTypes, PARENT_STRUCTURES[template.parent].xFraction);
+            roles = getParentRoles(PARENT_STRUCTURES[template.parent], atomTypes, positionsRed, lattice);
         } catch (error) {
             return false;
         }
@@ -2206,7 +2396,7 @@ export function buildMixingEndpoint(raw, entry, dielectric = null) {
         if (canonical.family === 'rocksalt') {
             endpoint.structure = { a: Math.SQRT2 * Math.sqrt(mat.vec_dot(endpoint.lattice[0], endpoint.lattice[0])) };
         }
-    } else if (natoms === 3 && nspecies === 2) {
+    } else if (natoms === 3 && nspecies === 2 && !hint && isFluoriteCell(endpoint)) {
         canonical = getFluoriteSites(endpoint.atomTypes, endpoint.positionsRed, endpoint.lattice);
         endpoint.family = canonical.family;
         endpoint.rotation = null;
@@ -2224,7 +2414,7 @@ export function buildMixingEndpoint(raw, entry, dielectric = null) {
         endpoint.structure = canonical.structure;
         relabelSegments(endpoint.segments, getChalcopyriteSpecialPoints(canonical.structure.a, canonical.structure.c));
     } else {
-        let families = hint ? [hint] : getSuperstructureFamilies(endpoint.atomTypes);
+        let families = hint ? [hint] : getSuperstructureFamilies(endpoint.atomTypes, endpoint.positionsRed, endpoint.lattice);
         let family = null;
         let lastError = chalcopyriteError;
         for (let candidate of families) {

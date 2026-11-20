@@ -83,7 +83,8 @@ export class MixingWebpage extends PhononWebpage {
     gamma-LiFeO2, Li2ZrO3 type, ...), fluorite (scheelite, CaUO4 type, ...) and
     antifluorite (MgAgAs type LiMgN, Li5SiP3) materials, and ABX3 perovskites and
     antiperovskites (the 5-atom cell, cubic or polar, and the supercells of the
-    octahedral tilts: Pnma, R-3c, ...) in
+    octahedral tilts: Pnma, R-3c, ...), and the 2H, 1T and 3R polytypes of the
+    transition-metal dichalcogenides in
     data/mixing/models.json, drawn from the PhononDB (A. Togo) and Materials
     Project (G. Petretto et al.) databases. Materials mix within their family; a
     binary with force constants (PhononDB) can also be mixed with an ordered
@@ -343,6 +344,9 @@ export class MixingWebpage extends PhononWebpage {
         let tag = "";
         if (family.indexOf("wurtzite") === 0) {
             tag = "wurtzite";
+        } else if (family.indexOf("tmd-") === 0) {
+            // the polytype of a transition-metal dichalcogenide: 2H, 1T, 3R
+            tag = family.slice(4);
         } else {
             let spacegroup = (material.spacegroup || "").replace(/_(\d)/g, "<sub>$1</sub>");
             for (let parent of ["rocksalt", "fluorite", "antifluorite", "perovskite", "antiperovskite"]) {
@@ -602,6 +606,9 @@ export class MixingWebpage extends PhononWebpage {
         let familyName = this.pairCache ? this.pairCache.sampled.endpoint1.family : "";
         let family = ["wurtzite", "rocksalt", "fluorite", "antifluorite", "perovskite", "antiperovskite"]
             .find((name) => familyName.indexOf(name) === 0);
+        if (familyName.indexOf("tmd-") === 0) {
+            family = familyName.slice(4);
+        }
         family = family ? family + ", " : "";
         return utils.format_formula_html(this.material1.name) +
             " + " + utils.format_formula_html(this.material2.name) +

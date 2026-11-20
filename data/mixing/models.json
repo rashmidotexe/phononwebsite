@@ -5534,5 +5534,89 @@
         "source": "mpdb",
         "spacegroup": "R3m",
         "family": "perovskite"
+    },
+    {
+        "id": "602",
+        "name": "MoTe2",
+        "source": "phonondb",
+        "spacegroup": "P6_3/mmc",
+        "family": "tmd-2H"
+    },
+    {
+        "id": "1186",
+        "name": "ZrS2",
+        "source": "phonondb",
+        "spacegroup": "P-3m1",
+        "family": "tmd-1T"
+    },
+    {
+        "id": "1821",
+        "name": "WSe2",
+        "source": "phonondb",
+        "spacegroup": "P6_3/mmc",
+        "family": "tmd-2H"
+    },
+    {
+        "id": "9813",
+        "name": "WS2",
+        "source": "phonondb",
+        "spacegroup": "R3m",
+        "family": "tmd-3R"
+    },
+    {
+        "id": "7581",
+        "name": "MoSe2",
+        "source": "phonondb",
+        "spacegroup": "R3m",
+        "family": "tmd-3R"
+    },
+    {
+        "id": "224",
+        "name": "WS2",
+        "source": "phonondb",
+        "spacegroup": "P6_3/mmc",
+        "family": "tmd-2H"
+    },
+    {
+        "id": "985831",
+        "name": "HfSe2",
+        "source": "phonondb",
+        "spacegroup": "P-3m1",
+        "family": "tmd-1T"
+    },
+    {
+        "id": "1434",
+        "name": "MoS2",
+        "source": "phonondb",
+        "spacegroup": "R3m",
+        "family": "tmd-3R"
+    },
+    {
+        "id": "985829",
+        "name": "HfS2",
+        "source": "phonondb",
+        "spacegroup": "P-3m1",
+        "family": "tmd-1T"
+    },
+    {
+        "id": "602",
+        "name": "MoTe2",
+        "source": "mpdb",
+        "spacegroup": "P6_3/mmc",
+        "family": "tmd-2H"
+    },
+    {
+        "id": "1634",
+        "name": "MoSe2",
+        "source": "mpdb",
+        "spacegroup": "P6_3/mmc",
+        "family": "tmd-2H"
+    },
+    {
+        "id": "7581",
+        "name": "MoSe2",
+        "source": "mpdb",
+        "spacegroup": "R3m",
+        "family": "tmd-3R"
     }
 ]

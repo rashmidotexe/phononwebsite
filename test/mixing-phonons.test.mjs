@@ -1282,3 +1282,96 @@ describe('Materials Project path alignment', () => {
         assert.ok(sampled.qpoints.length >= 0.9 * Math.min(points(limgn), points(liznas)));
     });
 });
+
+describe('transition-metal dichalcogenide mixing', () => {
+    let gammaIndices = (sampled) => sampled.qpoints
+        .map((q, k) => (q.every((v) => Math.abs(v - Math.round(v)) < 1e-9) ? k : -1))
+        .filter((k) => k >= 0);
+    let opticalDiff = (a, b) => {
+        let worst = 0;
+        a.forEach((row, k) => row.forEach((v, n) => {
+            if (Math.abs(v) > 1) {
+                worst = Math.max(worst, Math.abs(v - b[k][n]));
+            }
+        }));
+        return worst;
+    };
+
+    it('matches the 2H, 1T and 3R polytypes', () => {
+        let ws2 = endpoint('phonondb-WS2-2H-mp-224.json.gz', 'WS2');
+        assert.equal(ws2.family, 'tmd-2H');
+        assert.deepEqual(ws2.siteTypes, ['W', 'W', 'S', 'S', 'S', 'S']);
+        // the hexagonal cell along the canonical axes, the interlayer distance kept
+        let lattice = ws2.structure.lattice;
+        assert.ok(Math.abs(lattice[1][0] / lattice[0][0] + 0.5) < 1e-6 && Math.abs(lattice[2][0]) < 1e-6);
+        assert.ok(lattice[2][2] > 3 * lattice[0][0]);
+        // 1T: the chalcogens above and below the metal in either setting
+        let hfs2 = endpoint('phonondb-HfS2-1T-mp-985829.json.gz', 'HfS2');
+        let zrs2 = endpoint('phonondb-ZrS2-1T-mp-1186.json.gz', 'ZrS2');
+        assert.equal(hfs2.family, 'tmd-1T');
+        assert.equal(zrs2.family, 'tmd-1T');
+        assert.deepEqual(hfs2.siteTypes, ['Hf', 'S', 'S']);
+        // 3R: 3 atoms like 1T, but rhombohedral
+        let mos2 = endpoint('phonondb-MoS2-3R-mp-1434.json.gz', 'MoS2');
+        assert.equal(mos2.family, 'tmd-3R');
+        assert.deepEqual(mos2.siteTypes, ['Mo', 'S', 'S']);
+    });
+
+    it('maps a Materials Project 3R cell (other axes, polar) onto the PhononDB one', () => {
+        let pdb = endpoint('phonondb-MoSe2-3R-mp-7581.json.gz', 'MoSe2');
+        let mp = buildMixingEndpoint(loadFixture('mpdb-MoSe2-3R-mp-7581-trimmed.json.gz'), { name: 'MoSe2' });
+        assert.equal(mp.family, 'tmd-3R');
+        let relative = (a, b) => {
+            let n = 0;
+            let d = 0;
+            a.real.forEach((row, i) => row.forEach((v, j) => {
+                n += (v - b.real[i][j]) ** 2 + (a.imag[i][j] - b.imag[i][j]) ** 2;
+                d += v * v + a.imag[i][j] ** 2;
+            }));
+            return Math.sqrt(n / d);
+        };
+        let median = (sampled) => {
+            let r = sampled.matrices1.map((m, k) => relative(m, sampled.matrices2[k])).sort((p, q) => p - q);
+            return r[r.length >> 1];
+        };
+        assert.ok(median(sampleMixingPair(pdb, mp)) < 0.02);
+        mp.invert = !mp.invert;
+        assert.ok(median(sampleMixingPair(pdb, mp)) > 0.1);
+    });
+
+    it('keeps end-members exact, acoustic modes at zero and mirror symmetry', async () => {
+        let ws2 = endpoint('phonondb-WS2-2H-mp-224.json.gz', 'WS2');
+        let wse2 = endpoint('phonondb-WSe2-2H-mp-1821.json.gz', 'WSe2');
+        let hfs2 = endpoint('phonondb-HfS2-1T-mp-985829.json.gz', 'HfS2');
+        let zrs2 = endpoint('phonondb-ZrS2-1T-mp-1186.json.gz', 'ZrS2');
+        let mos2 = endpoint('phonondb-MoS2-3R-mp-1434.json.gz', 'MoS2');
+        let mose2 = endpoint('phonondb-MoSe2-3R-mp-7581.json.gz', 'MoSe2');
+        for (let [a, b] of [[ws2, wse2], [hfs2, zrs2], [mos2, mose2]]) {
+            let sampled = sampleMixingPair(a, b);
+            let reversed = sampleMixingPair(b, a);
+            assert.equal(sampled.recomputeNac, true);
+            assert.deepEqual(sampled.labels, reversed.labels);
+            let end0 = await computeMixedPhonon(sampled, 0);
+            assert.ok(opticalDiff(end0.eigenvalues, await computeReferenceEigenvalues(sampled)) < 1e-3);
+            let end1 = await computeMixedPhonon(sampled, 1);
+            assert.ok(opticalDiff(end1.eigenvalues, await computeReferenceEigenvalues(reversed)) < 1e-3);
+            let mixed = await computeMixedPhonon(sampled, 0.5, 0.3);
+            for (let k of gammaIndices(sampled)) {
+                for (let n = 0; n < 3; n++) {
+                    assert.ok(Math.abs(mixed.eigenvalues[k][n]) < 0.05, `${a.name} + ${b.name}: ${mixed.eigenvalues[k][n]}`);
+                }
+            }
+            let mirrored = await computeMixedPhonon(reversed, 0.5, 0.7);
+            assert.ok(opticalDiff(mixed.eigenvalues, mirrored.eigenvalues) < 1e-6);
+        }
+    });
+
+    it('does not mix different polytypes', () => {
+        let ws2 = endpoint('phonondb-WS2-2H-mp-224.json.gz', 'WS2');
+        let hfs2 = endpoint('phonondb-HfS2-1T-mp-985829.json.gz', 'HfS2');
+        let mos2 = endpoint('phonondb-MoS2-3R-mp-1434.json.gz', 'MoS2');
+        assert.throws(() => sampleMixingPair(ws2, mos2), /Cannot mix/);
+        assert.throws(() => sampleMixingPair(hfs2, mos2), /Cannot mix/);
+        assert.throws(() => sampleMixingPair(ws2, hfs2), /Cannot mix/);
+    });
+});
