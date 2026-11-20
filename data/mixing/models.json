@@ -424,5 +424,397 @@
         "name": "ZrC",
         "source": "mpdb",
         "spacegroup": "F-43m"
+    },
+    {
+        "id": "5782",
+        "name": "AgAlS2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "14091",
+        "name": "AgAlSe2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "14092",
+        "name": "AgAlTe2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "5342",
+        "name": "AgGaS2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "15703",
+        "name": "BeCN2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "15704",
+        "name": "BeSiN2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "3668",
+        "name": "CdGeP2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "4666",
+        "name": "CdSiP2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "4979",
+        "name": "CuAlS2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "8016",
+        "name": "CuAlSe2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "8017",
+        "name": "CuAlTe2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "983565",
+        "name": "CuBSe2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "5238",
+        "name": "CuGaS2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "4586",
+        "name": "LiAlTe2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "5048",
+        "name": "LiGaTe2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "20187",
+        "name": "LiInSe2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "20782",
+        "name": "LiInTe2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "34903",
+        "name": "MgGeP2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "2961",
+        "name": "MgSiP2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "971837",
+        "name": "ZnCdTe2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "4524",
+        "name": "ZnGeP2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "3595",
+        "name": "ZnSiAs2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "4763",
+        "name": "ZnSiP2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "4175",
+        "name": "ZnSnP2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "5782",
+        "name": "AgAlS2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "14091",
+        "name": "AgAlSe2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "14092",
+        "name": "AgAlTe2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "5342",
+        "name": "AgGaS2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "5518",
+        "name": "AgGaSe2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "19833",
+        "name": "AgInS2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "15703",
+        "name": "BeCN2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "1009088",
+        "name": "BeGeAs2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "1009087",
+        "name": "BeSiAs2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "15704",
+        "name": "BeSiN2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "1009085",
+        "name": "BeSiP2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "3668",
+        "name": "CdGeP2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "3078",
+        "name": "CdSiAs2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "4666",
+        "name": "CdSiP2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "5213",
+        "name": "CdSnP2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "4979",
+        "name": "CuAlS2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "8016",
+        "name": "CuAlSe2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "8017",
+        "name": "CuAlTe2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "983565",
+        "name": "CuBSe2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "5238",
+        "name": "CuGaS2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "3839",
+        "name": "CuGaTe2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "22261",
+        "name": "CuInTe2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "4586",
+        "name": "LiAlTe2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "5048",
+        "name": "LiGaTe2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "20187",
+        "name": "LiInSe2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "20782",
+        "name": "LiInTe2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "2961",
+        "name": "MgSiP2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "1009082",
+        "name": "MgSnAs2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "4524",
+        "name": "ZnGeP2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "3595",
+        "name": "ZnSiAs2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "4763",
+        "name": "ZnSiP2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "4175",
+        "name": "ZnSnP2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
     }
 ]

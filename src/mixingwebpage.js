@@ -76,8 +76,10 @@ export class MixingHighcharts extends PhononHighcharts {
 export class MixingWebpage extends PhononWebpage {
     /*
     Phonon page restricted to the curated list of 2-atom zinc blende / diamond
-    materials in data/mixing/models.json, drawn from the PhononDB (A. Togo)
-    and Materials Project (G. Petretto et al.) databases.
+    and 8-atom chalcopyrite materials in data/mixing/models.json, drawn from the
+    PhononDB (A. Togo) and Materials Project (G. Petretto et al.) databases.
+    A zinc blende with force constants (PhononDB) can also be mixed with a
+    chalcopyrite, folded into the chalcopyrite cell.
 
     Material 1 is picked in the regular list, material 2 in the second list and
     the character slider sets the fraction x of material 2 in the virtual
@@ -200,10 +202,15 @@ export class MixingWebpage extends PhononWebpage {
         let y = this.getMassFraction();
         let e1 = pair.endpoint1;
         let e2 = pair.endpoint2;
-        let sites = [0, 1].map((s) => {
+        // one entry per distinct site (2 in zinc blende, A / B / anion in chalcopyrite)
+        let sites = [];
+        e1.siteTypes.forEach((type, s) => {
             let mass = (1 - y) * e1.siteMasses[s] + y * e2.siteMasses[s];
-            let types = e1.siteTypes[s] === e2.siteTypes[s] ? e1.siteTypes[s] : e1.siteTypes[s] + "/" + e2.siteTypes[s];
-            return types + " " + mass.toFixed(2);
+            let types = type === e2.siteTypes[s] ? type : type + "/" + e2.siteTypes[s];
+            let entry = types + " " + mass.toFixed(2);
+            if (sites.indexOf(entry) < 0) {
+                sites.push(entry);
+            }
         });
         let prefix = this.massLinked ? "" : percent + " % " + utils.format_formula_html(this.material2.name) + ": ";
         this.dom_mass_value.html(prefix + sites.join(" · ") + " amu");
@@ -238,11 +245,14 @@ export class MixingWebpage extends PhononWebpage {
                 name: entry.name,
                 type: "json",
                 link: "https://materialsproject.org/materials/mp-"+entry.id,
+                // only materials of the same structure family can be mixed
+                family: entry.family || "zincblende",
             };
             if (entry.source === phonondb.name) {
                 m.source = phonondb.name;
                 m.reference = getReference(phonondb);
-                m.url = self.phonondbRoot+"/mp-"+entry.id+".json.gz";
+                // zinc blende files ship with the page, the others come from the upstream site
+                m.url = (m.family === "zincblende" ? self.phonondbRoot : phonondb.root)+"/mp-"+entry.id+".json.gz";
             } else {
                 m.source = mpdb.name;
                 m.reference = getReference(mpdb);
@@ -308,7 +318,9 @@ export class MixingWebpage extends PhononWebpage {
             .split(/[\s,]+/)
             .filter((token) => token.length > 0);
         let referenceIndices = this.getReferenceIndices();
+        let material1 = this.material1 ? this.findMaterial(this.material1.url) : null;
         let materials = this.materialsIndex
+            .filter((material) => this.canMix(material1, material))
             .filter((material) => this.materialMatchesFilter(material, tokens))
             .filter((material) => this.isReferenceEnabled(this.getMaterialReferenceKey(material)))
             .sort(this.compareMaterialsForMenu.bind(this));
@@ -348,6 +360,29 @@ export class MixingWebpage extends PhononWebpage {
         }
     }
 
+    loadRamanDatabase() {
+        // the mixing page shows no Raman spectra (and has no chart to draw them in)
+        return Promise.resolve();
+    }
+
+    loadExperimentalRaman() {
+        return Promise.resolve();
+    }
+
+    canMix(material1, material2) {
+        /*
+        materials of the same structure family mix directly; a zinc blende can be
+        folded into the chalcopyrite cell when its force constants are available
+        (PhononDB), the Materials Project files only cover the band path
+        */
+        let family1 = material1 ? material1.family : "zincblende";
+        if (family1 === material2.family) {
+            return true;
+        }
+        let zincblende = family1 === "zincblende" ? material1 : material2;
+        return !!zincblende && zincblende.source === "phonondb";
+    }
+
     findMaterial(url) {
         for (let i = 0; i < this.materialsIndex.length; i++) {
             if (this.materialsIndex[i].url === url) {
@@ -370,7 +405,15 @@ export class MixingWebpage extends PhononWebpage {
             link: url_vars.link,
             url_vars: url_vars,
         };
+        // drop a material 2 that cannot be mixed with the new material 1
+        let material2 = this.material2 ? this.findMaterial(this.material2.url) : null;
+        if (material2 && !this.canMix(this.findMaterial(url), material2)) {
+            this.material2 = null;
+            this.updateCharacterLabel();
+            this.updateMassLabel();
+        }
         this.markSelectedMaterials();
+        this.renderMaterial2Menu();
         this.refreshMixing(true, callback);
     }
 

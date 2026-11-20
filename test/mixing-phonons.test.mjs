@@ -11,7 +11,10 @@ import {
     sampleMixingPair,
     computeMixedPhonon,
     computeReferenceEigenvalues,
+    zincblendeAsChalcopyrite,
 } from '../src/mixingphonons.js';
+import { solveComplexHermitianWithEigenWasm } from '../src/eigenwasm.js';
+import * as utils from '../src/utils.js';
 import { alphaIdToNumber, indexDielectricRows } from '../src/mpdielectric.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -287,5 +290,200 @@ describe('zinc blende dynamical-matrix mixing', () => {
 
         // the two DFT data sets differ by ~13 cm-1, the mixture must sit in between
         assert.ok(maxAbsDiff(half.eigenvalues, mean) < 2);
+    });
+});
+
+describe('chalcopyrite dynamical-matrix mixing', () => {
+    let gammaIndices = (phonon) => phonon.highsym_qpts.filter((point) => point[1] === 'GAMMA').map((point) => point[0]);
+    let opticalDiff = (a, b) => {
+        let worst = 0;
+        a.forEach((row, k) => row.forEach((v, n) => {
+            if (Math.abs(v) > 1) {
+                worst = Math.max(worst, Math.abs(v - b[k][n]));
+            }
+        }));
+        return worst;
+    };
+
+    function zngep2Dielectric() {
+        let rows = JSON.parse(readFileSync(join(__dirname, 'fixtures', 'mixing', 'mp-dfpt-dielectric-ZnGeP2.json')));
+        return indexDielectricRows(rows).get(4524);
+    }
+
+    it('matches 8-atom cells onto the I-42d template, in either orientation', () => {
+        let cugas2 = endpoint('phonondb-CuGaS2-mp-5238.json.gz', 'CuGaS2');
+        let cualse2 = endpoint('phonondb-CuAlSe2-mp-8016.json.gz', 'CuAlSe2');
+        assert.equal(cugas2.family, 'chalcopyrite');
+        assert.deepEqual(cugas2.siteTypes, ['Cu', 'Cu', 'Ga', 'Ga', 'S', 'S', 'S', 'S']);
+        assert.deepEqual(cualse2.siteTypes, ['Cu', 'Cu', 'Al', 'Al', 'Se', 'Se', 'Se', 'Se']);
+        // CuAlSe2 is stored as the inversion image of the template
+        assert.equal(cugas2.invert, false);
+        assert.equal(cualse2.invert, true);
+        assert.ok(Math.abs(cugas2.structure.u - 0.2459) < 1e-3);
+        // seekpath names of the file are replaced by coordinate-based ones
+        let labels = cugas2.segments.map((s) => s.labelA + '-' + s.labelB);
+        assert.ok(labels.includes('Σ-GAMMA'));
+        assert.ok(!labels.some((label) => label.includes('S_0')));
+    });
+
+    it('folds a zinc blende into the chalcopyrite cell', async () => {
+        // D of the 8-atom supercell at Q has the eigenvalues of the zinc blende at the
+        // 4 points Q + g, also at Q = 0 for a polar crystal
+        let gap = endpoint('phonondb-GaP-mp-2490.json.gz', 'GaP');
+        let folded = zincblendeAsChalcopyrite(gap);
+        assert.equal(folded.family, 'chalcopyrite');
+        assert.deepEqual(folded.siteTypes, ['Ga', 'Ga', 'Ga', 'Ga', 'P', 'P', 'P', 'P']);
+        assert.ok(Math.abs(folded.structure.c - 2 * folded.structure.a) < 1e-12);
+
+        let eigen = async (m) => (await solveComplexHermitianWithEigenWasm(m.real, m.imag)).values.sort((p, q) => p - q);
+        let superReciprocal = utils.rec_lat(folded.lattice);
+        let candidates = [];
+        for (let a = -2; a <= 2; a++) {
+            for (let b = -2; b <= 2; b++) {
+                for (let c = -2; c <= 2; c++) {
+                    candidates.push([0, 1, 2].map((d) => a * superReciprocal[0][d] + b * superReciprocal[1][d] + c * superReciprocal[2][d]));
+                }
+            }
+        }
+        candidates.sort((g, h) => g.reduce((s, v) => s + v * v, 0) - h.reduce((s, v) => s + v * v, 0));
+        let direction = [0, 0, 1];
+        for (let Q of [[0, 0, 0], [0.13, -0.07, 0.21], [0.5, 0.5, -0.5]]) {
+            let qCart = [0, 1, 2].map((d) => Q[0] * superReciprocal[0][d] + Q[1] * superReciprocal[1][d] + Q[2] * superReciprocal[2][d]);
+            let seen = new Set();
+            let expected = [];
+            for (let g of candidates) {
+                let key = gap.lattice.map((p) => {
+                    let f = g[0] * p[0] + g[1] * p[1] + g[2] * p[2];
+                    return Math.round((f - Math.floor(f + 1e-9)) * 1e6) % 1000000;
+                }).join(',');
+                if (seen.has(key)) {
+                    continue;
+                }
+                seen.add(key);
+                let k = gap.lattice.map((p) => p[0] * (qCart[0] + g[0]) + p[1] * (qCart[1] + g[1]) + p[2] * (qCart[2] + g[2]));
+                let directionCart = [0, 1, 2].map((d) => direction[0] * superReciprocal[0][d] + direction[1] * superReciprocal[1][d] + direction[2] * superReciprocal[2][d]);
+                let directionPrimitive = gap.lattice.map((p) => p[0] * directionCart[0] + p[1] * directionCart[1] + p[2] * directionCart[2]);
+                expected.push(...await eigen(gap.evaluate(k, directionPrimitive)));
+            }
+            expected.sort((p, q) => p - q);
+            let actual = await eigen(folded.sampleAtQ(Q, direction));
+            actual.forEach((v, i) => assert.ok(Math.abs(v - expected[i]) < 1e-9 * (1 + Math.abs(expected[i]))));
+        }
+    });
+
+    it('mixes a PhononDB zinc blende with a chalcopyrite', async () => {
+        let gap = endpoint('phonondb-GaP-mp-2490.json.gz', 'GaP');
+        let cugas2 = endpoint('phonondb-CuGaS2-mp-5238.json.gz', 'CuGaS2');
+        let sampled = sampleMixingPair(gap, cugas2);
+        let reverse = sampleMixingPair(cugas2, gap);
+        assert.equal(sampled.recomputeNac, true);
+        // the folded zinc blende can be evaluated anywhere: the whole chalcopyrite path
+        assert.deepEqual(sampled.labels, cugas2.segments.map((s) => [s.labelA, s.labelB]));
+
+        let zincblendeEnd = await computeMixedPhonon(sampled, 0);
+        assert.ok(opticalDiff(zincblendeEnd.eigenvalues, await computeReferenceEigenvalues(sampled)) < 1e-6);
+        let chalcopyriteEnd = await computeMixedPhonon(reverse, 0);
+        assert.ok(opticalDiff(chalcopyriteEnd.eigenvalues, await computeReferenceEigenvalues(reverse)) < 1e-6);
+
+        let half = await computeMixedPhonon(sampled, 0.5, 0.3);
+        assert.equal(half.natoms, 8);
+        for (let k of gammaIndices(half)) {
+            for (let n = 0; n < 3; n++) {
+                assert.ok(Math.abs(half.eigenvalues[k][n]) < 0.05);
+            }
+        }
+        let mirrored = await computeMixedPhonon(reverse, 0.5, 0.7);
+        assert.ok(opticalDiff(half.eigenvalues, mirrored.eigenvalues) < 1e-6);
+    });
+
+    it('refuses a Materials Project zinc blende with a chalcopyrite', () => {
+        // its D is only known on the band path, folding needs it at Q + g
+        let gaas = endpoint('mpdb-GaAs-mp-2534.json.gz', 'GaAs');
+        let cugas2 = endpoint('phonondb-CuGaS2-mp-5238.json.gz', 'CuGaS2');
+        assert.throws(() => sampleMixingPair(gaas, cugas2), /force constants/);
+    });
+
+    it('keeps end-members exact, acoustic modes at zero and mirror symmetry', async () => {
+        let cugas2 = endpoint('phonondb-CuGaS2-mp-5238.json.gz', 'CuGaS2');
+        let cualse2 = endpoint('phonondb-CuAlSe2-mp-8016.json.gz', 'CuAlSe2');
+        let sampled = sampleMixingPair(cugas2, cualse2);
+        assert.equal(sampled.recomputeNac, true);
+
+        // short-range part + rebuilt dipole term (with phonopy's hermitian dd_q0)
+        // gives back each material's own dynamical matrix
+        let end0 = await computeMixedPhonon(sampled, 0);
+        assert.ok(opticalDiff(end0.eigenvalues, await computeReferenceEigenvalues(sampled)) < 1e-6);
+        let end1 = await computeMixedPhonon(sampled, 1);
+        let mirroredEnd = await computeMixedPhonon(sampleMixingPair(cualse2, cugas2), 0);
+        assert.ok(opticalDiff(end1.eigenvalues, mirroredEnd.eigenvalues) < 1e-6);
+
+        for (let x of [0.25, 0.5, 0.75]) {
+            let mixed = await computeMixedPhonon(sampled, x, 1 - x);
+            assert.equal(mixed.natoms, 8);
+            for (let k of gammaIndices(mixed)) {
+                for (let n = 0; n < 3; n++) {
+                    assert.ok(Math.abs(mixed.eigenvalues[k][n]) < 0.05, `x=${x} mode ${n}: ${mixed.eigenvalues[k][n]}`);
+                }
+            }
+        }
+
+        let forward = await computeMixedPhonon(sampled, 0.3, 0.6);
+        let mirrored = await computeMixedPhonon(sampleMixingPair(cualse2, cugas2), 0.7, 0.4);
+        assert.ok(opticalDiff(forward.eigenvalues, mirrored.eigenvalues) < 1e-6);
+    });
+
+    it('splits Materials Project chalcopyrite D with per-site Born charges', () => {
+        let zngep2 = buildMixingEndpoint(loadFixture('mpdb-ZnGeP2-mp-4524-trimmed.json.gz'), { name: 'ZnGeP2' }, zngep2Dielectric());
+        assert.ok(zngep2.nac);
+        // the two Zn (and the four P) carry differently oriented Born tensors
+        assert.notDeepEqual(zngep2.nac.born[0], zngep2.nac.born[1]);
+
+        // the short-range remainder is the same at Gamma from every direction,
+        // while the full D carries the direction-dependent LO-TO splitting
+        let atGamma = [];
+        let fullAtGamma = [];
+        for (let segment of zngep2.segments) {
+            for (let t of [0, 1]) {
+                let q = t ? segment.qB : segment.qA;
+                if (q.every((v) => Math.abs(v) < 1e-9)) {
+                    atGamma.push(segment.sampleShortRange(t));
+                    fullAtGamma.push(segment.sample(t));
+                }
+            }
+        }
+        assert.equal(atGamma.length, 3);
+        let relative = (a, b) => {
+            let num = 0;
+            let den = 0;
+            for (let i = 0; i < 24; i++) {
+                for (let j = 0; j < 24; j++) {
+                    num += (a.real[i][j] - b.real[i][j]) ** 2 + (a.imag[i][j] - b.imag[i][j]) ** 2;
+                    den += a.real[i][j] ** 2;
+                }
+            }
+            return Math.sqrt(num / den);
+        };
+        for (let i = 1; i < atGamma.length; i++) {
+            assert.ok(relative(atGamma[0], atGamma[i]) < 1e-4);
+            assert.ok(relative(fullAtGamma[0], fullAtGamma[i]) > 1e-2);
+        }
+    });
+
+    it('cuts segments ending at c/a-dependent points at the nearer one', () => {
+        let cugas2 = endpoint('phonondb-CuGaS2-mp-5238.json.gz', 'CuGaS2');
+        let zngep2 = buildMixingEndpoint(loadFixture('mpdb-ZnGeP2-mp-4524-trimmed.json.gz'), { name: 'ZnGeP2' }, zngep2Dielectric());
+        let path = buildCommonPath(cugas2, zngep2);
+        assert.deepEqual(path.map((s) => s.labelA + '-' + s.labelB), ['GAMMA-X', 'Σ-GAMMA', 'GAMMA-Z']);
+
+        // Sigma = (-eta, eta, eta) with eta = (1 + a^2/c^2)/4: the larger c/a gives
+        // the point nearer to Gamma, where the common stretch ends
+        let eta = (s) => (1 + (s.a * s.a) / (s.c * s.c)) / 4;
+        let nearer = Math.min(eta(cugas2.structure), eta(zngep2.structure));
+        let sigmaGamma = path[1];
+        assert.ok(Math.abs(sigmaGamma.qA[1] - nearer) < 1e-6);
+
+        // a -> b and b -> a use the same q-points
+        let reverse = buildCommonPath(zngep2, cugas2);
+        assert.deepEqual(reverse.map((s) => s.labelA + '-' + s.labelB), path.map((s) => s.labelA + '-' + s.labelB));
     });
 });
