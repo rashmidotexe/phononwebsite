@@ -494,6 +494,8 @@ export class MixingWebpage extends PhononWebpage {
         }
 
         let token = ++this.mixToken;
+        // a plain material 1 load still in flight must not replace the mixture
+        this.beginLoad();
         let x = this.character;
         let massFraction = this.getMassFraction();
         if (pairChanged) {

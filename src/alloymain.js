@@ -172,6 +172,7 @@ async function loadMixed(x, m) {
     p.k = 0;
     p.n = 0;
     delete p.link;
+    p.beginLoad();  // a material-list load still in flight must not replace the alloy
     p.phonon = new PhononJson();
     p.phonon.getFromInternalJson(mixedData, () => {
         if (thisRequest !== requestId) return;

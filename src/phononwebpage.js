@@ -236,25 +236,30 @@ export class PhononWebpage {
             http://henriquemiranda.github.io/phononwebsite/
             3. pymatgen phononBS format
         */
-        this.k = 0;
-        this.n = 0;
-        self = this;
+        let token = this.beginLoad();
+        let phonon;
 
-        function set_name() {
-            delete self.link;
-            self.ramanDbId = null;
-            self.name = utils.format_formula_html(self.phonon.name);
-            self.loadCallback();
-        }
+        let set_name = () => {
+            if (token !== this.loadToken) {
+                return;
+            }
+            this.phonon = phonon;
+            this.k = 0;
+            this.n = 0;
+            delete this.link;
+            this.ramanDbId = null;
+            this.name = utils.format_formula_html(this.phonon.name);
+            this.loadCallback();
+        };
 
         let file = event.target.files[0];
         if (file.name.indexOf(".yaml") > -1) {
-            this.phonon = new PhononYaml();
-            this.phonon.getFromFile(file, set_name );
+            phonon = new PhononYaml();
+            phonon.getFromFile(file, set_name );
          }
         else if (file.name.indexOf(".json") > -1) {
-            this.phonon = new PhononJson();
-            this.phonon.getFromFile(file, set_name );
+            phonon = new PhononJson();
+            phonon.getFromFile(file, set_name );
         }
         else {
             alert("Ivalid file");
@@ -265,6 +270,11 @@ export class PhononWebpage {
         /*
         load file from post request in the url
         */
+
+        // a newer load (or any other change of this.phonon) supersedes this one;
+        // its callbacks and progress hooks are then ignored
+        let token = this.beginLoad();
+        let isCurrent = () => token === this.loadToken;
 
         this.k = 0;
         this.n = 0;
@@ -277,26 +287,42 @@ export class PhononWebpage {
         let targetName = ("name" in url_vars) ? url_vars.name : this.name;
         this.startLoadingFeedback(targetName);
 
+        // the material being loaded; it replaces this.phonon only once loaded,
+        // so the page keeps showing the previous material until then
+        let phonon;
+
         let wrappedCallback = function() {
+            if (!isCurrent()) {
+                return;
+            }
+            this.phonon = phonon;
             this.finishLoadingFeedback();
             callback();
         }.bind(this);
 
         let hooks = {
             onStart: function() {
-                this.updateLoadingFeedback();
+                if (isCurrent()) {
+                    this.updateLoadingFeedback();
+                }
             }.bind(this),
             onProgress: function(progress) {
-                this.updateLoadingFeedback(progress);
+                if (isCurrent()) {
+                    this.updateLoadingFeedback(progress);
+                }
             }.bind(this),
             onComputeProgress: function(progress) {
-                this.updateLoadingFeedback(progress);
+                if (isCurrent()) {
+                    this.updateLoadingFeedback(progress);
+                }
             }.bind(this),
             onError: function(error) {
-                this.failLoadingFeedback(error);
+                if (isCurrent()) {
+                    this.failLoadingFeedback(error);
+                }
             }.bind(this),
             onFinish: function() {
-                if (this.loadingState && this.loadingState.status === 'loading') {
+                if (isCurrent() && this.loadingState && this.loadingState.status === 'loading') {
                     this.updateLoadingFeedback();
                 }
             }.bind(this)
@@ -310,21 +336,30 @@ export class PhononWebpage {
         }
 
         if ("yaml" in url_vars) {
-            this.phonon = new PhononYaml();
-            this.phonon.getFromURL(url_vars.yaml,wrappedCallback);
+            phonon = new PhononYaml();
+            phonon.getFromURL(url_vars.yaml,wrappedCallback);
         }
         else if ("json" in url_vars) {
-            this.phonon = new PhononJson();
-            this.phonon.getFromURL(url_vars.json,wrappedCallback,hooks);
+            phonon = new PhononJson();
+            phonon.getFromURL(url_vars.json,wrappedCallback,hooks);
         }
         else if ("data" in url_vars) {
             //an already parsed internal-format json object
-            this.phonon = new PhononJson();
-            this.phonon.getFromJson(url_vars.data,wrappedCallback,hooks);
+            phonon = new PhononJson();
+            phonon.getFromJson(url_vars.data,wrappedCallback,hooks);
         }
         else {
             //alert("Ivalid url");
         }
+    }
+
+    beginLoad() {
+        /*
+        start a new load of this.phonon and return its token; any load still in
+        flight is superseded and its callbacks are ignored
+        */
+        this.loadToken = (this.loadToken || 0) + 1;
+        return this.loadToken;
     }
 
     startLoadingFeedback(label) {
