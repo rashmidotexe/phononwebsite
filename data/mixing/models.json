@@ -1,0 +1,5622 @@
+[
+    {
+        "id": "866291",
+        "name": "AgBr",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "22925",
+        "name": "AgI",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "2172",
+        "name": "AlAs",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1700",
+        "name": "AlN",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1550",
+        "name": "AlP",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "2624",
+        "name": "AlSb",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1479",
+        "name": "BP",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "422",
+        "name": "BeS",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1541",
+        "name": "BeSe",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "252",
+        "name": "BeTe",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "2469",
+        "name": "CdS",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "2691",
+        "name": "CdSe",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "406",
+        "name": "CdTe",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "22914",
+        "name": "CuCl",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "830",
+        "name": "GaN",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "2490",
+        "name": "GaP",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "13032",
+        "name": "MgS",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "13031",
+        "name": "MgSe",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "13033",
+        "name": "MgTe",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "149",
+        "name": "Si2",
+        "source": "phonondb",
+        "spacegroup": "Fd-3m"
+    },
+    {
+        "id": "8062",
+        "name": "SiC",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1986",
+        "name": "ZnO",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "10695",
+        "name": "ZnS",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1190",
+        "name": "ZnSe",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "2176",
+        "name": "ZnTe",
+        "source": "phonondb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "866291",
+        "name": "AgBr",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "22925",
+        "name": "AgI",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "684580",
+        "name": "AgI",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "2172",
+        "name": "AlAs",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1700",
+        "name": "AlN",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1550",
+        "name": "AlP",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "2624",
+        "name": "AlSb",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "10044",
+        "name": "BAs",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1639",
+        "name": "BN",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1479",
+        "name": "BP",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "997618",
+        "name": "BSb",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1778",
+        "name": "BeO",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "422",
+        "name": "BeS",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1541",
+        "name": "BeSe",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "252",
+        "name": "BeTe",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "66",
+        "name": "C2",
+        "source": "mpdb",
+        "spacegroup": "Fd-3m"
+    },
+    {
+        "id": "1008223",
+        "name": "CaSe",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "2469",
+        "name": "CdS",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "2691",
+        "name": "CdSe",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "406",
+        "name": "CdTe",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "22913",
+        "name": "CuBr",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "32880",
+        "name": "CuBr",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "22914",
+        "name": "CuCl",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "22895",
+        "name": "CuI",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "2534",
+        "name": "GaAs",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "830",
+        "name": "GaN",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "2490",
+        "name": "GaP",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1002164",
+        "name": "GeC",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1002124",
+        "name": "HfC",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "20351",
+        "name": "InP",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "13032",
+        "name": "MgS",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "13031",
+        "name": "MgSe",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "13033",
+        "name": "MgTe",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1009540",
+        "name": "OsC",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1009792",
+        "name": "RuC",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1009750",
+        "name": "ScN",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "149",
+        "name": "Si2",
+        "source": "mpdb",
+        "spacegroup": "Fd-3m"
+    },
+    {
+        "id": "8062",
+        "name": "SiC",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1009813",
+        "name": "SiSn",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1009820",
+        "name": "SnC",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "13099",
+        "name": "YN",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1986",
+        "name": "ZnO",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "10695",
+        "name": "ZnS",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1190",
+        "name": "ZnSe",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "2176",
+        "name": "ZnTe",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "1009894",
+        "name": "ZrC",
+        "source": "mpdb",
+        "spacegroup": "F-43m"
+    },
+    {
+        "id": "5782",
+        "name": "AgAlS2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "14091",
+        "name": "AgAlSe2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "14092",
+        "name": "AgAlTe2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "5342",
+        "name": "AgGaS2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "15703",
+        "name": "BeCN2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "15704",
+        "name": "BeSiN2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "3668",
+        "name": "CdGeP2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "4666",
+        "name": "CdSiP2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "4979",
+        "name": "CuAlS2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "8016",
+        "name": "CuAlSe2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "8017",
+        "name": "CuAlTe2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "983565",
+        "name": "CuBSe2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "5238",
+        "name": "CuGaS2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "4586",
+        "name": "LiAlTe2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "5048",
+        "name": "LiGaTe2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "20187",
+        "name": "LiInSe2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "20782",
+        "name": "LiInTe2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "34903",
+        "name": "MgGeP2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "2961",
+        "name": "MgSiP2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "971837",
+        "name": "ZnCdTe2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "4524",
+        "name": "ZnGeP2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "3595",
+        "name": "ZnSiAs2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "4763",
+        "name": "ZnSiP2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "4175",
+        "name": "ZnSnP2",
+        "source": "phonondb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "5782",
+        "name": "AgAlS2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "14091",
+        "name": "AgAlSe2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "14092",
+        "name": "AgAlTe2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "5342",
+        "name": "AgGaS2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "5518",
+        "name": "AgGaSe2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "19833",
+        "name": "AgInS2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "15703",
+        "name": "BeCN2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "1009088",
+        "name": "BeGeAs2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "1009087",
+        "name": "BeSiAs2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "15704",
+        "name": "BeSiN2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "1009085",
+        "name": "BeSiP2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "3668",
+        "name": "CdGeP2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "3078",
+        "name": "CdSiAs2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "4666",
+        "name": "CdSiP2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "5213",
+        "name": "CdSnP2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "4979",
+        "name": "CuAlS2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "8016",
+        "name": "CuAlSe2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "8017",
+        "name": "CuAlTe2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "983565",
+        "name": "CuBSe2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "5238",
+        "name": "CuGaS2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "3839",
+        "name": "CuGaTe2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "22261",
+        "name": "CuInTe2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "4586",
+        "name": "LiAlTe2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "5048",
+        "name": "LiGaTe2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "20187",
+        "name": "LiInSe2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "20782",
+        "name": "LiInTe2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "2961",
+        "name": "MgSiP2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "1009082",
+        "name": "MgSnAs2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "4524",
+        "name": "ZnGeP2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "3595",
+        "name": "ZnSiAs2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "4763",
+        "name": "ZnSiP2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "4175",
+        "name": "ZnSnP2",
+        "source": "mpdb",
+        "spacegroup": "I-42d",
+        "family": "chalcopyrite"
+    },
+    {
+        "id": "22894",
+        "name": "AgI",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "8881",
+        "name": "AlAs",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "661",
+        "name": "AlN",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "8880",
+        "name": "AlP",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "2542",
+        "name": "BeO",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "672",
+        "name": "CdS",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "1070",
+        "name": "CdSe",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "12779",
+        "name": "CdTe",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "569346",
+        "name": "CuI",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "804",
+        "name": "GaN",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "8882",
+        "name": "GaP",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "966800",
+        "name": "InP",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "976280",
+        "name": "LiBr",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "570935",
+        "name": "LiI",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "1039",
+        "name": "MgTe",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "7140",
+        "name": "SiC",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "2133",
+        "name": "ZnO",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "560588",
+        "name": "ZnS",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "380",
+        "name": "ZnSe",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "8884",
+        "name": "ZnTe",
+        "source": "phonondb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "22894",
+        "name": "AgI",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "8881",
+        "name": "AlAs",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "661",
+        "name": "AlN",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "8880",
+        "name": "AlP",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "1018100",
+        "name": "AlSb",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "1008559",
+        "name": "BP",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "2542",
+        "name": "BeO",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "672",
+        "name": "CdS",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "1070",
+        "name": "CdSe",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "12779",
+        "name": "CdTe",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "569346",
+        "name": "CuI",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "804",
+        "name": "GaN",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "8882",
+        "name": "GaP",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "966800",
+        "name": "InP",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "976280",
+        "name": "LiBr",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "570935",
+        "name": "LiI",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "1018040",
+        "name": "MgSe",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "1039",
+        "name": "MgTe",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "165",
+        "name": "Si4",
+        "source": "mpdb",
+        "spacegroup": "P6_3/mmc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "7140",
+        "name": "SiC",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "2133",
+        "name": "ZnO",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "560588",
+        "name": "ZnS",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "380",
+        "name": "ZnSe",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "8884",
+        "name": "ZnTe",
+        "source": "mpdb",
+        "spacegroup": "P6_3mc",
+        "family": "wurtzite"
+    },
+    {
+        "id": "9248",
+        "name": "Cu2SiS3",
+        "source": "phonondb",
+        "spacegroup": "Cmc2_1",
+        "family": "wurtzite-A2BX3"
+    },
+    {
+        "id": "3934",
+        "name": "Cu3PS4",
+        "source": "phonondb",
+        "spacegroup": "Pmn2_1",
+        "family": "wurtzite-A3BX4"
+    },
+    {
+        "id": "756316",
+        "name": "Li3SbS4",
+        "source": "phonondb",
+        "spacegroup": "Pmn2_1",
+        "family": "wurtzite-A3BX4"
+    },
+    {
+        "id": "755642",
+        "name": "Li3VS4",
+        "source": "phonondb",
+        "spacegroup": "Pmn2_1",
+        "family": "wurtzite-A3BX4"
+    },
+    {
+        "id": "21459",
+        "name": "AgInS2",
+        "source": "phonondb",
+        "spacegroup": "Pna2_1",
+        "family": "wurtzite-ABX2"
+    },
+    {
+        "id": "7913",
+        "name": "BeSiN2",
+        "source": "phonondb",
+        "spacegroup": "Pna2_1",
+        "family": "wurtzite-ABX2"
+    },
+    {
+        "id": "7117",
+        "name": "LiAlSe2",
+        "source": "phonondb",
+        "spacegroup": "Pna2_1",
+        "family": "wurtzite-ABX2"
+    },
+    {
+        "id": "5854",
+        "name": "LiGaO2",
+        "source": "phonondb",
+        "spacegroup": "Pna2_1",
+        "family": "wurtzite-ABX2"
+    },
+    {
+        "id": "3647",
+        "name": "LiGaS2",
+        "source": "phonondb",
+        "spacegroup": "Pna2_1",
+        "family": "wurtzite-ABX2"
+    },
+    {
+        "id": "11582",
+        "name": "LiGaSe2",
+        "source": "phonondb",
+        "spacegroup": "Pna2_1",
+        "family": "wurtzite-ABX2"
+    },
+    {
+        "id": "20310",
+        "name": "LiInSe2",
+        "source": "phonondb",
+        "spacegroup": "Pna2_1",
+        "family": "wurtzite-ABX2"
+    },
+    {
+        "id": "7798",
+        "name": "MgGeN2",
+        "source": "phonondb",
+        "spacegroup": "Pna2_1",
+        "family": "wurtzite-ABX2"
+    },
+    {
+        "id": "2979",
+        "name": "ZnGeN2",
+        "source": "phonondb",
+        "spacegroup": "Pna2_1",
+        "family": "wurtzite-ABX2"
+    },
+    {
+        "id": "2979",
+        "name": "ZnGeN2",
+        "source": "mpdb",
+        "spacegroup": "Pna2_1",
+        "family": "wurtzite-ABX2"
+    },
+    {
+        "id": "1000",
+        "name": "BaTe",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1784",
+        "name": "CsF",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "23268",
+        "name": "NaI",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "571102",
+        "name": "TlI",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1253",
+        "name": "BaSe",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "15786",
+        "name": "KHoS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "22922",
+        "name": "AgCl",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "8584",
+        "name": "NaErSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "15796",
+        "name": "LiHoSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "4156",
+        "name": "Li2ZrO3",
+        "source": "phonondb",
+        "spacegroup": "C2/c",
+        "family": "rocksalt-A2BX3-C2c"
+    },
+    {
+        "id": "756034",
+        "name": "NaSmO2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "568062",
+        "name": "DyTlSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "978844",
+        "name": "SrCa3O4",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "rocksalt-A3BX4-Pm3m"
+    },
+    {
+        "id": "9367",
+        "name": "RbErS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "675531",
+        "name": "NaBiS2",
+        "source": "phonondb",
+        "spacegroup": "Fdd2",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "1265",
+        "name": "MgO",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "23295",
+        "name": "RbCl",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "20289",
+        "name": "NaInS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "1779",
+        "name": "YbTe",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "22450",
+        "name": "Li2PbO3",
+        "source": "phonondb",
+        "spacegroup": "C2/c",
+        "family": "rocksalt-A2BX3-C2c"
+    },
+    {
+        "id": "22898",
+        "name": "KI",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "36864",
+        "name": "Li2TiO3",
+        "source": "phonondb",
+        "spacegroup": "C2/c",
+        "family": "rocksalt-A2BX3-C2c"
+    },
+    {
+        "id": "22905",
+        "name": "LiCl",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "11742",
+        "name": "CsNdTe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "9366",
+        "name": "RbHoS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "1216",
+        "name": "YbO",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "755287",
+        "name": "Ca3CdO4",
+        "source": "phonondb",
+        "spacegroup": "Cmmm",
+        "family": "rocksalt-A3BX4-Cmmm"
+    },
+    {
+        "id": "13313",
+        "name": "ScTlSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "19717",
+        "name": "PbTe",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1672",
+        "name": "CaS",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "5273",
+        "name": "KPrTe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "22899",
+        "name": "LiI",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "11739",
+        "name": "KLaTe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "2175",
+        "name": "TlF",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "981103",
+        "name": "Sr3CdO4",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "rocksalt-A3BX4-Pm3m"
+    },
+    {
+        "id": "3613",
+        "name": "NaErS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "3056",
+        "name": "NaTlO2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "676360",
+        "name": "NaNdS2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "1315",
+        "name": "MgS",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "37605",
+        "name": "LiNdSe2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "1087",
+        "name": "SrS",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "569639",
+        "name": "TlCl",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "9036",
+        "name": "KSmTe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "2605",
+        "name": "CaO",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "15797",
+        "name": "LiErSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "5808",
+        "name": "RbNdTe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "22566",
+        "name": "TlInS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "7017",
+        "name": "NaNbN2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "7219",
+        "name": "Na2ZrSe3",
+        "source": "phonondb",
+        "spacegroup": "C2/m",
+        "family": "rocksalt-A2BX3-C2m"
+    },
+    {
+        "id": "9364",
+        "name": "RbSmS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "1958",
+        "name": "SrTe",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "11740",
+        "name": "KNdTe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "1820",
+        "name": "YbS",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "10779",
+        "name": "RbNdSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "2472",
+        "name": "SrO",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "5693",
+        "name": "NaCrS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "675230",
+        "name": "NaLaS2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "5175",
+        "name": "NaInO2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "7176",
+        "name": "RbLaSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "3332",
+        "name": "NaCrSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "10760",
+        "name": "MgSe",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "34477",
+        "name": "LiSmS2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "35015",
+        "name": "NaBiSe2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "570117",
+        "name": "ErTlSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "8175",
+        "name": "KTlO2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "23870",
+        "name": "NaH",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "15785",
+        "name": "KDyS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "15795",
+        "name": "LiDySe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "1415",
+        "name": "CaSe",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "10784",
+        "name": "RbErSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "24721",
+        "name": "RbH",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "35717",
+        "name": "LiDySe2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "11151",
+        "name": "NaPrTe2",
+        "source": "phonondb",
+        "spacegroup": "Fd-3m",
+        "family": "rocksalt-ABX2-Fd3m"
+    },
+    {
+        "id": "22867",
+        "name": "RbBr",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "37879",
+        "name": "LiYSe2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "755311",
+        "name": "NaLuO2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "15794",
+        "name": "LiYSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "9035",
+        "name": "NaLuS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "33322",
+        "name": "LiHoSe2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "10785",
+        "name": "RbLuSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "568588",
+        "name": "NdTlSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "573697",
+        "name": "CsCl",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "14115",
+        "name": "LiRhO2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "9365",
+        "name": "RbTbS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "10778",
+        "name": "RbPrSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "2758",
+        "name": "SrSe",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "571222",
+        "name": "CsBr",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "22916",
+        "name": "NaBr",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "753315",
+        "name": "Mg3ZnO4",
+        "source": "phonondb",
+        "spacegroup": "Cmmm",
+        "family": "rocksalt-A3BX4-Cmmm"
+    },
+    {
+        "id": "30041",
+        "name": "RbBiS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "1342",
+        "name": "BaO",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "23193",
+        "name": "KCl",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "3540",
+        "name": "Li2SnO3",
+        "source": "phonondb",
+        "spacegroup": "C2/c",
+        "family": "rocksalt-A2BX3-C2c24"
+    },
+    {
+        "id": "23259",
+        "name": "LiBr",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "675199",
+        "name": "NaPrS2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "760483",
+        "name": "Li2PdO3",
+        "source": "phonondb",
+        "spacegroup": "C2/m",
+        "family": "rocksalt-A2BX3-C2m"
+    },
+    {
+        "id": "754825",
+        "name": "NaTmO2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "15788",
+        "name": "LiYS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "33526",
+        "name": "LiBiS2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "33363",
+        "name": "LiYS2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "22903",
+        "name": "RbI",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "15781",
+        "name": "KLaS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "15791",
+        "name": "LiErS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "568560",
+        "name": "TlBr",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "4123",
+        "name": "ErTlS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "10780",
+        "name": "RbSmSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "22862",
+        "name": "NaCl",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "9263",
+        "name": "KErTe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "33667",
+        "name": "LiDyS2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "14476",
+        "name": "LiRhO2",
+        "source": "phonondb",
+        "spacegroup": "Fd-3m",
+        "family": "rocksalt-ABX2-Fd3m"
+    },
+    {
+        "id": "7914",
+        "name": "NaScO2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "15790",
+        "name": "LiHoS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "7046",
+        "name": "RbDyS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "23251",
+        "name": "KBr",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "5475",
+        "name": "NaTaN2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "756597",
+        "name": "Li2HfO3",
+        "source": "phonondb",
+        "spacegroup": "C2/m",
+        "family": "rocksalt-A2BX3-C2m"
+    },
+    {
+        "id": "9368",
+        "name": "RbTmS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "682",
+        "name": "NaF",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "754777",
+        "name": "NaLaO2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "11718",
+        "name": "RbF",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "36234",
+        "name": "NaTlO2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "569178",
+        "name": "HoTlSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "5488",
+        "name": "LiInO2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "8001",
+        "name": "LiAlO2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "31166",
+        "name": "DyTlS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "5840",
+        "name": "LiScO2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "15789",
+        "name": "LiDyS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "36791",
+        "name": "LiNdS2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "9361",
+        "name": "RbLaS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "10783",
+        "name": "RbHoSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "8830",
+        "name": "NaRhO2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "286",
+        "name": "YbSe",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "23231",
+        "name": "AgBr",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "15782",
+        "name": "KPrS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "4519",
+        "name": "KPrO2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "569507",
+        "name": "TbTlSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "10226",
+        "name": "NaYS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "3664",
+        "name": "NdTlS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "29678",
+        "name": "AgBiS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "38695",
+        "name": "LiTbSe2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "1138",
+        "name": "LiF",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "463",
+        "name": "KF",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "5694",
+        "name": "NaHoS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "9363",
+        "name": "RbNdS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "35205",
+        "name": "LiErSe2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "2931",
+        "name": "Li2TiO3",
+        "source": "phonondb",
+        "spacegroup": "C2/c",
+        "family": "rocksalt-A2BX3-C2c24"
+    },
+    {
+        "id": "16763",
+        "name": "KYTe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "24084",
+        "name": "KH",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "984729",
+        "name": "BaSr3O4",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "rocksalt-A3BX4-Pm3m"
+    },
+    {
+        "id": "35591",
+        "name": "LiErS2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "755352",
+        "name": "Li2HfO3",
+        "source": "phonondb",
+        "spacegroup": "C2/c",
+        "family": "rocksalt-A2BX3-C2c"
+    },
+    {
+        "id": "35388",
+        "name": "LiSmSe2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "11601",
+        "name": "NaErO2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "614603",
+        "name": "CsI",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "36029",
+        "name": "ErAgS2",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "1500",
+        "name": "BaS",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "4326",
+        "name": "KErS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "9362",
+        "name": "RbPrS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "9076",
+        "name": "NaTmS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "10782",
+        "name": "RbTbSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "1519",
+        "name": "CaTe",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "15793",
+        "name": "LiTbSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "15783",
+        "name": "KSmS2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "23703",
+        "name": "LiH",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "11178",
+        "name": "SrCeN2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "22473",
+        "name": "NaInSe2",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "29678",
+        "name": "AgBiS2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "30041",
+        "name": "RbBiS2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "33526",
+        "name": "LiBiS2",
+        "source": "mpdb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "35015",
+        "name": "NaBiSe2",
+        "source": "mpdb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "568560",
+        "name": "TlBr",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "569639",
+        "name": "TlCl",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "570354",
+        "name": "CuBr",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "571102",
+        "name": "TlI",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "571222",
+        "name": "CsBr",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "571386",
+        "name": "CuCl",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "573697",
+        "name": "CsCl",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "614603",
+        "name": "CsI",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "675230",
+        "name": "NaLaS2",
+        "source": "mpdb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "675531",
+        "name": "NaBiS2",
+        "source": "mpdb",
+        "spacegroup": "Fdd2",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "755287",
+        "name": "Ca3CdO4",
+        "source": "mpdb",
+        "spacegroup": "Cmmm",
+        "family": "rocksalt-A3BX4-Cmmm"
+    },
+    {
+        "id": "1008786",
+        "name": "MgTe",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "370",
+        "name": "CdS",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "463",
+        "name": "KF",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "682",
+        "name": "NaF",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1000",
+        "name": "BaTe",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1087",
+        "name": "SrS",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1138",
+        "name": "LiF",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1253",
+        "name": "BaSe",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1265",
+        "name": "MgO",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1315",
+        "name": "MgS",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1330",
+        "name": "AlN",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1342",
+        "name": "BaO",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1415",
+        "name": "CaSe",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1500",
+        "name": "BaS",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1519",
+        "name": "CaTe",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1672",
+        "name": "CaS",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1784",
+        "name": "CsF",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1794",
+        "name": "BeO",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "1958",
+        "name": "SrTe",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "2175",
+        "name": "TlF",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "2201",
+        "name": "PbSe",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "2229",
+        "name": "ZnO",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "2472",
+        "name": "SrO",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "2605",
+        "name": "CaO",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "2693",
+        "name": "SnSe",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "2758",
+        "name": "SrSe",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "2853",
+        "name": "GaN",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "3056",
+        "name": "NaTlO2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "4156",
+        "name": "Li2ZrO3",
+        "source": "mpdb",
+        "spacegroup": "C2/c",
+        "family": "rocksalt-A2BX3-C2c"
+    },
+    {
+        "id": "5175",
+        "name": "NaInO2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "5475",
+        "name": "NaTaN2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "5488",
+        "name": "LiInO2",
+        "source": "mpdb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "5840",
+        "name": "LiScO2",
+        "source": "mpdb",
+        "spacegroup": "I4_1/amd",
+        "family": "rocksalt-ABX2-I41amd"
+    },
+    {
+        "id": "7017",
+        "name": "NaNbN2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "7176",
+        "name": "RbLaSe2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "7219",
+        "name": "Na2ZrSe3",
+        "source": "mpdb",
+        "spacegroup": "C2/m",
+        "family": "rocksalt-A2BX3-C2m"
+    },
+    {
+        "id": "7914",
+        "name": "NaScO2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "8175",
+        "name": "KTlO2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "8830",
+        "name": "NaRhO2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "9361",
+        "name": "RbLaS2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "9382",
+        "name": "SrZrN2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "9383",
+        "name": "SrHfN2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "10226",
+        "name": "NaYS2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "10760",
+        "name": "MgSe",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "11718",
+        "name": "RbF",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "11739",
+        "name": "KLaTe2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "14115",
+        "name": "LiRhO2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "15781",
+        "name": "KLaS2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "15788",
+        "name": "LiYS2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "15794",
+        "name": "LiYSe2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "16763",
+        "name": "KYTe2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "19717",
+        "name": "PbTe",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "20289",
+        "name": "NaInS2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "21276",
+        "name": "PbS",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "22450",
+        "name": "Li2PbO3",
+        "source": "mpdb",
+        "spacegroup": "C2/c",
+        "family": "rocksalt-A2BX3-C2c"
+    },
+    {
+        "id": "22473",
+        "name": "NaInSe2",
+        "source": "mpdb",
+        "spacegroup": "R-3m",
+        "family": "rocksalt-ABX2-R3m"
+    },
+    {
+        "id": "22862",
+        "name": "NaCl",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "22867",
+        "name": "RbBr",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "22898",
+        "name": "KI",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "22899",
+        "name": "LiI",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "22903",
+        "name": "RbI",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "22905",
+        "name": "LiCl",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "22916",
+        "name": "NaBr",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "22919",
+        "name": "AgI",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "22922",
+        "name": "AgCl",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "23193",
+        "name": "KCl",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "23231",
+        "name": "AgBr",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "23251",
+        "name": "KBr",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "23259",
+        "name": "LiBr",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "23268",
+        "name": "NaI",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "23295",
+        "name": "RbCl",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "23703",
+        "name": "LiH",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "23870",
+        "name": "NaH",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "24084",
+        "name": "KH",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "24721",
+        "name": "RbH",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "rocksalt"
+    },
+    {
+        "id": "12558",
+        "name": "LiMgAs",
+        "source": "phonondb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "752798",
+        "name": "CeTh2O6",
+        "source": "phonondb",
+        "spacegroup": "Immm",
+        "family": "fluorite-A2BX6-Immm"
+    },
+    {
+        "id": "685991",
+        "name": "Li5SiP3",
+        "source": "phonondb",
+        "spacegroup": "Cc",
+        "family": "antifluorite-A5BX3-Cc"
+    },
+    {
+        "id": "20194",
+        "name": "CeO2",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "11327",
+        "name": "Rb2Se",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "9124",
+        "name": "LiZnAs",
+        "source": "phonondb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "556639",
+        "name": "DyNbO4",
+        "source": "phonondb",
+        "spacegroup": "C2/c",
+        "family": "fluorite-ABX4-I41a"
+    },
+    {
+        "id": "5104",
+        "name": "CaZnF4",
+        "source": "phonondb",
+        "spacegroup": "I4_1/a",
+        "family": "fluorite-ABX4-I41a"
+    },
+    {
+        "id": "1747",
+        "name": "K2Te",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "754964",
+        "name": "HfZrO4",
+        "source": "phonondb",
+        "spacegroup": "I4_1/a",
+        "family": "fluorite-ABX4-I41a"
+    },
+    {
+        "id": "36329",
+        "name": "SrUO4",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "fluorite-ABX4-R3m"
+    },
+    {
+        "id": "27888",
+        "name": "Zr3GeO8",
+        "source": "phonondb",
+        "spacegroup": "I-42m",
+        "family": "fluorite-A3BX8-I4mmm"
+    },
+    {
+        "id": "241",
+        "name": "CdF2",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "615746",
+        "name": "RbBiF4",
+        "source": "phonondb",
+        "spacegroup": "Fd-3m",
+        "family": "fluorite-ABX4-Fd3m"
+    },
+    {
+        "id": "676074",
+        "name": "Na2ThF6",
+        "source": "phonondb",
+        "spacegroup": "C2/c",
+        "family": "fluorite-A2BX6-C2c"
+    },
+    {
+        "id": "36111",
+        "name": "LiMgP",
+        "source": "phonondb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "8426",
+        "name": "K2Se",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "568662",
+        "name": "BaCl2",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "8177",
+        "name": "HgF2",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "5370",
+        "name": "ErNbO4",
+        "source": "phonondb",
+        "spacegroup": "C2/c",
+        "family": "fluorite-ABX4-I41a"
+    },
+    {
+        "id": "1266",
+        "name": "Na2Se",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "754736",
+        "name": "BaSr3I8",
+        "source": "phonondb",
+        "spacegroup": "I4/mmm",
+        "family": "fluorite-A3BX8-I4mmm"
+    },
+    {
+        "id": "23209",
+        "name": "SrCl2",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "2741",
+        "name": "CaF2",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "760513",
+        "name": "La2UO6",
+        "source": "phonondb",
+        "spacegroup": "Immm",
+        "family": "fluorite-A2BX6-Immm"
+    },
+    {
+        "id": "981",
+        "name": "SrF2",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "8041",
+        "name": "Rb2S",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "5387",
+        "name": "YNbO4",
+        "source": "phonondb",
+        "spacegroup": "C2/c",
+        "family": "fluorite-ABX4-I41a"
+    },
+    {
+        "id": "2286",
+        "name": "Li2Se",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "315",
+        "name": "PbF2",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "754852",
+        "name": "BaSrI4",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "fluorite-ABX4-R3m"
+    },
+    {
+        "id": "675800",
+        "name": "Li5TiP3",
+        "source": "phonondb",
+        "spacegroup": "C2/c",
+        "family": "antifluorite-A5BX3-Cc"
+    },
+    {
+        "id": "961684",
+        "name": "LiCaAs",
+        "source": "phonondb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "1569",
+        "name": "Be2C",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "675562",
+        "name": "K2ThF6",
+        "source": "phonondb",
+        "spacegroup": "C2/c",
+        "family": "fluorite-A2BX6-C2c"
+    },
+    {
+        "id": "2352",
+        "name": "Na2O",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "675798",
+        "name": "NaHoF4",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "fluorite-ABX4-I41a"
+    },
+    {
+        "id": "3960",
+        "name": "CaUO4",
+        "source": "phonondb",
+        "spacegroup": "R-3m",
+        "family": "fluorite-ABX4-R3m"
+    },
+    {
+        "id": "34081",
+        "name": "NaYF4",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "fluorite-ABX4-I41a"
+    },
+    {
+        "id": "648",
+        "name": "Na2S",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "971",
+        "name": "K2O",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "1394",
+        "name": "Rb2O",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "1776",
+        "name": "UN2",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "7575",
+        "name": "LiZnN",
+        "source": "phonondb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "1029",
+        "name": "BaF2",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "867674",
+        "name": "Ba3CaI8",
+        "source": "phonondb",
+        "spacegroup": "I4/mmm",
+        "family": "fluorite-A3BX8-I4mmm"
+    },
+    {
+        "id": "756235",
+        "name": "Ba3SrI8",
+        "source": "phonondb",
+        "spacegroup": "I4/mmm",
+        "family": "fluorite-A3BX8-I4mmm"
+    },
+    {
+        "id": "674459",
+        "name": "NaErF4",
+        "source": "phonondb",
+        "spacegroup": "I4_1/amd",
+        "family": "fluorite-ABX4-I41a"
+    },
+    {
+        "id": "674531",
+        "name": "Li5GeP3",
+        "source": "phonondb",
+        "spacegroup": "Cc",
+        "family": "antifluorite-A5BX3-Cc"
+    },
+    {
+        "id": "961685",
+        "name": "NaCaAs",
+        "source": "phonondb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "27478",
+        "name": "Na3PaF8",
+        "source": "phonondb",
+        "spacegroup": "I4/mmm",
+        "family": "fluorite-A3BX8-I4mmm"
+    },
+    {
+        "id": "2530",
+        "name": "Li2Te",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "1153",
+        "name": "Li2S",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "581857",
+        "name": "KBiF4",
+        "source": "phonondb",
+        "spacegroup": "Fd-3m",
+        "family": "fluorite-ABX4-Fd3m"
+    },
+    {
+        "id": "768383",
+        "name": "SmBiO4",
+        "source": "phonondb",
+        "spacegroup": "C2/c",
+        "family": "fluorite-ABX4-I41a"
+    },
+    {
+        "id": "644492",
+        "name": "LuNbO4",
+        "source": "phonondb",
+        "spacegroup": "C2/c",
+        "family": "fluorite-ABX4-I41a"
+    },
+    {
+        "id": "1960",
+        "name": "Li2O",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "1022",
+        "name": "K2S",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "10182",
+        "name": "LiZnP",
+        "source": "phonondb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "12862",
+        "name": "LuTaO4",
+        "source": "phonondb",
+        "spacegroup": "C2/c",
+        "family": "fluorite-ABX4-I41a"
+    },
+    {
+        "id": "643",
+        "name": "ThO2",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "2784",
+        "name": "Na2Te",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "37906",
+        "name": "LiMgN",
+        "source": "phonondb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "36111",
+        "name": "LiMgP",
+        "source": "mpdb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "37906",
+        "name": "LiMgN",
+        "source": "mpdb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "568662",
+        "name": "BaCl2",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "961684",
+        "name": "LiCaAs",
+        "source": "mpdb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "961685",
+        "name": "NaCaAs",
+        "source": "mpdb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "1009733",
+        "name": "Ca2Si",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "1011695",
+        "name": "Cs2Se",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "241",
+        "name": "CdF2",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "315",
+        "name": "PbF2",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "441",
+        "name": "Rb2Te",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "648",
+        "name": "Na2S",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "971",
+        "name": "K2O",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "981",
+        "name": "SrF2",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "1022",
+        "name": "K2S",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "1029",
+        "name": "BaF2",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "1153",
+        "name": "Li2S",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "1266",
+        "name": "Na2Se",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "1367",
+        "name": "Mg2Si",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "1394",
+        "name": "Rb2O",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "1565",
+        "name": "ZrO2",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "1569",
+        "name": "Be2C",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "1747",
+        "name": "K2Te",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "1960",
+        "name": "Li2O",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "2286",
+        "name": "Li2Se",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "2352",
+        "name": "Na2O",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "2530",
+        "name": "Li2Te",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "2741",
+        "name": "CaF2",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "2784",
+        "name": "Na2Te",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "7575",
+        "name": "LiZnN",
+        "source": "mpdb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "8041",
+        "name": "Rb2S",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "8177",
+        "name": "HgF2",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "8426",
+        "name": "K2Se",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "9124",
+        "name": "LiZnAs",
+        "source": "mpdb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "10182",
+        "name": "LiZnP",
+        "source": "mpdb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "11327",
+        "name": "Rb2Se",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "antifluorite"
+    },
+    {
+        "id": "12558",
+        "name": "LiMgAs",
+        "source": "mpdb",
+        "spacegroup": "F-43m",
+        "family": "antifluorite-ABX-F43m"
+    },
+    {
+        "id": "23209",
+        "name": "SrCl2",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "fluorite"
+    },
+    {
+        "id": "5777",
+        "name": "BaTiO3",
+        "source": "phonondb",
+        "spacegroup": "Amm2",
+        "family": "perovskite"
+    },
+    {
+        "id": "600089",
+        "name": "CsPbBr3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "4438",
+        "name": "CaSnO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "21043",
+        "name": "RbPbF3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "13334",
+        "name": "ZnSnO3",
+        "source": "phonondb",
+        "spacegroup": "R3c",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "19845",
+        "name": "PbTiO3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "3196",
+        "name": "NdGaO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "10250",
+        "name": "BaLiF3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "756205",
+        "name": "BiScO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "754943",
+        "name": "BiErO3",
+        "source": "phonondb",
+        "spacegroup": "R3c",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "985585",
+        "name": "Li3ClO",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "antiperovskite"
+    },
+    {
+        "id": "23049",
+        "name": "KMnCl3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "4582",
+        "name": "NdRhO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "23730",
+        "name": "NaMgH3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "4170",
+        "name": "NaTaO3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "3136",
+        "name": "NaNbO3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "28558",
+        "name": "RbGeBr3",
+        "source": "phonondb",
+        "spacegroup": "Pna2_1",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "674508",
+        "name": "RbPbF3",
+        "source": "phonondb",
+        "spacegroup": "R3c",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "754323",
+        "name": "BiTmO3",
+        "source": "phonondb",
+        "spacegroup": "R3c",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "28171",
+        "name": "K3IO",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "antiperovskite"
+    },
+    {
+        "id": "28593",
+        "name": "Li3BrO",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "antiperovskite"
+    },
+    {
+        "id": "669414",
+        "name": "PbHfO3",
+        "source": "phonondb",
+        "spacegroup": "Pbam",
+        "family": "perovskite-Pbam"
+    },
+    {
+        "id": "31045",
+        "name": "KAuI3",
+        "source": "phonondb",
+        "spacegroup": "P2_1/c",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "4514",
+        "name": "NaNbO3",
+        "source": "phonondb",
+        "spacegroup": "R3c",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "3317",
+        "name": "SmRhO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "989601",
+        "name": "LaWN3",
+        "source": "phonondb",
+        "spacegroup": "R3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "27214",
+        "name": "CsSnBr3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "23818",
+        "name": "BaLiH3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "12867",
+        "name": "SrSnO3",
+        "source": "phonondb",
+        "spacegroup": "I4/mcm",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "3448",
+        "name": "KMgF3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "4019",
+        "name": "CaTiO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "756458",
+        "name": "ErAlO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "5020",
+        "name": "BaTiO3",
+        "source": "phonondb",
+        "spacegroup": "R3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "5878",
+        "name": "KZnF3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "7781",
+        "name": "CaZrS3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "5193",
+        "name": "SrZrS3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "5052",
+        "name": "CdTiO3",
+        "source": "phonondb",
+        "spacegroup": "Pna2_1",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "3466",
+        "name": "PrAlO3",
+        "source": "phonondb",
+        "spacegroup": "R-3c",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "862832",
+        "name": "TlPaO3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "8218",
+        "name": "PrAlO3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "977455",
+        "name": "AgPaO3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "3316",
+        "name": "BaCeO3",
+        "source": "phonondb",
+        "spacegroup": "Imma",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "5986",
+        "name": "BaTiO3",
+        "source": "phonondb",
+        "spacegroup": "P4mm",
+        "family": "perovskite"
+    },
+    {
+        "id": "754009",
+        "name": "BiScO3",
+        "source": "phonondb",
+        "spacegroup": "R3c",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "4673",
+        "name": "SrHfO3",
+        "source": "phonondb",
+        "spacegroup": "Cmcm",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "12866",
+        "name": "SrSnO3",
+        "source": "phonondb",
+        "spacegroup": "Imma",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "770830",
+        "name": "BiHoO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "6951",
+        "name": "RbCdF3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "4551",
+        "name": "SrHfO3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "28377",
+        "name": "CsGeI3",
+        "source": "phonondb",
+        "spacegroup": "R3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "27865",
+        "name": "KMgCl3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "20489",
+        "name": "SrPbO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "3671",
+        "name": "NaNbO3",
+        "source": "phonondb",
+        "spacegroup": "Pbcm",
+        "family": "perovskite-Pbcm"
+    },
+    {
+        "id": "756214",
+        "name": "YAlO3",
+        "source": "phonondb",
+        "spacegroup": "R-3c",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "11623",
+        "name": "LaInO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "3187",
+        "name": "BaCeO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "5926",
+        "name": "KCaF3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "8402",
+        "name": "RbMgF3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "20940",
+        "name": "CdTiO3",
+        "source": "phonondb",
+        "spacegroup": "Pmc2_1",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "755165",
+        "name": "YScO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "20459",
+        "name": "PbTiO3",
+        "source": "phonondb",
+        "spacegroup": "P4mm",
+        "family": "perovskite"
+    },
+    {
+        "id": "755138",
+        "name": "NdInO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "3858",
+        "name": "NaTaO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "560399",
+        "name": "NaMgF3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "5837",
+        "name": "LaGaO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "22981",
+        "name": "TlIO3",
+        "source": "phonondb",
+        "spacegroup": "R3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "754853",
+        "name": "CaHfO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "28602",
+        "name": "Na3ClO",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "antiperovskite"
+    },
+    {
+        "id": "4342",
+        "name": "KNbO3",
+        "source": "phonondb",
+        "spacegroup": "P4mm",
+        "family": "perovskite"
+    },
+    {
+        "id": "989552",
+        "name": "LaMoN3",
+        "source": "phonondb",
+        "spacegroup": "R3c",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "22220",
+        "name": "LaLuO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "755790",
+        "name": "PbHfO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "20079",
+        "name": "CaPbO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "5811",
+        "name": "CsPbF3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "4950",
+        "name": "KCaF3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "4891",
+        "name": "HoAlO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "7104",
+        "name": "CsCaF3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "22988",
+        "name": "CsGeCl3",
+        "source": "phonondb",
+        "spacegroup": "R3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "756290",
+        "name": "TbGaO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "10429",
+        "name": "LaYO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "616378",
+        "name": "CsSnI3",
+        "source": "phonondb",
+        "spacegroup": "P4/mbm",
+        "family": "perovskite-P4mbm"
+    },
+    {
+        "id": "5537",
+        "name": "AgNbO3",
+        "source": "phonondb",
+        "spacegroup": "Pbcm",
+        "family": "perovskite-Pbcm"
+    },
+    {
+        "id": "5076",
+        "name": "SrZrO3",
+        "source": "phonondb",
+        "spacegroup": "I4/mcm",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "3442",
+        "name": "CaTiO3",
+        "source": "phonondb",
+        "spacegroup": "I4/mcm",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "22428",
+        "name": "SrCeO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "985586",
+        "name": "Na3BrO",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "antiperovskite"
+    },
+    {
+        "id": "14254",
+        "name": "NdAlO3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "31118",
+        "name": "SmScO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "5246",
+        "name": "KNbO3",
+        "source": "phonondb",
+        "spacegroup": "Amm2",
+        "family": "perovskite"
+    },
+    {
+        "id": "12992",
+        "name": "BaTiO3",
+        "source": "phonondb",
+        "spacegroup": "P4mm",
+        "family": "perovskite"
+    },
+    {
+        "id": "552588",
+        "name": "LiNbO3",
+        "source": "phonondb",
+        "spacegroup": "R-3c",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "752437",
+        "name": "SmInO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "20282",
+        "name": "CsPbF3",
+        "source": "phonondb",
+        "spacegroup": "R3c",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "558920",
+        "name": "NaNbO3",
+        "source": "phonondb",
+        "spacegroup": "Pca2_1",
+        "family": "perovskite-Pbcm"
+    },
+    {
+        "id": "756281",
+        "name": "TmAlO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "31119",
+        "name": "TbScO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "2879",
+        "name": "SrSnO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "561947",
+        "name": "CsHgF3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "8397",
+        "name": "CsSrF3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "644203",
+        "name": "CsCaH3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "9890",
+        "name": "AgTaO3",
+        "source": "phonondb",
+        "spacegroup": "R-3c",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "7792",
+        "name": "YScS3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "2955",
+        "name": "NaMgF3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "755798",
+        "name": "PbZrO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "21872",
+        "name": "PrLuO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "11824",
+        "name": "Ca3PN",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "antiperovskite"
+    },
+    {
+        "id": "3795",
+        "name": "NaZnF3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "6952",
+        "name": "RbYbF3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "5692",
+        "name": "TbRhO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "643749",
+        "name": "KCaF3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "3654",
+        "name": "RbCaF3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "14099",
+        "name": "AgZnF3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "3626",
+        "name": "SrZrO3",
+        "source": "phonondb",
+        "spacegroup": "Cmcm",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "571458",
+        "name": "RbGeI3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "22734",
+        "name": "PbHfO3",
+        "source": "phonondb",
+        "spacegroup": "Pbam",
+        "family": "perovskite-Pbam"
+    },
+    {
+        "id": "10175",
+        "name": "KCdF3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "7405",
+        "name": "SmAlO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "4419",
+        "name": "NaNbO3",
+        "source": "phonondb",
+        "spacegroup": "P4/mbm",
+        "family": "perovskite-P4mbm"
+    },
+    {
+        "id": "4675",
+        "name": "NaTaO3",
+        "source": "phonondb",
+        "spacegroup": "P4/mbm",
+        "family": "perovskite-P4mbm"
+    },
+    {
+        "id": "570231",
+        "name": "CsCdBr3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "4900",
+        "name": "BaCeO3",
+        "source": "phonondb",
+        "spacegroup": "R-3c",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "28166",
+        "name": "K3BrO",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "antiperovskite"
+    },
+    {
+        "id": "7483",
+        "name": "KHgF3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "4681",
+        "name": "NaNbO3",
+        "source": "phonondb",
+        "spacegroup": "Pmc2_1",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "23737",
+        "name": "KMgH3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "865120",
+        "name": "NaPaO3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "7375",
+        "name": "KNbO3",
+        "source": "phonondb",
+        "spacegroup": "R3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "5663",
+        "name": "BaCeO3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "849371",
+        "name": "CdSnO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "754936",
+        "name": "DyAlO3",
+        "source": "phonondb",
+        "spacegroup": "R-3c",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "568570",
+        "name": "CsSnI3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "5304",
+        "name": "LaAlO3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "755416",
+        "name": "HoGaO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "4360",
+        "name": "NaCdF3",
+        "source": "phonondb",
+        "spacegroup": "R3c",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "3336",
+        "name": "LaGaO3",
+        "source": "phonondb",
+        "spacegroup": "R-3c",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "4535",
+        "name": "PrGaO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "755893",
+        "name": "CaBiO3",
+        "source": "phonondb",
+        "spacegroup": "P2_1/c",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "754578",
+        "name": "TmGaO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "989524",
+        "name": "LaWN3",
+        "source": "phonondb",
+        "spacegroup": "R3c",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "9628",
+        "name": "KCdF3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "935811",
+        "name": "KNbO3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "675022",
+        "name": "CsPbCl3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "3721",
+        "name": "SrHfO3",
+        "source": "phonondb",
+        "spacegroup": "I4/mcm",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "3731",
+        "name": "LiNbO3",
+        "source": "phonondb",
+        "spacegroup": "R3c",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "556892",
+        "name": "BiInO3",
+        "source": "phonondb",
+        "spacegroup": "Pna2_1",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "3614",
+        "name": "KTaO3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "7538",
+        "name": "LaErO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "9200",
+        "name": "K3AuO",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "antiperovskite"
+    },
+    {
+        "id": "4699",
+        "name": "NaTaO3",
+        "source": "phonondb",
+        "spacegroup": "Cmcm",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "546973",
+        "name": "SrSnO3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "571418",
+        "name": "RbYbBr3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "3666",
+        "name": "LiTaO3",
+        "source": "phonondb",
+        "spacegroup": "R3c",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "4748",
+        "name": "NaNbO3",
+        "source": "phonondb",
+        "spacegroup": "Cmcm",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "561102",
+        "name": "BiInO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "4192",
+        "name": "Ca3AsN",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "antiperovskite-Pnma"
+    },
+    {
+        "id": "756979",
+        "name": "Rb3ClO",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "antiperovskite-Pnma"
+    },
+    {
+        "id": "7223",
+        "name": "Ca3AsN",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "antiperovskite"
+    },
+    {
+        "id": "7482",
+        "name": "RbHgF3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "23949",
+        "name": "RbCaH3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "5229",
+        "name": "SrTiO3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "23736",
+        "name": "LiMgH3",
+        "source": "phonondb",
+        "spacegroup": "R3c",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "3378",
+        "name": "SrHfO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "20337",
+        "name": "PbZrO3",
+        "source": "phonondb",
+        "spacegroup": "Amm2",
+        "family": "perovskite"
+    },
+    {
+        "id": "4387",
+        "name": "SrZrO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "22535",
+        "name": "PbHfO3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "567629",
+        "name": "CsPbBr3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "780387",
+        "name": "YbHfO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "4471",
+        "name": "ScAlO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "556003",
+        "name": "CaTiO3",
+        "source": "phonondb",
+        "spacegroup": "Imma",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "31120",
+        "name": "DyScO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "552729",
+        "name": "KIO3",
+        "source": "phonondb",
+        "spacegroup": "R3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "776024",
+        "name": "CaZrO3",
+        "source": "phonondb",
+        "spacegroup": "Pbam",
+        "family": "perovskite-Pbam"
+    },
+    {
+        "id": "8398",
+        "name": "CsYbF3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "540771",
+        "name": "BaZrS3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "13108",
+        "name": "SrHfO3",
+        "source": "phonondb",
+        "spacegroup": "P4mm",
+        "family": "perovskite"
+    },
+    {
+        "id": "776108",
+        "name": "LiNbO3",
+        "source": "phonondb",
+        "spacegroup": "Pbcm",
+        "family": "perovskite-Pbcm"
+    },
+    {
+        "id": "556983",
+        "name": "LaGaO3",
+        "source": "phonondb",
+        "spacegroup": "Imma",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "5899",
+        "name": "NdAlO3",
+        "source": "phonondb",
+        "spacegroup": "R-3c",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "755612",
+        "name": "DyGaO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "755574",
+        "name": "LuAlO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "31116",
+        "name": "LaScO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "13374",
+        "name": "LaTmO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "572291",
+        "name": "K3ClO",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "antiperovskite-Pnma"
+    },
+    {
+        "id": "559756",
+        "name": "PrScO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "550908",
+        "name": "SrHfO3",
+        "source": "phonondb",
+        "spacegroup": "P4/mbm",
+        "family": "perovskite-P4mbm"
+    },
+    {
+        "id": "2998",
+        "name": "BaTiO3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "570223",
+        "name": "CsGeBr3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "5163",
+        "name": "LaRhO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "23037",
+        "name": "CsPbCl3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "865758",
+        "name": "YbGeO3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "13109",
+        "name": "SrHfO3",
+        "source": "phonondb",
+        "spacegroup": "Imma",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "3792",
+        "name": "YAlO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "30056",
+        "name": "CsCaBr3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "31117",
+        "name": "NdScO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "568544",
+        "name": "CsCdCl3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "4789",
+        "name": "PrRhO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "30528",
+        "name": "TlMnCl3",
+        "source": "phonondb",
+        "spacegroup": "P4/mbm",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "647557",
+        "name": "PbZrO3",
+        "source": "phonondb",
+        "spacegroup": "Pbam",
+        "family": "perovskite-Pbam"
+    },
+    {
+        "id": "756630",
+        "name": "DyAlO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "4434",
+        "name": "TbAlO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "568005",
+        "name": "CsYbBr3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "2920",
+        "name": "LaAlO3",
+        "source": "phonondb",
+        "spacegroup": "R-3c",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "756272",
+        "name": "LaDyO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "8399",
+        "name": "CsCdF3",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "14550",
+        "name": "CdTiO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "768221",
+        "name": "BiYO3",
+        "source": "phonondb",
+        "spacegroup": "R3c",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "31121",
+        "name": "HoScO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "754225",
+        "name": "YbTiO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "756166",
+        "name": "LaHoO3",
+        "source": "phonondb",
+        "spacegroup": "Pnma",
+        "family": "perovskite-Pnma"
+    },
+    {
+        "id": "4651",
+        "name": "SrTiO3",
+        "source": "phonondb",
+        "spacegroup": "I4/mcm",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "28602",
+        "name": "Na3ClO",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "antiperovskite"
+    },
+    {
+        "id": "30056",
+        "name": "CsCaBr3",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "31149",
+        "name": "Ca3BiN",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "antiperovskite"
+    },
+    {
+        "id": "561947",
+        "name": "CsHgF3",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "568544",
+        "name": "CsCdCl3",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "570008",
+        "name": "Sr3BiN",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "antiperovskite"
+    },
+    {
+        "id": "616378",
+        "name": "CsSnI3",
+        "source": "mpdb",
+        "spacegroup": "P4/mbm",
+        "family": "perovskite-P4mbm"
+    },
+    {
+        "id": "644203",
+        "name": "CsCaH3",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "985586",
+        "name": "Na3BrO",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "antiperovskite"
+    },
+    {
+        "id": "998156",
+        "name": "RbSnCl3",
+        "source": "mpdb",
+        "spacegroup": "Cm",
+        "family": "perovskite"
+    },
+    {
+        "id": "998198",
+        "name": "RbCaBr3",
+        "source": "mpdb",
+        "spacegroup": "Cm",
+        "family": "perovskite"
+    },
+    {
+        "id": "998297",
+        "name": "CsSrBr3",
+        "source": "mpdb",
+        "spacegroup": "Cm",
+        "family": "perovskite"
+    },
+    {
+        "id": "998552",
+        "name": "BaHfO3",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "2920",
+        "name": "LaAlO3",
+        "source": "mpdb",
+        "spacegroup": "R-3c",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "3163",
+        "name": "BaSnO3",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "3448",
+        "name": "KMgF3",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "3614",
+        "name": "KTaO3",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "3654",
+        "name": "RbCaF3",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "3666",
+        "name": "LiTaO3",
+        "source": "mpdb",
+        "spacegroup": "R3c",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "3731",
+        "name": "LiNbO3",
+        "source": "mpdb",
+        "spacegroup": "R3c",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "3834",
+        "name": "BaZrO3",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "4342",
+        "name": "KNbO3",
+        "source": "mpdb",
+        "spacegroup": "P4mm",
+        "family": "perovskite"
+    },
+    {
+        "id": "4360",
+        "name": "NaCdF3",
+        "source": "mpdb",
+        "spacegroup": "R3c",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "4405",
+        "name": "Rb3AuO",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "antiperovskite"
+    },
+    {
+        "id": "4514",
+        "name": "NaNbO3",
+        "source": "mpdb",
+        "spacegroup": "R3c",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "4651",
+        "name": "SrTiO3",
+        "source": "mpdb",
+        "spacegroup": "I4/mcm",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "5020",
+        "name": "BaTiO3",
+        "source": "mpdb",
+        "spacegroup": "R3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "5878",
+        "name": "KZnF3",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "5986",
+        "name": "BaTiO3",
+        "source": "mpdb",
+        "spacegroup": "P4mm",
+        "family": "perovskite"
+    },
+    {
+        "id": "6951",
+        "name": "RbCdF3",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "7104",
+        "name": "CsCaF3",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "7375",
+        "name": "KNbO3",
+        "source": "mpdb",
+        "spacegroup": "R3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "7482",
+        "name": "RbHgF3",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "7752",
+        "name": "Sr3SbN",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "antiperovskite"
+    },
+    {
+        "id": "8399",
+        "name": "CsCdF3",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "8402",
+        "name": "RbMgF3",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "9200",
+        "name": "K3AuO",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "antiperovskite"
+    },
+    {
+        "id": "10250",
+        "name": "BaLiF3",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "11824",
+        "name": "Ca3PN",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "antiperovskite"
+    },
+    {
+        "id": "12992",
+        "name": "BaTiO3",
+        "source": "mpdb",
+        "spacegroup": "P4mm",
+        "family": "perovskite"
+    },
+    {
+        "id": "13109",
+        "name": "SrHfO3",
+        "source": "mpdb",
+        "spacegroup": "Imma",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "20282",
+        "name": "CsPbF3",
+        "source": "mpdb",
+        "spacegroup": "R3c",
+        "family": "perovskite-R"
+    },
+    {
+        "id": "20459",
+        "name": "PbTiO3",
+        "source": "mpdb",
+        "spacegroup": "P4mm",
+        "family": "perovskite"
+    },
+    {
+        "id": "22988",
+        "name": "CsGeCl3",
+        "source": "mpdb",
+        "spacegroup": "R3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "23737",
+        "name": "KMgH3",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "23818",
+        "name": "BaLiH3",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "23949",
+        "name": "RbCaH3",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "27193",
+        "name": "RbIO3",
+        "source": "mpdb",
+        "spacegroup": "R3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "28171",
+        "name": "K3IO",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "antiperovskite"
+    },
+    {
+        "id": "28377",
+        "name": "CsGeI3",
+        "source": "mpdb",
+        "spacegroup": "R3m",
+        "family": "perovskite"
+    },
+    {
+        "id": "602",
+        "name": "MoTe2",
+        "source": "phonondb",
+        "spacegroup": "P6_3/mmc",
+        "family": "tmd-2H"
+    },
+    {
+        "id": "1186",
+        "name": "ZrS2",
+        "source": "phonondb",
+        "spacegroup": "P-3m1",
+        "family": "tmd-1T"
+    },
+    {
+        "id": "1821",
+        "name": "WSe2",
+        "source": "phonondb",
+        "spacegroup": "P6_3/mmc",
+        "family": "tmd-2H"
+    },
+    {
+        "id": "9813",
+        "name": "WS2",
+        "source": "phonondb",
+        "spacegroup": "R3m",
+        "family": "tmd-3R"
+    },
+    {
+        "id": "7581",
+        "name": "MoSe2",
+        "source": "phonondb",
+        "spacegroup": "R3m",
+        "family": "tmd-3R"
+    },
+    {
+        "id": "224",
+        "name": "WS2",
+        "source": "phonondb",
+        "spacegroup": "P6_3/mmc",
+        "family": "tmd-2H"
+    },
+    {
+        "id": "985831",
+        "name": "HfSe2",
+        "source": "phonondb",
+        "spacegroup": "P-3m1",
+        "family": "tmd-1T"
+    },
+    {
+        "id": "1434",
+        "name": "MoS2",
+        "source": "phonondb",
+        "spacegroup": "R3m",
+        "family": "tmd-3R"
+    },
+    {
+        "id": "985829",
+        "name": "HfS2",
+        "source": "phonondb",
+        "spacegroup": "P-3m1",
+        "family": "tmd-1T"
+    },
+    {
+        "id": "602",
+        "name": "MoTe2",
+        "source": "mpdb",
+        "spacegroup": "P6_3/mmc",
+        "family": "tmd-2H"
+    },
+    {
+        "id": "1634",
+        "name": "MoSe2",
+        "source": "mpdb",
+        "spacegroup": "P6_3/mmc",
+        "family": "tmd-2H"
+    },
+    {
+        "id": "7581",
+        "name": "MoSe2",
+        "source": "mpdb",
+        "spacegroup": "R3m",
+        "family": "tmd-3R"
+    }
+]
