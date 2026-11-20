@@ -7,9 +7,11 @@
  * WURTZITE_SUPERSTRUCTURES), a cation-ordered ternary rocksalt (alpha-NaFeO2
  * type R-3m, gamma-LiFeO2 type I4_1/amd, Li2ZrO3 type C2/c, ...;
  * ROCKSALT_SUPERSTRUCTURES) or fluorite / antifluorite (scheelite, CaUO4 type,
- * MgAgAs type LiMgN, ...; FLUORITE_SUPERSTRUCTURES). A binary with force
- * constants can also be folded into the cell of an ordered ternary on its
- * lattice. Force constants
+ * MgAgAs type LiMgN, ...; FLUORITE_SUPERSTRUCTURES), or an A B X3 perovskite /
+ * antiperovskite: the 5-atom cell (cubic or polar) or a supercell of the
+ * octahedral tilts (Pnma, R-3c, ...; PEROVSKITE_SUPERSTRUCTURES). A binary (a
+ * 5-atom perovskite) with force constants can also be folded into the cell of
+ * an ordered ternary (a tilted perovskite) on its lattice. Force constants
  * and site masses are mixed separately:
  *
  *     Phi_k(q)   = M_k^1/2 D_k(q) M_k^1/2
@@ -805,6 +807,7 @@ export const FLUORITE_SUPERSTRUCTURES = {
         sites: superstructureSites([
             ['A', 1, 0, 0, 0], ['B', 2, 0, 0, 0], ['X', 0, 0, 0, 0],
         ]),
+        referencePoints: { X: [0.5, 0, 0.5], W: [0.5, 0.25, -0.25], L: [0.5, 0.5, 0.5] },
         specialPoints: null,
         path: null,
     },
@@ -897,7 +900,206 @@ export const FLUORITE_SUPERSTRUCTURES = {
     },
 };
 
-export const SUPERSTRUCTURES = Object.assign({}, WURTZITE_SUPERSTRUCTURES, ROCKSALT_SUPERSTRUCTURES, FLUORITE_SUPERSTRUCTURES);
+// perovskites: the 5-atom cell itself ('perovskite', 'antiperovskite': sub 0 =
+// A, 1 = B, 2-4 = X) and the supercells of the octahedral tilts, one per
+// supercell lattice (the sites carry no ordering, so every tilt system on the
+// same supercell shares the template). Derived with analyzeSuperstructure from
+// PhononDB mp-5777 (BaTiO3), mp-3466 (PrAlO3), mp-4438 (CaSnO3), mp-616378
+// (CsSnI3), mp-669414 (PbHfO3), mp-3671 (NaNbO3), mp-985585 (Li3OCl) and mp-4192
+// (Ca3AsN); referencePoints from Materials Project mp-30056 (CsCaBr3) and
+// mp-2920 (LaAlO3). With no ordering on the sites every orientation of a tilted
+// cell matches, but they put the tilts (or the polarization) in different senses:
+// referenceStructure, the canonical cell (at unit volume) and positions of the
+// material it was derived from, picks the match with the same distortion, so two
+// materials are mixed with their tilts aligned (see matchScore).
+export const PEROVSKITE_SUPERSTRUCTURES = {
+    'perovskite': {
+        parent: 'perovskite',
+        title: 'A B X3 perovskite (Pm-3m, polar P4mm, R3m, Amm2)',
+        supercell: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+        sites: superstructureSites([
+            ['A', 0, 0, 0, 0], ['B', 1, 0, 0, 0], ['X', 2, 0, 0, 0], ['X', 3, 0, 0, 0], ['X', 4, 0, 0, 0],
+        ]),
+        referencePoints: { X: [0.5, 0, 0], M: [0.5, 0.5, 0], R: [0.5, 0.5, 0.5] },
+        referenceStructure: {
+            lattice: [[1.0055, 0.002, 0], [0.002, 1.0055, 0], [0, 0, 0.9892]],
+            positions: [
+                [0, 0, 0], [0.5138, 0.5138, 0.5], [0.4845, 0.4845, 0], [0.4872, -0.0229, 0.5],
+                [-0.0229, 0.4872, 0.5],
+            ],
+        },
+        specialPoints: null,
+        path: null,
+    },
+    'perovskite-R': {
+        parent: 'perovskite',
+        title: 'anti-phase tilts a-a-a-, a0a0c-, a-a-c0 (R-3c, R3c, I4/mcm, Imma)',
+        supercell: [[1, 1, 0], [1, -1, 0], [-1, 0, -1]],
+        sites: superstructureSites([
+            ['A', 0, 0, 0, 0], ['A', 0, 1, 0, 0], ['B', 1, 0, 0, 0], ['B', 1, 1, 0, 0], ['X', 2, 0, 0, 0], ['X', 2, 1, 0, 0],
+            ['X', 3, 0, 0, 0], ['X', 3, 1, 0, 0], ['X', 4, 0, 0, 0], ['X', 4, 1, 0, 0],
+        ]),
+        referencePoints: { L: [0.5, 0, 0], Z: [0.5, 0, 0.5], F: [0.5, 0.5, 0.5] },
+        referenceStructure: {
+            lattice: [[0.7964, 0.7973, 0.0007], [0.7911, -0.7902, 0.0025], [-0.7984, 0.0018, -0.7953]],
+            positions: [
+                [0, 0, 0], [0.5, 0.5, 0], [0.25, -0.25, -0.5], [0.75, 0.25, -0.5],
+                [0.4538, 0, 0], [1.0462, 0.5, 0], [0, 0, -0.5462], [0.5, 0.5, -0.4538],
+                [-0.0462, -0.5, -0.5462], [0.5462, 0, -0.4538],
+            ],
+        },
+        specialPoints: null,
+        path: null,
+    },
+    'perovskite-Pnma': {
+        parent: 'perovskite',
+        title: 'GdFeO3 type tilts a-b+a- (Pnma)',
+        supercell: [[1, 1, 0], [0, 0, -2], [-1, 1, 0]],
+        sites: superstructureSites([
+            ['A', 0, 0, 0, -1], ['A', 0, 0, 1, -1], ['A', 0, 0, 0, 0], ['A', 0, 0, 1, 0], ['B', 1, 0, 0, -1], ['B', 1, 0, 1, -1],
+            ['B', 1, 0, 0, 0], ['B', 1, 0, 1, 0], ['X', 2, 0, 0, -1], ['X', 2, 0, 1, -1], ['X', 2, 0, 0, 0], ['X', 2, 0, 1, 0],
+            ['X', 3, 0, 0, -1], ['X', 3, 0, 1, -1], ['X', 3, 0, 0, 0], ['X', 3, 0, 1, 0], ['X', 4, 0, 0, -1], ['X', 4, 0, 1, -1],
+            ['X', 4, 0, 0, 0], ['X', 4, 0, 1, 0],
+        ]),
+        referenceStructure: {
+            lattice: [[0.6411, 0.6411, 0], [0, 0, -1.2574], [-0.6203, 0.6203, 0]],
+            positions: [
+                [-0.1107, 0.5, 0.0303], [0.3893, 0.5, 0.5], [0, 0, 0], [0.5, 0, 0.5303],
+                [0.4447, 0.25, 0.0152], [0.9447, 0.25, 0.5152], [0.4447, -0.25, 0.0152], [0.9447, -0.25, 0.5152],
+                [0.4872, 0.5, -0.0935], [0.9872, 0.5, 0.6239], [0.4021, 0, 0.1239], [0.9021, 0, 0.4065],
+                [0.2449, 0.1931, -0.2889], [0.6444, 0.3069, 0.3192], [0.2449, -0.1931, -0.2889], [0.6444, -0.3069, 0.3192],
+                [0.1444, 0.3069, 0.2111], [0.7449, 0.1931, 0.8192], [0.1444, -0.3069, 0.2111], [0.7449, -0.1931, 0.8192],
+            ],
+        },
+        specialPoints: null,
+        path: null,
+    },
+    'perovskite-P4mbm': {
+        parent: 'perovskite',
+        title: 'in-phase tilt a0a0c+ (P4/mbm)',
+        supercell: [[0, -1, -1], [0, -1, 1], [-1, 0, 0]],
+        sites: superstructureSites([
+            ['A', 0, 0, -1, 0], ['A', 0, 0, 0, 0], ['B', 1, 0, -1, 0], ['B', 1, 0, 0, 0], ['X', 2, 0, -1, 0], ['X', 2, 0, 0, 0],
+            ['X', 3, 0, -1, 0], ['X', 3, 0, 0, 0], ['X', 4, 0, -1, 0], ['X', 4, 0, 0, 0],
+        ]),
+        referenceStructure: {
+            lattice: [[0, -0.7899, -0.7899], [0, -0.7899, 0.7899], [-0.8013, 0, 0]],
+            positions: [
+                [0.5, 0.5, 0], [0, 0, 0], [0, 0.5, -0.5], [-0.5, 0, -0.5],
+                [0.3079, 0.3079, -0.5], [-0.3079, -0.3079, -0.5], [0.1921, 0.8079, -0.5], [-0.1921, 0.1921, -0.5],
+                [0, 0.5, 0], [-0.5, 0, 0],
+            ],
+        },
+        specialPoints: null,
+        path: null,
+    },
+    'perovskite-Pbam': {
+        parent: 'perovskite',
+        title: 'antiferroelectric PbZrO3 type (Pbam)',
+        supercell: [[-1, -1, 0], [2, -2, 0], [0, 0, 2]],
+        sites: superstructureSites([
+            ['A', 0, 1, -2, 0], ['A', 0, 0, -1, 0], ['A', 0, 1, -1, 0], ['A', 0, 0, 0, 0], ['A', 0, 1, -2, 1], ['A', 0, 0, -1, 1],
+            ['A', 0, 1, -1, 1], ['A', 0, 0, 0, 1], ['B', 1, 1, -2, 0], ['B', 1, 0, -1, 0], ['B', 1, 1, -1, 0], ['B', 1, 0, 0, 0],
+            ['B', 1, 1, -2, 1], ['B', 1, 0, -1, 1], ['B', 1, 1, -1, 1], ['B', 1, 0, 0, 1], ['X', 2, 1, -2, 0], ['X', 2, 0, -1, 0],
+            ['X', 2, 1, -1, 0], ['X', 2, 0, 0, 0], ['X', 2, 1, -2, 1], ['X', 2, 0, -1, 1], ['X', 2, 1, -1, 1], ['X', 2, 0, 0, 1],
+            ['X', 3, 1, -2, 0], ['X', 3, 0, -1, 0], ['X', 3, 1, -1, 0], ['X', 3, 0, 0, 0], ['X', 3, 1, -2, 1], ['X', 3, 0, -1, 1],
+            ['X', 3, 1, -1, 1], ['X', 3, 0, 0, 1], ['X', 4, 1, -2, 0], ['X', 4, 0, -1, 0], ['X', 4, 1, -1, 0], ['X', 4, 0, 0, 0],
+            ['X', 4, 1, -2, 1], ['X', 4, 0, -1, 1], ['X', 4, 1, -1, 1], ['X', 4, 0, 0, 1],
+        ]),
+        referenceStructure: {
+            lattice: [[-0.5014, -0.5014, 0], [1.0054, -1.0054, 0], [0, 0, 0.9918]],
+            positions: [
+                [0.4168, 0.7527, 0], [0.5, 0.2527, 0], [-0.0832, 0.5, 0], [0, 0, 0],
+                [0.4224, 0.7477, 0.5], [0.4944, 0.2477, 0.5], [-0.0776, 0.505, 0.5], [-0.0056, 0.005, 0.5],
+                [-0.0478, 0.752, 0.2497], [-0.0353, 0.252, 0.2497], [-0.5478, 0.5007, 0.2497], [-0.5353, 0.0007, 0.2497],
+                [-0.0478, 0.752, 0.7503], [-0.0353, 0.252, 0.7503], [-0.5478, 0.5007, 0.7503], [-0.5353, 0.0007, 0.7503],
+                [-0.0209, 0.7211, 0], [-0.0623, 0.2211, 0], [-0.5209, 0.5316, 0], [-0.5623, 0.0316, 0],
+                [0.0018, 0.7804, 0.5], [-0.0849, 0.2804, 0.5], [-0.4982, 0.4724, 0.5], [-0.5849, -0.0276, 0.5],
+                [0.2084, 0.8764, 0.2067], [0.2084, 0.3764, 0.2291], [-0.265, 0.6163, 0.2797], [-0.3181, 0.1364, 0.2797],
+                [0.2084, 0.8764, 0.7932], [0.2084, 0.3764, 0.7709], [-0.2651, 0.6163, 0.7203], [-0.3181, 0.1364, 0.7203],
+                [0.235, 0.6364, 0.2797], [0.1819, 0.1163, 0.2797], [-0.2916, 0.3764, 0.2067], [-0.2916, -0.1236, 0.2291],
+                [0.2349, 0.6364, 0.7203], [0.1819, 0.1163, 0.7203], [-0.2916, 0.3764, 0.7932], [-0.2916, -0.1236, 0.7709],
+            ],
+        },
+        specialPoints: null,
+        path: null,
+    },
+    'perovskite-Pbcm': {
+        parent: 'perovskite',
+        title: 'NaNbO3 P phase type (Pbcm, Pca2_1)',
+        supercell: [[-1, 1, 0], [1, 1, 0], [0, 0, -4]],
+        sites: superstructureSites([
+            ['A', 0, 0, 0, -3], ['A', 0, 0, 1, -3], ['A', 0, 0, 0, -2], ['A', 0, 0, 1, -2], ['A', 0, 0, 0, -1], ['A', 0, 0, 1, -1],
+            ['A', 0, 0, 0, 0], ['A', 0, 0, 1, 0], ['B', 1, 0, 0, -3], ['B', 1, 0, 1, -3], ['B', 1, 0, 0, -2], ['B', 1, 0, 1, -2],
+            ['B', 1, 0, 0, -1], ['B', 1, 0, 1, -1], ['B', 1, 0, 0, 0], ['B', 1, 0, 1, 0], ['X', 2, 0, 0, -3], ['X', 2, 0, 1, -3],
+            ['X', 2, 0, 0, -2], ['X', 2, 0, 1, -2], ['X', 2, 0, 0, -1], ['X', 2, 0, 1, -1], ['X', 2, 0, 0, 0], ['X', 2, 0, 1, 0],
+            ['X', 3, 0, 0, -3], ['X', 3, 0, 1, -3], ['X', 3, 0, 0, -2], ['X', 3, 0, 1, -2], ['X', 3, 0, 0, -1], ['X', 3, 0, 1, -1],
+            ['X', 3, 0, 0, 0], ['X', 3, 0, 1, 0], ['X', 4, 0, 0, -3], ['X', 4, 0, 1, -3], ['X', 4, 0, 0, -2], ['X', 4, 0, 1, -2],
+            ['X', 4, 0, 0, -1], ['X', 4, 0, 1, -1], ['X', 4, 0, 0, 0], ['X', 4, 0, 1, 0],
+        ]),
+        referenceStructure: {
+            lattice: [[-0.4985, 0.4985, 0], [0.5053, 0.5053, 0], [0, 0, -1.9849]],
+            positions: [
+                [-0.002, 0.045, 0.75], [0.5162, 0.545, 0.75], [0, 0, 0.5], [0.5142, 0.5, 0.5],
+                [-0.002, -0.045, 0.25], [0.5162, 0.455, 0.25], [0, 0, 0], [0.5142, 0.5, 0],
+                [0.0127, 0.5242, 0.6252], [0.5015, 1.0242, 0.6252], [0.0127, 0.4758, 0.3748], [0.5015, 0.9758, 0.3748],
+                [0.0127, 0.4758, 0.1252], [0.5015, 0.9758, 0.1252], [0.0127, 0.5242, -0.1252], [0.5015, 1.0242, -0.1252],
+                [0.0766, 0.4747, 0.75], [0.4376, 0.9747, 0.75], [-0.0614, 0.5, 0.5], [0.5755, 1, 0.5],
+                [0.0766, 0.5253, 0.25], [0.4376, 1.0253, 0.25], [-0.0614, 0.5, 0], [0.5755, 1, 0],
+                [-0.2839, 0.2854, 0.643], [0.2992, 0.7066, 0.6077], [-0.2019, 0.2146, 0.357], [0.215, 0.7934, 0.3923],
+                [-0.2019, 0.2146, 0.143], [0.215, 0.7934, 0.1077], [-0.2839, 0.2854, -0.143], [0.2992, 0.7066, -0.1077],
+                [0.215, 0.2066, 0.6077], [0.7981, 0.7854, 0.643], [0.2992, 0.2934, 0.3923], [0.7161, 0.7146, 0.357],
+                [0.2992, 0.2934, 0.1077], [0.7161, 0.7146, 0.143], [0.215, 0.2066, -0.1077], [0.7981, 0.7854, -0.143],
+            ],
+        },
+        specialPoints: null,
+        path: null,
+    },
+    'antiperovskite': {
+        parent: 'antiperovskite',
+        title: 'X3 B A antiperovskite (Pm-3m)',
+        supercell: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+        sites: superstructureSites([
+            ['A', 0, 0, 0, 0], ['B', 1, 0, 0, 0], ['X', 2, 0, 0, 0], ['X', 3, 0, 0, 0], ['X', 4, 0, 0, 0],
+        ]),
+        referencePoints: { X: [0.5, 0, 0], M: [0.5, 0.5, 0], R: [0.5, 0.5, 0.5] },
+        referenceStructure: {
+            lattice: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+            positions: [
+                [0, 0, 0], [0.5, 0.5, 0.5], [0.5, 0.5, 0], [0.5, 0, 0.5],
+                [0, 0.5, 0.5],
+            ],
+        },
+        specialPoints: null,
+        path: null,
+    },
+    'antiperovskite-Pnma': {
+        parent: 'antiperovskite',
+        title: 'GdFeO3 type tilts (Pnma)',
+        supercell: [[0, -1, -1], [-2, 0, 0], [0, 1, -1]],
+        sites: superstructureSites([
+            ['A', 0, -1, 0, -1], ['A', 0, 0, 0, -1], ['A', 0, -1, 0, 0], ['A', 0, 0, 0, 0], ['B', 1, -1, 0, -1], ['B', 1, 0, 0, -1],
+            ['B', 1, -1, 0, 0], ['B', 1, 0, 0, 0], ['X', 2, -1, 0, -1], ['X', 2, 0, 0, -1], ['X', 2, -1, 0, 0], ['X', 2, 0, 0, 0],
+            ['X', 3, -1, 0, -1], ['X', 3, 0, 0, -1], ['X', 3, -1, 0, 0], ['X', 3, 0, 0, 0], ['X', 4, -1, 0, -1], ['X', 4, 0, 0, -1],
+            ['X', 4, -1, 0, 0], ['X', 4, 0, 0, 0],
+        ]),
+        referenceStructure: {
+            lattice: [[0, -0.629, -0.629], [-1.2639, 0, 0], [0, 0.6289, -0.6289]],
+            positions: [
+                [0.4668, 0.5, 0.5], [0.5, 0, 0.5043], [-0.0332, 0.5, 0.0043], [0, 0, 0],
+                [-0.0166, 0.25, 0.5022], [-0.0166, -0.25, 0.5022], [-0.5166, 0.25, 0.0022], [-0.5166, -0.25, 0.0022],
+                [0.266, 0.231, 0.7196], [0.266, -0.231, 0.7196], [-0.2992, 0.269, 0.2847], [-0.2992, -0.269, 0.2847],
+                [0.2008, 0.269, 0.2196], [0.2008, -0.269, 0.2196], [-0.234, 0.231, -0.2153], [-0.234, -0.231, -0.2153],
+                [-0.0112, 0.5, 0.539], [-0.022, 0, 0.4654], [-0.5112, 0.5, -0.0346], [-0.522, 0, 0.039],
+            ],
+        },
+        specialPoints: null,
+        path: null,
+    },
+};
+
+export const SUPERSTRUCTURES = Object.assign({}, WURTZITE_SUPERSTRUCTURES, ROCKSALT_SUPERSTRUCTURES,
+    FLUORITE_SUPERSTRUCTURES, PEROVSKITE_SUPERSTRUCTURES);
 
 function rowTimesMatrix(v, m) {
     return [0, 1, 2].map((j) => v[0] * m[0][j] + v[1] * m[1][j] + v[2] * m[2][j]);
@@ -1208,6 +1410,168 @@ function* fccDescriptions(layout, atomTypes, positionsRed, lattice, isAnion) {
 // the parent lattices of the ordered ternaries: how to read a cell as a
 // supercell of the parent, where a template site sits in the parent basis, and
 // how far the frame from the bonds may be from the refined one
+// perovskite ABX3 (Pm-3m): the simple cubic cell a I, A at the origin, B at
+// (1/2,1/2,1/2), X at the face centres; antiperovskite (Li3OCl, Ca3PN) has the
+// same sites with the cation on X. A and B are told apart by geometry: B is the
+// centre of the X octahedra.
+const PEROVSKITE_SITES = [
+    { red: [0, 0, 0] },
+    { red: [0.5, 0.5, 0.5] },
+    { red: [0.5, 0.5, 0] },
+    { red: [0.5, 0, 0.5] },
+    { red: [0, 0.5, 0.5] },
+];
+
+function getPerovskiteRoles(atomTypes, positionsRed, lattice) {
+    /*
+    species -> role of an A B X3 cell: X has 3/5 of the atoms; B is the cation
+    with six X neighbours forming an octahedron (the six within a factor 1.45 of
+    each other, as in tetragonal PbTiO3, the seventh farther), A the other one;
+    chlorates and iodates (three short bonds) are not perovskites
+    */
+    let counts = {};
+    atomTypes.forEach((type) => { counts[type] = (counts[type] || 0) + 1; });
+    let species = Object.keys(counts);
+    let x = species.filter((type) => 5 * counts[type] === 3 * atomTypes.length);
+    let cations = species.filter((type) => 5 * counts[type] === atomTypes.length);
+    if (species.length !== 3 || x.length !== 1 || cations.length !== 2) {
+        throw new Error('Not an A B X3 cell: ' + JSON.stringify(counts));
+    }
+    let positionsCar = utils.red_car_list(positionsRed, lattice);
+    let xAtoms = atomTypes.map((type, i) => i).filter((i) => atomTypes[i] === x[0]);
+    let octahedral = (type) => atomTypes.every((t, i) => {
+        if (t !== type) {
+            return true;
+        }
+        let d = getNearestBonds(i, xAtoms, positionsCar, lattice, 7).map((v) => Math.sqrt(mat.vec_dot(v, v)));
+        return d[5] / d[0] < 1.45 && d[6] / d[5] > 1.1;
+    });
+    let mean = (type) => {
+        let total = 0;
+        atomTypes.forEach((t, i) => {
+            if (t === type) {
+                getNearestBonds(i, xAtoms, positionsCar, lattice, 6).forEach((v) => { total += Math.sqrt(mat.vec_dot(v, v)); });
+            }
+        });
+        return total;
+    };
+    let b = cations.filter(octahedral);
+    if (b.length === 2) {
+        b = [mean(cations[0]) <= mean(cations[1]) ? cations[0] : cations[1]];
+    }
+    if (b.length !== 1) {
+        throw new Error('No B X6 octahedra: not a perovskite');
+    }
+    let roles = {};
+    roles[cations.find((type) => type !== b[0])] = 'A';
+    roles[b[0]] = 'B';
+    roles[x[0]] = 'X';
+    return roles;
+}
+
+function* perovskiteDescriptions(atomTypes, positionsRed, lattice, isAnion, roles) {
+    /*
+    every way of reading an A B X3 cell as a supercell of the cubic perovskite, as
+    in fccDescriptions: the cubic axes are the B -> X bonds of the octahedra
+    (length a/2) averaged over all B, so tilts of the octahedra, which alternate
+    between neighbours, average out; the cell is read in the basis of twice these
+    vectors. The origin is an A atom.
+    */
+    let natoms = atomTypes.length;
+    let positionsCar = utils.red_car_list(positionsRed, lattice);
+    let role = (i) => roles[atomTypes[i]];
+    let aAtoms = [];
+    let bAtoms = [];
+    let xAtoms = [];
+    for (let i = 0; i < natoms; i++) {
+        (role(i) === 'A' ? aAtoms : role(i) === 'B' ? bAtoms : xAtoms).push(i);
+    }
+    if (!bAtoms.length || aAtoms.length !== bAtoms.length || xAtoms.length !== 3 * bAtoms.length) {
+        return;
+    }
+    let cosine = (p, q) => mat.vec_dot(p, q) / Math.sqrt(mat.vec_dot(p, p) * mat.vec_dot(q, q));
+    let axes = [];
+    for (let bond of getNearestBonds(bAtoms[0], xAtoms, positionsCar, lattice, 6)) {
+        if (!axes.some((axis) => Math.abs(cosine(axis, bond)) > 0.7)) {
+            axes.push(bond);
+        }
+    }
+    if (axes.length !== 3) {
+        return;
+    }
+    let sums = axes.map(() => [0, 0, 0]);
+    for (let source of bAtoms) {
+        for (let bond of getNearestBonds(source, xAtoms, positionsCar, lattice, 6)) {
+            let cosines = axes.map((axis) => cosine(axis, bond));
+            let k = [0, 1, 2].reduce((best, j) => (Math.abs(cosines[j]) > Math.abs(cosines[best]) ? j : best), 0);
+            let sign = cosines[k] > 0 ? 1 : -1;
+            sums[k] = sums[k].map((v, d) => v + sign * bond[d]);
+        }
+    }
+    // twice the mean bond: the cubic lattice vectors. Tilts shorten the mean by
+    // cos(tilt) along every axis (6 % at 20 degrees): scale to the volume per B
+    let volume = Math.abs(mat.matrix_determinant(lattice));
+    let average = sums.map((v) => mat.vec_scale(v, 1 / bAtoms.length));
+    let scale = Math.cbrt(volume / (bAtoms.length * Math.abs(mat.matrix_determinant(average))));
+    average = average.map((v) => mat.vec_scale(v, scale));
+    let a = Math.cbrt(volume / bAtoms.length);
+    let H = [[a, 0, 0], [0, a, 0], [0, 0, a]];
+    let permutations = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]];
+
+    for (let permutation of permutations) {
+        for (let signs = 0; signs < 8; signs++) {
+            let basis = permutation.map((k, i) => mat.vec_scale(average[k], (signs >> i) & 1 ? -1 : 1));
+            let inverse = mat.matrix_inverse(basis);
+            let Mraw = lattice.map((row) => rowTimesMatrix(row, inverse));
+            let M = Mraw.map((row) => row.map(Math.round));
+            if (Mraw.some((row, r) => row.some((v, k) => Math.abs(v - M[r][k]) > 0.1)) ||
+                Math.round(Math.abs(mat.matrix_determinant(M))) !== bAtoms.length) {
+                continue;
+            }
+            let T = orthogonalPolarFactor(basis.map((v) => mat.vec_scale(v, 1 / Math.sqrt(mat.vec_dot(v, v)))));
+            for (let origin of aAtoms) {
+                let sites = [];
+                for (let n = 0; n < natoms; n++) {
+                    let d = [0, 1, 2].map((k) => positionsCar[n][k] - positionsCar[origin][k]);
+                    let f = rowTimesMatrix(d, inverse);
+                    let candidates = role(n) === 'A' ? [0] : role(n) === 'B' ? [1] : [2, 3, 4];
+                    // the nearest of the candidate sites; strong tilts (NdRhO3, YScO3)
+                    // move atoms up to ~0.27 a from the ideal site
+                    let found = null;
+                    let best = 0.35;
+                    for (let sub of candidates) {
+                        let r = f.map((v, k) => v - PEROVSKITE_SITES[sub].red[k]);
+                        let rounded = r.map(Math.round);
+                        let deviation = Math.max.apply(null, r.map((v, k) => Math.abs(v - rounded[k])));
+                        if (deviation < best) {
+                            best = deviation;
+                            found = { sub: sub, n: rounded };
+                        }
+                    }
+                    if (!found) {
+                        break;
+                    }
+                    sites.push(found);
+                }
+                if (sites.length === natoms) {
+                    yield { T: T, origin: origin, H: H, M: M, sites: sites, a: a };
+                }
+            }
+        }
+    }
+}
+
+const perovskiteParent = (anti) => ({
+    describe: perovskiteDescriptions,
+    sitePosition: (site) => site.n.map((v, k) => v + PEROVSKITE_SITES[site.sub].red[k]),
+    frameTolerance: 25,
+    xFraction: 3 / 5,
+    originRole: 'A',
+    getRoles: getPerovskiteRoles,
+    // the X species is an anion in perovskite, a cation in antiperovskite
+    acceptsX: (type) => ANION_LIKE.has(type) !== anti,
+});
+
 const fccParent = (name) => ({
     describe: (...args) => fccDescriptions(FCC_LAYOUTS[name], ...args),
     sitePosition: (site) => site.n.map((v, k) => v + FCC_LAYOUTS[name].sites[site.sub].red[k]),
@@ -1228,7 +1592,23 @@ const PARENT_STRUCTURES = {
     rocksalt: fccParent('rocksalt'),
     fluorite: fccParent('fluorite'),
     antifluorite: fccParent('antifluorite'),
+    perovskite: perovskiteParent(false),
+    antiperovskite: perovskiteParent(true),
 };
+
+function getParentRoles(parent, atomTypes, positionsRed, lattice) {
+    // species -> role (A, B, X) of a ternary cell read on the given parent
+    let roles = parent.getRoles
+        ? parent.getRoles(atomTypes, positionsRed, lattice)
+        : getSuperstructureRoles(atomTypes, parent.xFraction);
+    if (parent.acceptsX) {
+        let x = Object.keys(roles).find((type) => roles[type] === 'X');
+        if (!parent.acceptsX(x)) {
+            throw new Error('The X species ' + x + ' does not fit this parent');
+        }
+    }
+    return roles;
+}
 
 export function analyzeWurtziteDerivative(atomTypes, positionsRed, lattice, supercell = null) {
     return analyzeSuperstructure('wurtzite', atomTypes, positionsRed, lattice, supercell);
@@ -1243,8 +1623,8 @@ export function analyzeSuperstructure(parent, atomTypes, positionsRed, lattice, 
     vectors reduced into the supercell, ordered by role, sublattice and position
     */
     let parentStructure = PARENT_STRUCTURES[parent];
-    let roles = getSuperstructureRoles(atomTypes, parentStructure.xFraction);
-    for (let d of parentStructure.describe(atomTypes, positionsRed, lattice, (type) => roles[type] === 'X')) {
+    let roles = getParentRoles(parentStructure, atomTypes, positionsRed, lattice);
+    for (let d of parentStructure.describe(atomTypes, positionsRed, lattice, (type) => roles[type] === 'X', roles)) {
         if (roles[atomTypes[d.origin]] !== parentStructure.originRole) {
             continue;
         }
@@ -1308,12 +1688,12 @@ function matchSuperstructure(atomTypes, positionsRed, lattice, template, score =
     let best = null;
     let bestScore = -Infinity;
     let parent = PARENT_STRUCTURES[template.parent];
-    let roles = getSuperstructureRoles(atomTypes, parent.xFraction);
+    let roles = getParentRoles(parent, atomTypes, positionsRed, lattice);
     let templateInverse = mat.matrix_inverse(template.supercell);
     let reciprocal = utils.rec_lat(lattice);
     let positionsCar = utils.red_car_list(positionsRed, lattice);
     let originSite = template.sites.find((site) => site.sub === 0 && site.n.every((v) => v === 0));
-    for (let d of parent.describe(atomTypes, positionsRed, lattice, (type) => roles[type] === 'X')) {
+    for (let d of parent.describe(atomTypes, positionsRed, lattice, (type) => roles[type] === 'X', roles)) {
         if (roles[atomTypes[d.origin]] !== originSite.role) {
             continue;
         }
@@ -1418,6 +1798,33 @@ function referencePointScore(segments, template) {
             }
         }
         return count;
+    };
+}
+
+function matchScore(segments, template) {
+    /*
+    how to choose among the equivalent matches of a cell (matchSuperstructure):
+    first the distortion closest to the template's referenceStructure (positions
+    in parent units and the cell shape at unit volume), then, among matches equal
+    up to a symmetry of the crystal, the labelled points (referencePointScore)
+    */
+    let pointScore = referencePointScore(segments, template);
+    let reference = template.referenceStructure;
+    if (!reference) {
+        return pointScore;
+    }
+    return (match) => {
+        let lattice = match.structure.lattice;
+        let scale = Math.cbrt(Math.abs(mat.matrix_determinant(lattice)));
+        let deviation = 0;
+        lattice.forEach((row, i) => row.forEach((v, j) => {
+            deviation += (v / scale - reference.lattice[i][j]) ** 2;
+        }));
+        match.structure.positionsRed.forEach((position, s) => {
+            let d = rowTimesMatrix(position.map((v, k) => v - reference.positions[s][k]), template.supercell);
+            deviation += mat.vec_dot(d, d);
+        });
+        return -Math.round(deviation * 1e4) * 1000 + (pointScore ? pointScore(match) : 0);
     };
 }
 
@@ -1823,7 +2230,7 @@ export function buildMixingEndpoint(raw, entry, dielectric = null) {
         for (let candidate of families) {
             try {
                 canonical = matchSuperstructure(endpoint.atomTypes, endpoint.positionsRed, endpoint.lattice,
-                    SUPERSTRUCTURES[candidate], referencePointScore(endpoint.segments, SUPERSTRUCTURES[candidate]));
+                    SUPERSTRUCTURES[candidate], matchScore(endpoint.segments, SUPERSTRUCTURES[candidate]));
                 family = candidate;
                 break;
             } catch (error) {
@@ -1832,7 +2239,8 @@ export function buildMixingEndpoint(raw, entry, dielectric = null) {
         }
         if (!family) {
             throw lastError || new Error('Mixing supports 2-atom zinc blende and rocksalt, 3-atom fluorite, ' +
-                '4-atom wurtzite, 8-atom chalcopyrite and ternary wurtzite, rocksalt and fluorite cells');
+                '4-atom wurtzite, 5-atom perovskite, 8-atom chalcopyrite and ternary wurtzite, rocksalt, ' +
+                'fluorite and perovskite cells');
         }
         let template = SUPERSTRUCTURES[family];
         endpoint.family = family;
@@ -2106,6 +2514,19 @@ export function binaryAsSuperstructure(binary, family) {
         throw new Error('Mixing a ' + template.parent + ' with a ternary ' + template.parent +
             ' needs its force constants (PhononDB); the Materials Project files only cover the band path');
     }
+    if (SUPERSTRUCTURES[binary.family] && binary.structure && binary.structure.lattice) {
+        // a 5-atom perovskite read by matchSuperstructure: fold its canonical cell (the
+        // file may be rotated or in another setting), evaluated at canonical q; its
+        // sites are the parent sublattices in order
+        let cell = binary.structure.lattice;
+        let primitive = Object.assign({}, binary, { lattice: cell, evaluate: binary.sampleAtQ });
+        let lattice = mat.matrix_multiply(template.supercell, cell);
+        let inverse = mat.matrix_inverse(template.supercell);
+        let positionsRed = template.sites.map((site) => rowTimesMatrix(
+            binary.structure.positionsRed[site.sub].map((v, k) => v + site.n[k]), inverse));
+        return foldIntoSupercell(primitive, family, lattice, positionsRed, template.sites.map((site) => site.sub),
+            { lattice: lattice, positionsRed: positionsRed });
+    }
     if (FCC_LAYOUTS[template.parent]) {
         // rocksalt, fluorite, antifluorite: the binary sites are the sublattices in order
         let a = binary.structure.a;
@@ -2304,7 +2725,9 @@ export function getParentFamily(family) {
     if (family === 'chalcopyrite') {
         return 'zincblende';
     }
-    return SUPERSTRUCTURES[family] ? SUPERSTRUCTURES[family].parent : null;
+    // (the 5-atom perovskite is a template of its own parent, not a superstructure)
+    let template = SUPERSTRUCTURES[family];
+    return template && template.parent !== family ? template.parent : null;
 }
 
 export function sampleMixingPair(endpoint1, endpoint2) {
@@ -2332,6 +2755,12 @@ export function sampleMixingPair(endpoint1, endpoint2) {
     let shortRange2 = [];
     let qDirections = [];
     let path = buildCommonPath(endpoint1, endpoint2);
+    if (!path.length) {
+        // two files known only on their band paths, of different types (a cubic and a
+        // polar perovskite): nothing to sample both on
+        throw new Error('The band paths of ' + endpoint1.name + ' and ' + endpoint2.name +
+            ' have no segment in common; a PhononDB file for one of them can be evaluated on the other\'s path');
+    }
     let qpoints = [];
     let matrices1 = [];
     let matrices2 = [];

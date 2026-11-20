@@ -1146,3 +1146,139 @@ describe('ternary fluorite dynamical-matrix mixing', () => {
         assert.throws(() => sampleMixingPair(limgn, caznf4), /Cannot mix/);
     });
 });
+
+describe('perovskite dynamical-matrix mixing', () => {
+    let gammaIndices = (sampled) => sampled.qpoints
+        .map((q, k) => (q.every((v) => Math.abs(v - Math.round(v)) < 1e-9) ? k : -1))
+        .filter((k) => k >= 0);
+    let opticalDiff = (a, b) => {
+        let worst = 0;
+        a.forEach((row, k) => row.forEach((v, n) => {
+            if (Math.abs(v) > 1) {
+                worst = Math.max(worst, Math.abs(v - b[k][n]));
+            }
+        }));
+        return worst;
+    };
+    // the three modes closest to zero at Gamma: cubic perovskites have soft
+    // (imaginary) modes there besides the acoustic ones
+    let acoustic = (phonon, k) => phonon.eigenvalues[k].map(Math.abs).sort((p, q) => p - q)[2];
+    let eigen = async (m) => (await solveComplexHermitianWithEigenWasm(m.real, m.imag)).values.sort((p, q) => p - q);
+
+    it('tells A and B apart by the octahedra, in cubic and polar cells', () => {
+        let srtio3 = endpoint('phonondb-SrTiO3-mp-5229.json.gz', 'SrTiO3');
+        assert.equal(srtio3.family, 'perovskite');
+        assert.deepEqual(srtio3.siteTypes, ['Sr', 'Ti', 'O', 'O', 'O']);
+        // tetragonal PbTiO3: Ti off-centre in its octahedron, still B
+        let pbtio3 = endpoint('phonondb-PbTiO3-mp-20459.json.gz', 'PbTiO3');
+        assert.equal(pbtio3.family, 'perovskite');
+        assert.deepEqual(pbtio3.siteTypes, ['Pb', 'Ti', 'O', 'O', 'O']);
+        // antiperovskite: O in the Li6 octahedra, Cl on the A site
+        let li3clo = endpoint('phonondb-Li3ClO-mp-985585.json.gz', 'Li3ClO');
+        assert.equal(li3clo.family, 'antiperovskite');
+        assert.deepEqual(li3clo.siteTypes, ['Cl', 'O', 'Li', 'Li', 'Li']);
+        let catio3 = endpoint('phonondb-CaTiO3-mp-4019.json.gz', 'CaTiO3');
+        assert.equal(catio3.family, 'perovskite-Pnma');
+        assert.equal(catio3.siteTypes.length, 20);
+    });
+
+    it('aligns the octahedral tilts whatever the setting of the file', () => {
+        // the same CaTiO3 with the origin on another Ca and the atoms reordered: every
+        // orientation of the tilted cell matches the template, the tilts must come out
+        // the same
+        let raw = loadFixture('phonondb-CaTiO3-mp-4019.json.gz');
+        let reference = buildMixingEndpoint(raw, { name: 'CaTiO3' }).structure;
+        let shifted = loadFixture('phonondb-CaTiO3-mp-4019.json.gz');
+        let ca = shifted.atom_types.map((type, i) => i).filter((i) => shifted.atom_types[i] === 'Ca');
+        let shift = shifted.atom_pos_red[ca[1]].map((v, k) => v - shifted.atom_pos_red[ca[0]][k]);
+        let order = shifted.atom_types.map((_, i) => i).reverse();
+        shifted.atom_types = order.map((i) => raw.atom_types[i]);
+        shifted.atom_pos_red = order.map((i) => raw.atom_pos_red[i].map((v, k) => v - shift[k]));
+        let structure = buildMixingEndpoint(shifted, { name: 'CaTiO3' }).structure;
+        let worst = 0;
+        structure.positionsRed.forEach((p, s) => p.forEach((v, k) => {
+            worst = Math.max(worst, Math.abs(v - reference.positionsRed[s][k]));
+        }));
+        assert.ok(worst < 1e-6, 'positions differ by ' + worst);
+    });
+
+    it('folds a 5-atom perovskite into the Pnma cell', async () => {
+        // D of the 20-atom supercell at Q has the eigenvalues of SrTiO3 at the 4 points Q + g
+        let srtio3 = endpoint('phonondb-SrTiO3-mp-5229.json.gz', 'SrTiO3');
+        let folded = binaryAsSuperstructure(srtio3, 'perovskite-Pnma');
+        assert.equal(folded.siteTypes.filter((type) => type === 'O').length, 12);
+        let cell = srtio3.structure.lattice;
+        let superReciprocal = utils.rec_lat(folded.lattice);
+        let toCart = (q) => [0, 1, 2].map((d) => q[0] * superReciprocal[0][d] + q[1] * superReciprocal[1][d] + q[2] * superReciprocal[2][d]);
+        let toPrimitive = (k) => cell.map((p) => p[0] * k[0] + p[1] * k[1] + p[2] * k[2]);
+        for (let Q of [[0.13, -0.07, 0.21], [0.5, 0, 0]]) {
+            let qCart = toCart(Q);
+            let candidates = [];
+            for (let a = -2; a <= 2; a++) {
+                for (let b = -2; b <= 2; b++) {
+                    for (let c = -2; c <= 2; c++) {
+                        candidates.push(toCart([a, b, c]));
+                    }
+                }
+            }
+            candidates.sort((g, h) => g.reduce((t, v) => t + v * v, 0) - h.reduce((t, v) => t + v * v, 0));
+            let seen = new Set();
+            let expected = [];
+            for (let g of candidates) {
+                let key = toPrimitive(g).map((v) => Math.round((v - Math.floor(v + 1e-9)) * 1e6) % 1000000).join(',');
+                if (seen.has(key)) {
+                    continue;
+                }
+                seen.add(key);
+                expected.push(...await eigen(srtio3.sampleAtQ(toPrimitive([0, 1, 2].map((d) => qCart[d] + g[d])), null)));
+            }
+            assert.equal(seen.size, 4);
+            expected.sort((p, q) => p - q);
+            let actual = await eigen(folded.sampleAtQ(Q, null));
+            actual.forEach((v, i) => assert.ok(Math.abs(v - expected[i]) < 1e-8 * (1 + Math.abs(expected[i]))));
+        }
+    });
+
+    it('keeps end-members exact, acoustic modes at zero and mirror symmetry', async () => {
+        let srtio3 = endpoint('phonondb-SrTiO3-mp-5229.json.gz', 'SrTiO3');
+        let kmgf3 = endpoint('phonondb-KMgF3-mp-3448.json.gz', 'KMgF3');
+        let catio3 = endpoint('phonondb-CaTiO3-mp-4019.json.gz', 'CaTiO3');
+        let namgh3 = endpoint('phonondb-NaMgH3-mp-23730.json.gz', 'NaMgH3');
+        for (let [a, b] of [[srtio3, kmgf3], [srtio3, catio3], [catio3, namgh3]]) {
+            let sampled = sampleMixingPair(a, b);
+            let reversed = sampleMixingPair(b, a);
+            assert.equal(sampled.recomputeNac, true);
+            assert.deepEqual(sampled.labels, reversed.labels);
+            let end0 = await computeMixedPhonon(sampled, 0);
+            assert.ok(opticalDiff(end0.eigenvalues, await computeReferenceEigenvalues(sampled)) < 1e-4);
+            let end1 = await computeMixedPhonon(sampled, 1);
+            assert.ok(opticalDiff(end1.eigenvalues, await computeReferenceEigenvalues(reversed)) < 1e-4);
+            let mixed = await computeMixedPhonon(sampled, 0.5, 0.3);
+            for (let k of gammaIndices(sampled)) {
+                assert.ok(acoustic(mixed, k) < 0.05, `${a.name} + ${b.name}: ${acoustic(mixed, k)}`);
+            }
+            let mirrored = await computeMixedPhonon(reversed, 0.5, 0.7);
+            assert.ok(opticalDiff(mixed.eigenvalues, mirrored.eigenvalues) < 1e-6);
+        }
+    });
+
+    it('refuses a perovskite with an antiperovskite', () => {
+        let srtio3 = endpoint('phonondb-SrTiO3-mp-5229.json.gz', 'SrTiO3');
+        let li3clo = endpoint('phonondb-Li3ClO-mp-985585.json.gz', 'Li3ClO');
+        let catio3 = endpoint('phonondb-CaTiO3-mp-4019.json.gz', 'CaTiO3');
+        assert.throws(() => sampleMixingPair(srtio3, li3clo), /Cannot mix/);
+        assert.throws(() => sampleMixingPair(li3clo, catio3), /Cannot mix/);
+    });
+});
+
+describe('Materials Project path alignment', () => {
+    it('lines up two MgAgAs type antifluorite files', () => {
+        // the two files put L at different, equivalent points; the reference points of
+        // the template choose matches in which they coincide
+        let limgn = buildMixingEndpoint(loadFixture('mpdb-LiMgN-mp-37906-trimmed.json.gz'), { name: 'LiMgN' });
+        let liznas = buildMixingEndpoint(loadFixture('mpdb-LiZnAs-mp-9124-trimmed.json.gz'), { name: 'LiZnAs' });
+        let points = (e) => e.segments.reduce((total, segment) => total + segment.npoints, 0);
+        let sampled = sampleMixingPair(limgn, liznas);
+        assert.ok(sampled.qpoints.length >= 0.9 * Math.min(points(limgn), points(liznas)));
+    });
+});

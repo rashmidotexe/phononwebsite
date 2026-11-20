@@ -81,7 +81,9 @@ export class MixingWebpage extends PhononWebpage {
     lonsdaleite, 8-atom chalcopyrite, ternary wurtzite (beta-NaFeO2, enargite and
     Cu2SiS3 type) and cation-ordered ternary rocksalt (alpha-NaFeO2,
     gamma-LiFeO2, Li2ZrO3 type, ...), fluorite (scheelite, CaUO4 type, ...) and
-    antifluorite (MgAgAs type LiMgN, Li5SiP3) materials in
+    antifluorite (MgAgAs type LiMgN, Li5SiP3) materials, and ABX3 perovskites and
+    antiperovskites (the 5-atom cell, cubic or polar, and the supercells of the
+    octahedral tilts: Pnma, R-3c, ...) in
     data/mixing/models.json, drawn from the PhononDB (A. Togo) and Materials
     Project (G. Petretto et al.) databases. Materials mix within their family; a
     binary with force constants (PhononDB) can also be mixed with an ordered
@@ -332,7 +334,8 @@ export class MixingWebpage extends PhononWebpage {
 
     getFamilyTag(material) {
         /*
-        the structure family; ternary rocksalts and (anti)fluorites also name their space group,
+        the structure family; ternary rocksalts, (anti)fluorites and tilted or polar
+        perovskites also name their space group,
         e.g. LiDyS2 is listed in the alpha-NaFeO2 (R-3m) and gamma-LiFeO2
         (I4_1/amd) orderings
         */
@@ -341,11 +344,13 @@ export class MixingWebpage extends PhononWebpage {
         if (family.indexOf("wurtzite") === 0) {
             tag = "wurtzite";
         } else {
-            for (let parent of ["rocksalt", "fluorite", "antifluorite"]) {
+            let spacegroup = (material.spacegroup || "").replace(/_(\d)/g, "<sub>$1</sub>");
+            for (let parent of ["rocksalt", "fluorite", "antifluorite", "perovskite", "antiperovskite"]) {
                 if (family === parent) {
-                    tag = parent;
+                    // the cubic cell is the default; a polar 5-atom perovskite names its group
+                    let cubic = !spacegroup || spacegroup === "Fm-3m" || spacegroup === "Pm-3m";
+                    tag = parent + (cubic ? "" : " " + spacegroup);
                 } else if (family.indexOf(parent + "-") === 0) {
-                    let spacegroup = (material.spacegroup || "").replace(/_(\d)/g, "<sub>$1</sub>");
                     tag = parent + (spacegroup ? " " + spacegroup : "");
                 }
             }
@@ -426,6 +431,8 @@ export class MixingWebpage extends PhononWebpage {
             rocksalt: ["rocksalt", "Ternary rocksalts"],
             fluorite: ["fluorite", "Ternary fluorites"],
             antifluorite: ["antifluorite", "Ternary antifluorites"],
+            perovskite: ["5-atom perovskite", "Tilted perovskites"],
+            antiperovskite: ["5-atom antiperovskite", "Tilted antiperovskites"],
         };
         let family1 = material1 ? material1.family : "zincblende";
         let parent = FAMILY_NAMES[family1] ? family1 : getParentFamily(family1);
@@ -593,7 +600,8 @@ export class MixingWebpage extends PhononWebpage {
         let percent = Math.round(this.character * 100);
         let mass = this.massLinked ? "" : ", mass " + Math.round(this.massCharacter * 100) + " %";
         let familyName = this.pairCache ? this.pairCache.sampled.endpoint1.family : "";
-        let family = ["wurtzite", "rocksalt", "fluorite", "antifluorite"].find((name) => familyName.indexOf(name) === 0);
+        let family = ["wurtzite", "rocksalt", "fluorite", "antifluorite", "perovskite", "antiperovskite"]
+            .find((name) => familyName.indexOf(name) === 0);
         family = family ? family + ", " : "";
         return utils.format_formula_html(this.material1.name) +
             " + " + utils.format_formula_html(this.material2.name) +
