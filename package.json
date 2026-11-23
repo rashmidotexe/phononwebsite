@@ -28,7 +28,7 @@
     "build": "sh ./scripts/build-debug.sh",
     "build:debug": "npm run build",
     "build:site": "sh ./scripts/build-site.sh",
-    "test": "npm run build:site && node --test --test-force-exit test/*.test.mjs",
+    "test": "npm run build:site && node --test $(ls test/*.test.mjs | grep -v vibcrystal-capture) && node --test --test-force-exit test/vibcrystal-capture.test.mjs",
     "test:browser": "PLAYWRIGHT_SMOKE=1 node --test --test-force-exit test/browser-smoke.test.mjs",
     "test:py": "python3 -m pytest python/phononweb/tests -q",
     "prepare:phonondb": "python3 python/phononweb/scripts/prepare_phonondb.py",

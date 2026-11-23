@@ -25,14 +25,29 @@
  * D_2 but not of their average), lifting the acoustic branches off zero at
  * Gamma. The sum rule is linear in Phi, so mixing Phi keeps it for every x.
  *
- * Long-range (LO-TO) part: only the short-range force constants are mixed, and
- * the dipole-dipole term is recomputed for the virtual crystal from the
- * linearly mixed Born charges and dielectric tensor on the mixed lattice. For
- * PhononDB the stored (Gonze) force constants already are the short-range part.
- * For Materials Project the Born charges and dielectric tensor come from the MP
- * DFPT collection (mpdielectric.js), and the material's own dipole-dipole term
- * is subtracted from D rebuilt at the q-points of the file. If they are not
- * available the long-range term is mixed along with the rest of Phi.
+ * Gauge: what is mixed are the force constants Phi_ij(R), i.e. D in the cell
+ * gauge exp(2 pi i q.R) with the same lattice vector R for corresponding atoms.
+ * D is kept in the atom gauge exp(2 pi i q.(R + tau_j - tau_i)), which depends
+ * on the internal positions; when the two end-members' positions differ (u,
+ * ordered anions, octahedral tilts) both are brought to the gauge of the mixed
+ * positions before mixing (changeGauge). Mixing the atom-gauge matrices directly
+ * would add matrices in two different gauges: exact at Gamma and at the ends,
+ * but not periodic in q (omega(q + G) != omega(q)).
+ *
+ * Long-range (LO-TO) part: the full Ewald dipole-dipole sum of each end-member
+ * (reciprocal part as in phonopy, plus the real-space part phonopy leaves in its
+ * short-range force constants; gonze.js getGonzeDipoleDipole) is subtracted, the
+ * remainders are mixed, and the full sum of the virtual crystal is rebuilt from
+ * the linearly mixed Born charges and dielectric tensor on the mixed lattice and
+ * positions. The full sum does not depend on the Ewald parameter, so the split
+ * is the same in any cell (a binary folded into a supercell has the folded
+ * short-range part of its own primitive cell). phonopy's reciprocal part alone
+ * depends on its Ewald parameter, which is set per cell from the volume and
+ * dielectric tensor: subtracting only that part made the mixture depend on the
+ * cell and on the two materials' parameters. For Materials Project the Born
+ * charges and dielectric tensor come from the MP DFPT collection
+ * (mpdielectric.js). If they are not available the long-range term is mixed
+ * along with the rest of Phi.
  *
  * Before mixing, both end-members are brought to a common representation:
  *
@@ -78,7 +93,7 @@
  */
 
 import { buildDynamicalMatrixBlocks } from './dynamicalmatrix.js';
-import { getGonzeReciprocalCorrection } from './gonze.js';
+import { getGonzeReciprocalCorrection, getGonzeRealSpaceRemainder, getGonzeDipoleDipole } from './gonze.js';
 import { solveComplexHermitianWithEigenWasm } from './eigenwasm.js';
 import * as atomic_data from './atomic_data.js';
 import * as utils from './utils.js';
@@ -2980,6 +2995,11 @@ export function sampleMixingPair(endpoint1, endpoint2) {
         labels.push([segment.labelA, segment.labelB]);
     }
 
+    if (recomputeNac) {
+        shortRange1 = subtractRealSpaceDipole(endpoint1, shortRange1, qpoints);
+        shortRange2 = subtractRealSpaceDipole(endpoint2, shortRange2, qpoints);
+    }
+
     return {
         endpoint1: endpoint1,
         endpoint2: endpoint2,
@@ -3166,18 +3186,24 @@ function buildMixedNacPayload(endpoint1, endpoint2, x, lattice, masses, position
     );
 }
 
-export function buildNacPayload(born, dielectric, unitConversion, lattice, masses, positionsCar, tolerance) {
+export function buildNacPayload(born, dielectric, unitConversion, lattice, masses, positionsCar, tolerance, lambdaOverride = null) {
     /*
     payload for getGonzeReciprocalCorrection: the G list, Ewald parameter, dd_q0
-    and unit factor built for the given lattice with phonopy's own rules
+    and unit factor built for the given lattice with phonopy's own rules (or, with
+    lambdaOverride, for that Ewald parameter, the G list cut where the Gaussian
+    reaches 1e-10 as phonopy does)
     */
     let volume = Math.abs(mat.matrix_determinant(lattice));
     let reciprocal = utils.rec_lat(lattice);
+    let trace = dielectric[0][0] + dielectric[1][1] + dielectric[2][2];
     // phonopy defaults: 300 G points, exp(-G eps G / 4 lambda^2) = 1e-10 at the cutoff
     let gCutoff = Math.cbrt(3 * 300 / (4 * Math.PI) / volume);
-    let gList = getGonzeGList(lattice, reciprocal, gCutoff);
-    let trace = dielectric[0][0] + dielectric[1][1] + dielectric[2][2];
     let lambda = Math.sqrt(-(gCutoff * gCutoff) * trace / 3 / 4 / Math.log(1e-10));
+    if (lambdaOverride) {
+        lambda = lambdaOverride;
+        gCutoff = lambda * Math.sqrt(-12 * Math.log(1e-10) / trace);
+    }
+    let gList = getGonzeGList(lattice, reciprocal, gCutoff);
 
     return {
         masses: masses,
@@ -3191,6 +3217,7 @@ export function buildNacPayload(born, dielectric, unitConversion, lattice, masse
             lambda: lambda,
             dd_q0: getGonzeDdQ0(gList, born, dielectric, positionsCar, lambda),
             nac_factor: unitConversion * 4 * Math.PI / volume,
+            unit_conversion: unitConversion,
             q_direction_tolerance: tolerance,
         },
     };
@@ -3254,6 +3281,88 @@ function imposeAcousticSumRule(matrices, qpoints, masses, positionsRed) {
     }
 }
 
+function endpointLattice(endpoint) {
+    // canonical lattice of an end-member, as computeMixedPhonon mixes it
+    if (endpoint.structure && endpoint.structure.lattice) {
+        return endpoint.structure.lattice;
+    }
+    if (endpoint.family === 'wurtzite') {
+        return wurtziteLattice(endpoint.structure.a, endpoint.structure.c);
+    }
+    if (endpoint.family === 'chalcopyrite') {
+        return chalcopyriteLattice(endpoint.structure.a, endpoint.structure.c);
+    }
+    return endpoint.lattice;
+}
+
+function subtractRealSpaceDipole(endpoint, matrices, qpoints) {
+    /*
+    The short-range parts so far are D minus phonopy's reciprocal-space dipole sum,
+    whose Ewald parameter depends on the cell: the rest of the dipole interaction
+    (the real-space part of the Ewald sum) is still in them. Take it out too, in the
+    end-member's canonical cell, so that what is mixed linearly is D minus the full,
+    lambda-independent dipole-dipole term (getGonzeDipoleDipole), which the mixture
+    rebuilds from the mixed Born charges and dielectric tensor.
+    */
+    let lattice = endpointLattice(endpoint);
+    let positions = endpointPositions(endpoint);
+    let payload = buildNacPayload(endpoint.nac.siteBorn, endpoint.nac.siteDielectric, endpoint.nac.unitConversion,
+        lattice, endpoint.siteMasses, utils.red_car_list(positions, lattice), endpoint.nac.tolerance);
+    let factorSq = endpoint.frequencyFactor * endpoint.frequencyFactor;
+    return matrices.map((matrix, k) => {
+        let out = { real: matrix.real.map((row) => row.slice()), imag: matrix.imag.map((row) => row.slice()) };
+        addBlockTensor(out, getGonzeRealSpaceRemainder(payload, qpoints[k]), -factorSq);
+        return out;
+    });
+}
+
+function endpointPositions(endpoint) {
+    // canonical reduced positions of an end-member, as computeMixedPhonon mixes them
+    if (endpoint.structure && endpoint.structure.lattice) {
+        return endpoint.structure.positionsRed;
+    }
+    if (endpoint.family === 'wurtzite') {
+        return wurtzitePositions(endpoint.structure.u);
+    }
+    if (endpoint.family === 'chalcopyrite') {
+        return chalcopyritePositions(endpoint.structure.a, endpoint.structure.c, endpoint.structure.u);
+    }
+    return FCC_LAYOUTS[endpoint.family]
+        ? FCC_LAYOUTS[endpoint.family].sites.map((site) => site.red.slice())
+        : [[0, 0, 0], [0.25, 0.25, 0.25]];
+}
+
+function changeGauge(matrix, q, from, to) {
+    /*
+    D in the atom gauge of the positions `from` -> atom gauge of `to` (reduced, same
+    cell and site order): D_ij * exp(2 pi i q.((to_j - to_i) - (from_j - from_i))).
+    Through the cell gauge exp(2 pi i q.R) this keeps the force constants Phi_ij(R)
+    and only moves the atoms.
+    */
+    let n = from.length;
+    let shift = from.map((p, i) => 2 * Math.PI * (q[0] * (to[i][0] - p[0]) + q[1] * (to[i][1] - p[1]) + q[2] * (to[i][2] - p[2])));
+    if (shift.every((v) => Math.abs(v) < 1e-12)) {
+        return matrix;
+    }
+    let out = { real: matrix.real.map((row) => row.slice()), imag: matrix.imag.map((row) => row.slice()) };
+    for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n; j++) {
+            let phase = shift[j] - shift[i];
+            let cos = Math.cos(phase);
+            let sin = Math.sin(phase);
+            for (let a = 0; a < 3; a++) {
+                for (let b = 0; b < 3; b++) {
+                    let re = matrix.real[3 * i + a][3 * j + b];
+                    let im = matrix.imag[3 * i + a][3 * j + b];
+                    out.real[3 * i + a][3 * j + b] = re * cos - im * sin;
+                    out.imag[3 * i + a][3 * j + b] = re * sin + im * cos;
+                }
+            }
+        }
+    }
+    return out;
+}
+
 export async function computeMixedPhonon(sampled, x, massFraction = x) {
     /*
     diagonalize the virtual-crystal D_alloy (mixed force constants and masses)
@@ -3306,21 +3415,31 @@ export async function computeMixedPhonon(sampled, x, massFraction = x) {
         : null;
     let frequencyFactorSq = sampled.recomputeNac ? endpoint1.frequencyFactor * endpoint1.frequencyFactor : 1;
 
+    // the virtual crystal mixes the force constants Phi(R), not the atom-gauge D(q):
+    // each end-member is brought to the gauge of the mixed positions first (the two
+    // differ by phases 2 pi q.(tau_1 - tau_2) when the internal positions differ:
+    // u, tilts, ordered anions). Unchanged at Gamma.
+    let positions1 = endpointPositions(endpoint1);
+    let positions2 = endpointPositions(endpoint2);
+    let gauge1 = (matrix, q) => changeGauge(matrix, q, positions1, positionsRed);
+    let gauge2 = (matrix, q) => changeGauge(matrix, q, positions2, positionsRed);
+
     let matrices = sampled.qpoints.map((q, k) => {
         if (nacPayload) {
             // mixed short-range force constants + dipole-dipole term of the mixed crystal
             let matrix = mixForceConstantMatrices(
-                sampled.shortRange1[k], endpoint1.siteMasses,
-                sampled.shortRange2[k], endpoint2.siteMasses,
+                gauge1(sampled.shortRange1[k], q), endpoint1.siteMasses,
+                gauge2(sampled.shortRange2[k], q), endpoint2.siteMasses,
                 masses, x
             );
-            let dd = getGonzeReciprocalCorrection(nacPayload, q, sampled.qDirections[k]);
+            // the full Ewald sum, matching what was subtracted from the end-members
+            let dd = getGonzeDipoleDipole(nacPayload, q, sampled.qDirections[k]);
             addBlockTensor(matrix, dd, frequencyFactorSq);
             return matrix;
         }
         return mixForceConstantMatrices(
-            sampled.matrices1[k], endpoint1.siteMasses,
-            sampled.matrices2[k], endpoint2.siteMasses,
+            gauge1(sampled.matrices1[k], q), endpoint1.siteMasses,
+            gauge2(sampled.matrices2[k], q), endpoint2.siteMasses,
             masses, x
         );
     });

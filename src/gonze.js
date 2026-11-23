@@ -254,3 +254,223 @@ export function getGonzeReciprocalCorrection(payload, qpoint, qDirection = null)
 
     return dd;
 }
+
+// ---------------------------------------------------------------------------
+// real-space part of the Ewald dipole-dipole sum (Gonze & Lee, PRB 55, 10355
+// (1997), eqs. 71-75). phonopy keeps only the damped reciprocal-space sum, with an
+// Ewald parameter lambda chosen per cell: that sum alone depends on lambda, the
+// rest of the dipole interaction staying in the short-range force constants.
+// Adding the real-space remainder gives the full dipole-dipole term, independent
+// of lambda, so a mixture can subtract and rebuild all of it.
+// ---------------------------------------------------------------------------
+
+function erfc(x) {
+    /*
+    complementary error function to ~1e-15: Taylor series of erf below 3, Lentz
+    continued fraction above
+    */
+    if (x < 0) {
+        return 2 - erfc(-x);
+    }
+    if (x < 3) {
+        let term = x;
+        let sum = x;
+        let x2 = x * x;
+        for (let n = 1; n < 200; n++) {
+            term *= -x2 / n;
+            let add = term / (2 * n + 1);
+            sum += add;
+            if (Math.abs(add) < 1e-17 * Math.abs(sum)) {
+                break;
+            }
+        }
+        return 1 - (2 / Math.sqrt(Math.PI)) * sum;
+    }
+    // erfc(x) = exp(-x^2)/sqrt(pi) * 1/(x + (1/2)/(x + 1/(x + (3/2)/(x + ...))))
+    let tiny = 1e-300;
+    let f = x;
+    let c = x;
+    let d = 0;
+    for (let n = 1; n < 300; n++) {
+        let a = n / 2;
+        d = x + a * d;
+        d = Math.abs(d) < tiny ? tiny : d;
+        c = x + a / c;
+        c = Math.abs(c) < tiny ? tiny : c;
+        d = 1 / d;
+        let delta = c * d;
+        f *= delta;
+        if (Math.abs(delta - 1) < 1e-16) {
+            break;
+        }
+    }
+    return Math.exp(-x * x) / Math.sqrt(Math.PI) / f;
+}
+
+function getRealSpaceTerms(payload) {
+    /*
+    the real-space Ewald terms of the payload, cached on it: for every atom pair
+    and lattice vector R with d = R + r_j - r_i inside the cutoff, the tensor
+    Z_i^T H(d) Z_j / sqrt(m_i m_j) (units of the reciprocal part), and the q = 0
+    row sums that keep the acoustic sum rule
+    */
+    if (payload.nac._realSpace) {
+        return payload.nac._realSpace;
+    }
+    let nac = payload.nac;
+    let lattice = payload.primitive_lattice;
+    let positions = nac.positions_car;
+    let born = nac.born;
+    let natoms = positions.length;
+    let dielectric = nac.dielectric;
+    let inverse = invert3x3(dielectric);
+    let sqrtDet = Math.sqrt(determinant3x3(dielectric));
+    // lambda multiplies G without 2 pi: the Gaussian width in real space is 2 pi lambda
+    let ewald = 2 * Math.PI * nac.lambda;
+    // erfc(4.5) = 2e-10, exp(-4.5^2) = 2e-9: terms beyond are below 1e-9 of the sum
+    let yMax = 4.5;
+    // cutoff in the metric d.eps^-1.d; in cartesian length at most yMax/ewald*sqrt(eps_max)
+    let epsMax = Math.max(dielectric[0][0], dielectric[1][1], dielectric[2][2]);
+    let reach = (yMax / ewald) * Math.sqrt(epsMax);
+    let volume = Math.abs(determinant3x3(lattice));
+    let cross = (p, q) => [p[1] * q[2] - p[2] * q[1], p[2] * q[0] - p[0] * q[2], p[0] * q[1] - p[1] * q[0]];
+    let span = [0, 1, 2].map((k) => {
+        let normal = cross(lattice[(k + 1) % 3], lattice[(k + 2) % 3]);
+        let height = volume / Math.sqrt(dot3(normal, normal));
+        let maxOffset = 0;
+        for (let i = 0; i < natoms; i++) {
+            for (let j = 0; j < natoms; j++) {
+                let d = [0, 1, 2].map((c) => positions[j][c] - positions[i][c]);
+                maxOffset = Math.max(maxOffset, Math.sqrt(dot3(d, d)));
+            }
+        }
+        return Math.ceil((reach + maxOffset) / height);
+    });
+    let vectors = [];
+    let terms = [];
+    let scale = nac.unit_conversion;
+    let rowSums = [];
+    for (let i = 0; i < natoms; i++) {
+        rowSums.push(new Float64Array(9));
+    }
+    for (let a = -span[0]; a <= span[0]; a++) {
+        for (let b = -span[1]; b <= span[1]; b++) {
+            for (let c = -span[2]; c <= span[2]; c++) {
+                let R = [0, 1, 2].map((k) => a * lattice[0][k] + b * lattice[1][k] + c * lattice[2][k]);
+                let index = -1;
+                for (let i = 0; i < natoms; i++) {
+                    for (let j = 0; j < natoms; j++) {
+                        let d = [0, 1, 2].map((k) => R[k] + positions[j][k] - positions[i][k]);
+                        let reduced = multiplyMatrixByVector(inverse, d);
+                        let length = Math.sqrt(dot3(d, reduced));
+                        let y = ewald * length;
+                        if (length < 1e-8 || y > yMax) {
+                            continue;
+                        }
+                        let gauss = (2 / Math.sqrt(Math.PI)) * Math.exp(-y * y);
+                        let tail = erfc(y);
+                        let along = (3 * tail / (y * y * y) + gauss * (3 / (y * y) + 2)) / (length * length);
+                        let isotropic = tail / (y * y * y) + gauss / (y * y);
+                        let factor = (ewald * ewald * ewald) / sqrtDet;
+                        // H in the cartesian axes, then Z_i^T H Z_j
+                        let H = [0, 1, 2].map((p) => [0, 1, 2].map((r) =>
+                            factor * (along * reduced[p] * reduced[r] - isotropic * inverse[p][r])
+                        ));
+                        let block = new Float64Array(9);
+                        let weight = scale / Math.sqrt(payload.masses[i] * payload.masses[j]);
+                        for (let alpha = 0; alpha < 3; alpha++) {
+                            for (let beta = 0; beta < 3; beta++) {
+                                let value = 0;
+                                for (let p = 0; p < 3; p++) {
+                                    for (let r = 0; r < 3; r++) {
+                                        value += born[i][p][alpha] * H[p][r] * born[j][r][beta];
+                                    }
+                                }
+                                block[alpha * 3 + beta] = value * weight;
+                            }
+                        }
+                        if (index < 0) {
+                            index = vectors.length;
+                            vectors.push(R);
+                        }
+                        terms.push({ i: i, j: j, r: index, block: block });
+                        // acoustic sum rule: q = 0 sums with the unweighted charges
+                        let sumWeight = scale / Math.sqrt(payload.masses[i] * payload.masses[i]);
+                        for (let k = 0; k < 9; k++) {
+                            rowSums[i][k] += block[k] / weight * sumWeight;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    payload.nac._realSpace = { vectors: vectors, terms: terms, rowSums: rowSums };
+    return payload.nac._realSpace;
+}
+
+export function getGonzeRealSpaceRemainder(payload, qpoint) {
+    /*
+    the rest of the Ewald dipole-dipole sum beside the reciprocal part of
+    getGonzeReciprocalCorrection, for the same payload and lambda:
+    -sum_R Z_i^T H(R + r_j - r_i) Z_j exp(2 pi i q.(R + r_j - r_i)), with the q = 0
+    row sums taken off the diagonal blocks (acoustic sum rule; the self term of the
+    Ewald sum cancels there). Same units and block layout as the reciprocal part.
+    */
+    let qCart = getQCart(qpoint, payload.primitive_lattice);
+    let { vectors, terms, rowSums } = getRealSpaceTerms(payload);
+    let positions = payload.nac.positions_car;
+    let natoms = positions.length;
+    let cosR = new Float64Array(vectors.length);
+    let sinR = new Float64Array(vectors.length);
+    for (let n = 0; n < vectors.length; n++) {
+        let phase = 2 * Math.PI * dot3(qCart, vectors[n]);
+        cosR[n] = Math.cos(phase);
+        sinR[n] = Math.sin(phase);
+    }
+    let cosAtom = positions.map((r) => Math.cos(2 * Math.PI * dot3(qCart, r)));
+    let sinAtom = positions.map((r) => Math.sin(2 * Math.PI * dot3(qCart, r)));
+    let out = createComplexBlockTensor(natoms);
+    for (let t = 0; t < terms.length; t++) {
+        let { i, j, r, block } = terms[t];
+        // exp(2 pi i q.(R + r_j - r_i)) = e(R) e(r_j) / e(r_i)
+        let cosA = cosAtom[j] * cosAtom[i] + sinAtom[j] * sinAtom[i];
+        let sinA = sinAtom[j] * cosAtom[i] - cosAtom[j] * sinAtom[i];
+        let cos = cosR[r] * cosA - sinR[r] * sinA;
+        let sin = sinR[r] * cosA + cosR[r] * sinA;
+        let target = out[i][j];
+        for (let alpha = 0; alpha < 3; alpha++) {
+            for (let beta = 0; beta < 3; beta++) {
+                let value = block[alpha * 3 + beta];
+                target[alpha][beta][0] -= value * cos;
+                target[alpha][beta][1] -= value * sin;
+            }
+        }
+    }
+    for (let i = 0; i < natoms; i++) {
+        let sums = rowSums[i];
+        for (let alpha = 0; alpha < 3; alpha++) {
+            for (let beta = 0; beta < 3; beta++) {
+                // hermitian part, as for phonopy's dd_q0
+                out[i][i][alpha][beta][0] += (sums[alpha * 3 + beta] + sums[beta * 3 + alpha]) / 2;
+            }
+        }
+    }
+    return out;
+}
+
+export function getGonzeDipoleDipole(payload, qpoint, qDirection = null) {
+    // the full (lambda-independent) Ewald dipole-dipole term: reciprocal + real space
+    let reciprocal = getGonzeReciprocalCorrection(payload, qpoint, qDirection);
+    let remainder = getGonzeRealSpaceRemainder(payload, qpoint);
+    for (let i = 0; i < reciprocal.length; i++) {
+        for (let j = 0; j < reciprocal.length; j++) {
+            for (let alpha = 0; alpha < 3; alpha++) {
+                for (let beta = 0; beta < 3; beta++) {
+                    reciprocal[i][j][alpha][beta][0] += remainder[i][j][alpha][beta][0];
+                    reciprocal[i][j][alpha][beta][1] += remainder[i][j][alpha][beta][1];
+                }
+            }
+        }
+    }
+    return reciprocal;
+}
