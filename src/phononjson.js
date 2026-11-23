@@ -729,6 +729,11 @@ export class PhononJson {
 
         if (!this.vec && this.canComputeEigenvectorsOnDemand()) {
             this.vec = new Array(this.kpoints.length).fill(null);
+            // eigenvectors computed here from the force constants follow phonopy's
+            // convention: the phases use the shortest vectors R + tau_j - tau_i, so the
+            // displacement of atom i in cell R carries exp(2 pi i q.(R + tau_i)), the
+            // atom's own position included (as for phonopy band.yaml eigenvectors)
+            this.addatomphase = true;
         }
 
         //get qindex

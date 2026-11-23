@@ -68,6 +68,38 @@ describe('PhononJson runtime eigenvectors', () => {
     assert.ok(Math.abs(firstMode[1][0]) < 1e-6);
     assert.ok(Math.abs(firstMode[2][0]) < 1e-6);
     assert.ok(Math.abs(phonon.eigenvalues[0][0] - 33.35641) < 1e-4);
+    // phonopy convention (shortest vectors R + tau_j - tau_i): the animation adds the
+    // phase of each atom's own position
+    assert.equal(phonon.addatomphase, true);
+  });
+
+  it('keeps stored eigenvectors in their own (cell) phase convention', async () => {
+    const phonon = new PhononJson();
+    await new Promise((resolve) => {
+      phonon.getFromInternalJson({
+        name: 'Stored',
+        natoms: 1,
+        atom_types: ['C'],
+        atom_numbers: [6],
+        atom_pos_car: [[0, 0, 0]],
+        atom_pos_red: [[0, 0, 0]],
+        lattice: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+        qpoints: [[0, 0, 0]],
+        distances: [0],
+        formula: 'C',
+        eigenvalues: [[10, 20, 30]],
+        // one q-point, three modes, one atom
+        vectors: [[
+          [[[1, 0], [0, 0], [0, 0]]],
+          [[[0, 0], [1, 0], [0, 0]]],
+          [[[0, 0], [0, 0], [1, 0]]],
+        ]],
+        repetitions: [1, 1, 1],
+        highsym_qpts: [[0, 'GAMMA']],
+        line_breaks: [[0, 1]],
+      }, resolve);
+    });
+    assert.equal(phonon.addatomphase, false);
   });
 
   it('uses the same band-connection mapping as the pre-generated path', async () => {

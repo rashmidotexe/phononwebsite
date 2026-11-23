@@ -2482,6 +2482,8 @@ export function buildMixingEndpoint(raw, entry, dielectric = null) {
         segment.labelB = fixLabel(segment.labelB, segment.qB);
     });
     endpoint.name = entry && entry.name ? entry.name : utils.get_formula(endpoint.atomTypes);
+    // how the material is drawn on its own (the mixture at x = 0 is drawn the same way)
+    endpoint.repetitions = raw.repetitions || [3, 3, 3];
     endpoint.order = canonical.order;
     endpoint.invert = canonical.invert;
     endpoint.siteTypes = canonical.order.map((i) => endpoint.atomTypes[i]);
@@ -3363,6 +3365,84 @@ function changeGauge(matrix, q, from, to) {
     return out;
 }
 
+function presentInFileFrame(data, endpoint) {
+    /*
+    The mixture is computed in the canonical cell of material 1 (site order of the
+    template, origin on its first site, rotated onto the template axes, and the
+    inversion image when the file is stored in the opposite setting). Show it in
+    the setting of material 1's own file instead: at x = 0 the page then draws
+    exactly the material on its own, and the mixture changes continuously from it.
+
+    With T the orthogonal map file -> canonical (the rotation, times -1 for the
+    inversion image), the canonical lattice rows are C0 = U^-1 (F T^T) for the
+    file rows F and an integer U. The mixed cell C_x, reduced positions p and q
+    points go back as F_x = U C_x T, p U^-1 + (origin of the file), q in the
+    reciprocal basis of F_x, displacements T^T e, atoms in the order of the file.
+    The eigenvectors are in the atom gauge, so wrapping a position back into the
+    cell needs no phase change. A binary folded into a supercell has no file
+    setting and stays canonical.
+    */
+    if (endpoint.anyQ || !endpoint.positionsRed || !endpoint.order) {
+        return data;
+    }
+    let R = endpoint.rotation || [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+    let sign = endpoint.invert ? -1 : 1;
+    let T = R.map((row) => row.map((v) => sign * v));
+    let file = endpoint.lattice;
+    let canonical0 = endpointLattice(endpoint);
+    let positions0 = endpointPositions(endpoint);
+    let rotatedFile = file.map((row) => matrixTimesVector(T, row));
+    let Uraw = mat.matrix_multiply(rotatedFile, mat.matrix_inverse(canonical0));
+    let U = Uraw.map((row) => row.map(Math.round));
+    if (!isIntegerMatrix(Uraw, 1e-4) || Math.abs(Math.abs(mat.matrix_determinant(U)) - 1) > 1e-6) {
+        return data;
+    }
+    let Uinverse = mat.matrix_inverse(U);
+    let n = data.natoms;
+    let order = endpoint.order;
+
+    // rows of F_x: canonical rows in the file basis, then back to file cartesian axes
+    let lattice = mat.matrix_multiply(U, data.lattice).map((row) => rowTimesMatrix(row, T));
+    let toFileReduced = (p) => rowTimesMatrix(p, Uinverse);
+    let origin = [0, 1, 2].map((k) => endpoint.positionsRed[order[0]][k] - toFileReduced(positions0[0])[k]);
+    let positionsRed = new Array(n);
+    let atomTypes = new Array(n);
+    for (let s = 0; s < n; s++) {
+        let p = toFileReduced(data.atom_pos_red[s]).map((v, k) => v + origin[k]);
+        positionsRed[order[s]] = p.map((v) => v - Math.floor(v + 1e-9));
+        atomTypes[order[s]] = data.atom_types[s];
+    }
+
+    let canonicalReciprocal = utils.rec_lat(data.lattice);
+    let qpoints = data.qpoints.map((q) => {
+        let cartesian = rowTimesMatrix(q, canonicalReciprocal);
+        let fileCartesian = rowTimesMatrix(cartesian, T);
+        return lattice.map((row) => mat.vec_dot(row, fileCartesian));
+    });
+    // T^T e for every atom: as a row vector, e T
+    let back = (component) => [0, 1, 2].map((j) => component[0] * T[0][j] + component[1] * T[1][j] + component[2] * T[2][j]);
+    let vectors = data.vectors.map((modes) => modes.map((atoms) => {
+        let out = new Array(n);
+        for (let s = 0; s < n; s++) {
+            let re = back(atoms[s].map((c) => c[0]));
+            let im = back(atoms[s].map((c) => c[1]));
+            out[order[s]] = [0, 1, 2].map((k) => [re[k], im[k]]);
+        }
+        return out;
+    }));
+
+    return Object.assign({}, data, {
+        atom_types: atomTypes,
+        atom_numbers: atomTypes.map((type) => atomic_data.atomic_number[type]),
+        atom_pos_red: positionsRed,
+        atom_pos_car: utils.red_car_list(positionsRed, lattice),
+        lattice: lattice,
+        qpoints: qpoints,
+        vectors: vectors,
+        repetitions: endpoint.repetitions || data.repetitions,
+    });
+}
+
 export async function computeMixedPhonon(sampled, x, massFraction = x) {
     /*
     diagonalize the virtual-crystal D_alloy (mixed force constants and masses)
@@ -3468,7 +3548,16 @@ export async function computeMixedPhonon(sampled, x, massFraction = x) {
         vectors.push(modes);
     }
 
-    return {
+    // displacements in the convention of the files (PhononDB 'avg-mass-normalized':
+    // e_i sqrt(<m> / m_i)), so the mixture is drawn like material 1 on its own
+    let averageMass = masses.reduce((sum, mass) => sum + mass, 0) / natoms;
+    let amplitude = Math.sqrt(averageMass);
+    vectors.forEach((modes) => modes.forEach((atoms) => atoms.forEach((axes) => axes.forEach((component) => {
+        component[0] *= amplitude;
+        component[1] *= amplitude;
+    }))));
+
+    let data = {
         name: utils.get_formula(atomTypes),
         natoms: natoms,
         atom_types: atomTypes,
@@ -3484,9 +3573,12 @@ export async function computeMixedPhonon(sampled, x, massFraction = x) {
         eigenvalues: eigenvalues,
         vectors: vectors,
         repetitions: natoms > 4 ? [2, 2, 2] : [3, 3, 3],
+        average_mass: averageMass,
+        mode_amplitude_convention: 'avg-mass-normalized',
         family: endpoint1.family,
         // 'recomputed': dipole-dipole term from mixed Born charges and dielectric tensor
         // 'interpolated': the long-range term is mixed along with the force constants
         nac_mode: sampled.recomputeNac ? 'recomputed' : 'interpolated',
     };
+    return presentInFileFrame(data, endpoint1);
 }

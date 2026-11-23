@@ -490,3 +490,65 @@ function wurtzitePositionsOf(u) {
     return [[1 / 3, 2 / 3, 0], [2 / 3, 1 / 3, 0.5], [1 / 3, 2 / 3, u], [2 / 3, 1 / 3, 0.5 + u]]
         .map((p) => p.map((v) => v - Math.floor(v + 1e-9)));
 }
+
+describe('mixing: presentation in the setting of material 1', () => {
+    let fileStructure = (raw) => raw.structure
+        ? { lattice: raw.structure.lattice.matrix, positions: raw.structure.sites.map((s) => s.abc), types: raw.structure.sites.map((s) => s.label) }
+        : { lattice: raw.lattice, positions: raw.atom_pos_red, types: raw.atom_types };
+
+    it('draws the mixture at x = 0 exactly as material 1 on its own', async () => {
+        // inverted wurtzite (GaN), tilted perovskite (CaTiO3), and a Materials Project 3R
+        // cell stored with c along x: the mixture is computed in a canonical cell (other
+        // origin, atom order, axes, or the inversion image) but drawn in the file's setting
+        let cases = [
+            ['phonondb-GaN-wurtzite-mp-804.json.gz', 'GaN', 'phonondb-AlN-wurtzite-mp-661.json.gz', 'AlN'],
+            ['phonondb-CaTiO3-mp-4019.json.gz', 'CaTiO3', 'phonondb-NaMgH3-mp-23730.json.gz', 'NaMgH3'],
+            ['mpdb-MoSe2-3R-mp-7581-trimmed.json.gz', 'MoSe2', 'phonondb-MoS2-3R-mp-1434.json.gz', 'MoS2'],
+        ];
+        for (let [f1, n1, f2, n2] of cases) {
+            let raw = loadFixture(f1);
+            let e1 = buildMixingEndpoint(raw, { name: n1 });
+            let sampled = sampleMixingPair(e1, endpoint(f2, n2));
+            let mixed = await computeMixedPhonon(sampled, 0);
+            let file = fileStructure(raw);
+            assert.deepEqual(mixed.atom_types, file.types, n1);
+            mixed.lattice.forEach((row, i) => row.forEach((v, j) => assert.ok(Math.abs(v - file.lattice[i][j]) < 1e-6, n1)));
+            mixed.atom_pos_red.forEach((p, i) => p.forEach((v, k) => {
+                let d = v - file.positions[i][k];
+                assert.ok(Math.abs(d - Math.round(d)) < 1e-6, n1 + ' atom ' + i);
+            }));
+            assert.deepEqual(mixed.repetitions, raw.repetitions || [3, 3, 3]);
+            // the modes are the file's own: same eigenvectors at the same (file) q
+            if (e1.evaluate) {
+                let k = Math.floor(mixed.qpoints.length * 0.37);
+                let D = e1.evaluate(mixed.qpoints[k], null);
+                let solution = await solveComplexHermitianWithEigenWasm(D.real, D.imag);
+                let order = solution.values.map((v, i) => [v, i]).sort((a, b) => a[0] - b[0]);
+                let n = mixed.natoms;
+                for (let mode = 0; mode < 3 * n; mode++) {
+                    let [value, index] = order[mode];
+                    let isolated = [mode - 1, mode + 1].every((other) => other < 0 || other >= 3 * n ||
+                        Math.abs(order[other][0] - value) > 1e-3 * Math.abs(value));
+                    if (!isolated) {
+                        continue;
+                    }
+                    let re = 0;
+                    let im = 0;
+                    let normFile = 0;
+                    let normMixed = 0;
+                    for (let a = 0; a < n; a++) {
+                        for (let c = 0; c < 3; c++) {
+                            let f = solution.vectors[index][3 * a + c];
+                            let g = mixed.vectors[k][mode][a][c].map((v) => v * Math.sqrt(e1.masses[a]));
+                            re += f[0] * g[0] + f[1] * g[1];
+                            im += f[0] * g[1] - f[1] * g[0];
+                            normFile += f[0] * f[0] + f[1] * f[1];
+                            normMixed += g[0] * g[0] + g[1] * g[1];
+                        }
+                    }
+                    assert.ok(Math.abs(Math.hypot(re, im) / Math.sqrt(normFile * normMixed) - 1) < 1e-8, n1 + ' mode ' + mode);
+                }
+            }
+        }
+    });
+});
