@@ -12,7 +12,10 @@
  * octahedral tilts (Pnma, R-3c, ...; PEROVSKITE_SUPERSTRUCTURES). A binary (a
  * 5-atom perovskite) with force constants can also be folded into the cell of
  * an ordered ternary (a tilted perovskite) on its lattice. Transition-metal
- * dichalcogenides mix within their polytype (2H, 1T, 3R; TMD_SUPERSTRUCTURES). Force constants
+ * dichalcogenides mix within their polytype (2H, 1T, 3R; TMD_SUPERSTRUCTURES).
+ * Rutiles (A X2, with the CaCl2-type distortion) mix with each other and fold into
+ * the cation-ordered rutiles: trirutile A B2 X6, A B X4, A B3 X8
+ * (RUTILE_SUPERSTRUCTURES). Force constants
  * and site masses are mixed separately:
  *
  *     Phi_k(q)   = M_k^1/2 D_k(q) M_k^1/2
@@ -1181,8 +1184,120 @@ export const TMD_SUPERSTRUCTURES = {
     'tmd-3R': layeredTemplate('tmd-3R', '3R (R3m)'),
 };
 
+// rutile: the 6-atom cell itself ('rutile', sub 0-1 cations, 2-5 anions) and cation
+// orderings on supercells of it: trirutile (c tripled, A B B along the chains), and
+// A B X4 / A B3 X8 orderings. Derived with analyzeSuperstructure from PhononDB
+// mp-1873 (ZnF2), mp-3653 (MgSb2O6), mp-754478 (HfZrO4), mp-756638 (NbRhO4) and
+// mp-29892 (LiSb3O8); referencePoints from the tetragonal Materials Project files
+// (mp-571166 CaBr2, mp-776532 HfO2). As for the tilted perovskites, an orthorhombic
+// (CaCl2 type) distortion fits the tetragonal template in two senses: each template
+// keeps the distortion of a reference (for 'rutile' CaCl2 mp-23214, Pnnm) and the
+// closest match is used (matchScore).
+export const RUTILE_SUPERSTRUCTURES = {
+    'rutile': {
+        parent: 'rutile',
+        title: 'A X2 rutile (P4_2/mnm, CaCl2 type Pnnm)',
+        supercell: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+        sites: superstructureSites([
+            ['A', 0, 0, 0, 0], ['A', 1, 0, 0, 0], ['X', 2, 0, 0, 0], ['X', 3, 0, 0, 0], ['X', 4, 0, 0, 0], ['X', 5, 0, 0, 0],
+        ]),
+        referencePoints: { X: [0, 0.5, 0], M: [0.5, 0.5, 0], Z: [0, 0, 0.5], R: [0, 0.5, 0.5], A: [0.5, 0.5, 0.5] },
+        referenceStructure: {
+            lattice: [[1.173, 0, 0], [0, 1.1316, 0], [0, 0, 0.7534]],
+            positions: [
+                [0, 0, 0], [0.5, 0.5, 0.5], [0.3341, 0.2715, 0], [-0.3341, -0.2715, 0],
+                [0.8341, 0.2285, 0.5], [0.1659, 0.7715, 0.5],
+            ],
+        },
+        specialPoints: null,
+        path: null,
+    },
+    'rutile-AB2X6': {
+        parent: 'rutile',
+        title: 'trirutile A B2 X6 (P4_2/mnm)',
+        supercell: [[-1, 0, 0], [0, -1, 0], [0, 0, 3]],
+        sites: superstructureSites([
+            ['A', 0, 0, 0, 0], ['A', 0, 0, 0, 1], ['A', 1, 0, 0, 1], ['A', 1, 0, 0, 2], ['B', 0, 0, 0, 2], ['B', 1, 0, 0, 0],
+            ['X', 2, 0, 0, 0], ['X', 2, 0, 0, 1], ['X', 2, 0, 0, 2], ['X', 3, 0, 0, 0], ['X', 3, 0, 0, 1], ['X', 3, 0, 0, 2],
+            ['X', 4, 0, 0, 0], ['X', 4, 0, 0, 1], ['X', 4, 0, 0, 2], ['X', 5, 0, 0, 0], ['X', 5, 0, 0, 1], ['X', 5, 0, 0, 2],
+        ]),
+        referenceStructure: {
+            lattice: [[-0.7948, 0, 0], [0, -0.7948, 0], [0, 0, 1.5828]],
+            positions: [
+                [0, 0, 0], [0, 0, 0.3349], [-0.5, -0.5, 0.5], [-0.5, -0.5, 0.8349],
+                [0, 0, 0.6675], [-0.5, -0.5, 0.1675], [-0.3024, -0.3024, -0.0038], [-0.3024, -0.3024, 0.3387],
+                [-0.3094, -0.3094, 0.6675], [0.3024, 0.3024, -0.0038], [0.3024, 0.3024, 0.3387], [0.3094, 0.3094, 0.6675],
+                [-0.8094, -0.1906, 0.1675], [-0.8024, -0.1976, 0.4962], [-0.8024, -0.1976, 0.8387], [-0.1906, -0.8094, 0.1675],
+                [-0.1976, -0.8024, 0.4962], [-0.1976, -0.8024, 0.8387],
+            ],
+        },
+        specialPoints: null,
+        path: null,
+    },
+    'rutile-ABX4-Cmmm': {
+        parent: 'rutile',
+        title: 'A B X4 (Cmmm)',
+        supercell: [[-1, 0, 0], [0, 1, 0], [0, 0, -1]],
+        sites: superstructureSites([
+            ['A', 0, 0, 0, 0], ['B', 1, 0, 0, 0], ['X', 2, 0, 0, 0], ['X', 3, 0, 0, 0], ['X', 4, 0, 0, 0], ['X', 5, 0, 0, 0],
+        ]),
+        referenceStructure: {
+            lattice: [[-1.1449, -0.0012, 0], [0.0012, 1.1449, 0], [0, 0, -0.7629]],
+            positions: [
+                [0, 0, 0], [-0.5, 0.5, -0.5], [-0.307, 0.307, 0], [0.307, -0.307, 0],
+                [-0.8038, 0.1962, -0.5], [-0.1962, 0.8038, -0.5],
+            ],
+        },
+        specialPoints: null,
+        path: null,
+    },
+    'rutile-ABX4-I41md': {
+        parent: 'rutile',
+        title: 'A B X4 (I4_1md)',
+        supercell: [[-1, 0, 1], [1, 0, 1], [0, 1, -1]],
+        sites: superstructureSites([
+            ['A', 0, 0, 0, 0], ['A', 1, 0, 0, 0], ['B', 0, 0, 0, 1], ['B', 1, 0, 0, 1], ['X', 2, 0, 0, 0], ['X', 2, 0, 0, 1],
+            ['X', 3, 0, 0, 0], ['X', 3, 0, 0, 1], ['X', 4, 0, 0, 0], ['X', 4, 0, 0, 1], ['X', 5, 0, 0, 0], ['X', 5, 0, 0, 1],
+        ]),
+        referenceStructure: {
+            lattice: [[-0.9291, 0, 0.5793], [0.9291, 0, 0.5793], [0, 0.9291, -0.5793]],
+            positions: [
+                [0, 0, 0], [0.25, 0.75, 0.5], [0.5216, 0.5216, 0], [0.7716, 1.2716, 0.5],
+                [-0.0064, 0.2844, 0.2907], [0.5051, 0.8105, 0.3054], [-0.0064, -0.2971, -0.2907], [0.5051, 0.1997, -0.3054],
+                [-0.0471, 0.7436, 0.2093], [0.4497, 1.2551, 0.1946], [0.5344, 0.7436, 0.7907], [1.0605, 1.2551, 0.8054],
+            ],
+        },
+        specialPoints: null,
+        path: null,
+    },
+    'rutile-AB3X8': {
+        parent: 'rutile',
+        title: 'A B3 X8 (P2_1/c)',
+        supercell: [[-1, 0, -1], [0, -1, 0], [-1, 0, 3]],
+        sites: superstructureSites([
+            ['A', 0, -1, 0, 0], ['A', 0, 0, 0, 0], ['A', 0, -1, 0, 2], ['A', 1, -1, 0, 0], ['A', 1, -1, 0, 1], ['A', 1, -1, 0, 2],
+            ['B', 0, -1, 0, 1], ['B', 1, 0, 0, 0], ['X', 2, -1, 0, 0], ['X', 2, 0, 0, 0], ['X', 2, -1, 0, 1], ['X', 2, -1, 0, 2],
+            ['X', 3, -1, 0, 0], ['X', 3, 0, 0, 0], ['X', 3, -1, 0, 1], ['X', 3, -1, 0, 2], ['X', 4, -1, 0, 0], ['X', 4, 0, 0, 0],
+            ['X', 4, -1, 0, 1], ['X', 4, -1, 0, 2], ['X', 5, -1, 0, 0], ['X', 5, 0, 0, 0], ['X', 5, -1, 0, 1], ['X', 5, -1, 0, 2],
+        ]),
+        referenceStructure: {
+            lattice: [[-0.7243, 0, -0.4789], [0, -0.7277, 0], [-0.7211, 0, 1.4204]],
+            positions: [
+                [0.7367, -0.0215, 0.251], [0, 0, 0], [0.2633, 0.0215, 0.749], [0.2633, -0.5215, 0.249],
+                [0, -0.5, 0.5], [-0.2633, -0.4785, 0.751], [0.5, 0, 0.5], [-0.5, -0.5, 0],
+                [0.5126, -0.3094, 0.1743], [-0.2211, -0.2938, -0.0787], [0.2649, -0.3276, 0.4185], [0.0207, -0.2821, 0.6739],
+                [0.9793, 0.2821, 0.3261], [0.2211, 0.2938, 0.0787], [0.7351, 0.3276, 0.5815], [0.4874, 0.3094, 0.8257],
+                [0.0207, -0.2179, 0.1739], [-0.7351, -0.1724, -0.0815], [-0.2211, -0.2062, 0.4213], [-0.4874, -0.1906, 0.6743],
+                [0.4874, -0.8094, 0.3257], [-0.2649, -0.8276, 0.0815], [0.2211, -0.7938, 0.5787], [-0.0207, -0.7821, 0.8261],
+            ],
+        },
+        specialPoints: null,
+        path: null,
+    },
+};
+
 export const SUPERSTRUCTURES = Object.assign({}, WURTZITE_SUPERSTRUCTURES, ROCKSALT_SUPERSTRUCTURES,
-    FLUORITE_SUPERSTRUCTURES, PEROVSKITE_SUPERSTRUCTURES, TMD_SUPERSTRUCTURES);
+    FLUORITE_SUPERSTRUCTURES, PEROVSKITE_SUPERSTRUCTURES, TMD_SUPERSTRUCTURES, RUTILE_SUPERSTRUCTURES);
 
 function rowTimesMatrix(v, m) {
     return [0, 1, 2].map((j) => v[0] * m[0][j] + v[1] * m[1][j] + v[2] * m[2][j]);
@@ -1763,6 +1878,147 @@ const layeredParent = (name) => ({
     getRoles: getLayeredRoles,
 });
 
+// rutile (TiO2, P4_2/mnm): the tetragonal cell diag(a, a, c), cations at the
+// origin and at the body centre, anions at +-(u, u, 0) and (1/2 +- u, 1/2 -+ u,
+// 1/2) with u ~ 0.305 (sites are matched to the nearest, u varies a little)
+const RUTILE_U = 0.305;
+const RUTILE_SITES = [
+    { role: 'C', red: [0, 0, 0] },
+    { role: 'C', red: [0.5, 0.5, 0.5] },
+    { role: 'X', red: [RUTILE_U, RUTILE_U, 0] },
+    { role: 'X', red: [-RUTILE_U, -RUTILE_U, 0] },
+    { role: 'X', red: [0.5 + RUTILE_U, 0.5 - RUTILE_U, 0.5] },
+    { role: 'X', red: [0.5 - RUTILE_U, 0.5 + RUTILE_U, 0.5] },
+];
+
+function getRutileRoles(atomTypes) {
+    /*
+    species -> role of a rutile-derived A X2 / ternary cell: X the anion (2/3 of the
+    atoms, a usual anion), the cations A (and B for an ordered ternary, by number
+    of atoms, then valence)
+    */
+    let counts = {};
+    atomTypes.forEach((type) => { counts[type] = (counts[type] || 0) + 1; });
+    let species = Object.keys(counts);
+    let x = species.filter((type) => 3 * counts[type] === 2 * atomTypes.length && ANION_LIKE.has(type));
+    if (x.length !== 1 || species.length < 2 || species.length > 3) {
+        throw new Error('Not an A X2 rutile cell: ' + JSON.stringify(counts));
+    }
+    if (species.length === 3) {
+        return getSuperstructureRoles(atomTypes, 2 / 3);
+    }
+    let roles = {};
+    roles[species.find((type) => type !== x[0])] = 'A';
+    roles[x[0]] = 'X';
+    return roles;
+}
+
+function* rutileDescriptions(atomTypes, positionsRed, lattice, isAnion) {
+    /*
+    every way of reading the cell as a supercell of rutile: c along the shortest
+    cation -> cation vectors (the chains of edge-sharing octahedra, +-c), averaged
+    over all cations; the a axes from the next cation neighbours (+-a/2, +-a/2,
+    +-c/2) projected on the plane, as the sums of two at right angles; a from the
+    volume. Every in-plane axis, either direction of c and either handedness is
+    tried. The origin is a cation.
+    */
+    let natoms = atomTypes.length;
+    let positionsCar = utils.red_car_list(positionsRed, lattice);
+    let cations = [];
+    let anions = [];
+    for (let i = 0; i < natoms; i++) {
+        (isAnion(atomTypes[i]) ? anions : cations).push(i);
+    }
+    if (cations.length < 2 || cations.length % 2 || 2 * cations.length !== anions.length) {
+        return;
+    }
+    let unit = (v) => mat.vec_scale(v, 1 / Math.sqrt(mat.vec_dot(v, v)));
+    let cross = (p, q) => [p[1] * q[2] - p[2] * q[1], p[2] * q[0] - p[0] * q[2], p[0] * q[1] - p[1] * q[0]];
+    let near = getNearestBonds(cations[0], cations, positionsCar, lattice, 10);
+    let axis = unit(near[0]);
+    // c: the chain vector, averaged over all cations with a common sign
+    let sum = [0, 0, 0];
+    for (let cation of cations) {
+        for (let bond of getNearestBonds(cation, cations, positionsCar, lattice, 2)) {
+            let sign = mat.vec_dot(bond, axis) > 0 ? 1 : -1;
+            sum = sum.map((v, d) => v + sign * bond[d]);
+        }
+    }
+    let cVector = mat.vec_scale(sum, 1 / (2 * cations.length));
+    let c = Math.sqrt(mat.vec_dot(cVector, cVector));
+    let ezBase = unit(cVector);
+    if (near.slice(0, 2).some((bond) => Math.abs(mat.vec_dot(unit(bond), ezBase)) < 0.95)) {
+        return;
+    }
+    // in-plane directions of the next shell, and the a axes between them
+    let planar = near.slice(2).map((bond) => unit(bond.map((v, d) => v - mat.vec_dot(bond, ezBase) * ezBase[d])));
+    let directions = [];
+    for (let p of planar) {
+        for (let q of planar) {
+            if (Math.abs(mat.vec_dot(p, q)) < 0.25) {
+                let candidate = unit(p.map((v, d) => v + q[d]));
+                if (!directions.some((other) => mat.vec_dot(other, candidate) > 0.95)) {
+                    directions.push(candidate);
+                }
+            }
+        }
+    }
+    if (!directions.length) {
+        return;
+    }
+    let volume = Math.abs(mat.matrix_determinant(lattice));
+    let a = Math.sqrt((2 * volume) / (cations.length * c));
+    let H = [[a, 0, 0], [0, a, 0], [0, 0, c]];
+    let Hinverse = mat.matrix_inverse(H);
+
+    for (let ex of directions) {
+        for (let sign of [1, -1]) {
+            for (let handedness of [1, -1]) {
+                let ez = mat.vec_scale(ezBase, sign);
+                let ey = mat.vec_scale(cross(ez, ex), handedness);
+                let T = [ex, ey, ez];
+                let rotated = lattice.map((row) => matrixTimesVector(T, row));
+                let Mraw = rotated.map((row) => rowTimesMatrix(row, Hinverse));
+                let M = Mraw.map((row) => row.map(Math.round));
+                if (Mraw.some((row, r) => row.some((v, k) => Math.abs(v - M[r][k]) > 0.1)) ||
+                    Math.round(Math.abs(mat.matrix_determinant(M))) * 2 !== cations.length) {
+                    continue;
+                }
+                for (let origin of cations) {
+                    let sites = [];
+                    for (let n = 0; n < natoms; n++) {
+                        let d = [0, 1, 2].map((k) => positionsCar[n][k] - positionsCar[origin][k]);
+                        let f = rowTimesMatrix(matrixTimesVector(T, d), Hinverse);
+                        // rutile and its CaCl2-type distortions stay within 0.06 of the
+                        // ideal sites; marcasite (FeS2, OsAs2: anion pairs) is at 0.1 and more
+                        let found = null;
+                        let best = 0.09;
+                        RUTILE_SITES.forEach((site, sub) => {
+                            if ((site.role === 'X') !== isAnion(atomTypes[n])) {
+                                return;
+                            }
+                            let r = f.map((v, k) => v - site.red[k]);
+                            let rounded = r.map(Math.round);
+                            let deviation = Math.max.apply(null, r.map((v, k) => Math.abs(v - rounded[k])));
+                            if (deviation < best) {
+                                best = deviation;
+                                found = { sub: sub, n: rounded };
+                            }
+                        });
+                        if (!found) {
+                            break;
+                        }
+                        sites.push(found);
+                    }
+                    if (sites.length === natoms) {
+                        yield { T: T, origin: origin, H: H, M: M, sites: sites, a: a, c: c };
+                    }
+                }
+            }
+        }
+    }
+}
+
 const perovskiteParent = (anti) => ({
     describe: perovskiteDescriptions,
     sitePosition: (site) => site.n.map((v, k) => v + PEROVSKITE_SITES[site.sub].red[k]),
@@ -1796,6 +2052,14 @@ const PARENT_STRUCTURES = {
     antifluorite: fccParent('antifluorite'),
     perovskite: perovskiteParent(false),
     antiperovskite: perovskiteParent(true),
+    rutile: {
+        describe: rutileDescriptions,
+        sitePosition: (site) => site.n.map((v, k) => v + RUTILE_SITES[site.sub].red[k]),
+        frameTolerance: 15,
+        xFraction: 2 / 3,
+        originRole: 'A',
+        getRoles: getRutileRoles,
+    },
     'tmd-1T': layeredParent('tmd-1T'),
     'tmd-2H': layeredParent('tmd-2H'),
     'tmd-3R': layeredParent('tmd-3R'),
@@ -1983,13 +2247,17 @@ function referencePointScore(segments, template) {
     files may run the same path in orientations related by a symmetry of the
     crystal (L at (0,-1/2,0) in one, (0,0,1/2) in the other). Of the equivalent
     matches, prefer the one that puts the labelled points of the file where the
-    template has them (modulo the reciprocal lattice), so the paths line up.
+    template has them (modulo the reciprocal lattice), so the paths line up. On a
+    tie, prefer the points exactly there (signs included): two files whose points
+    agree only modulo the reciprocal lattice can still run their segments on lines
+    related by q -> -q (Z-R from (0,0,1/2) in one, from (0,0,-1/2) in the other).
     */
     if (!template.referencePoints || !segments.length) {
         return null;
     }
     return (match) => {
         let count = 0;
+        let exact = 0;
         for (let segment of segments) {
             for (let [label, q] of [[segment.labelA, segment.qA], [segment.labelB, segment.qB]]) {
                 let reference = template.referencePoints[normalizeLabel(label)];
@@ -1999,10 +2267,14 @@ function referencePointScore(segments, template) {
                 let mapped = match.qMap(q);
                 if (mapped.every((v, k) => Math.abs(v - reference[k] - Math.round(v - reference[k])) < 1e-3)) {
                     count += 1;
+                    if (mapped.every((v, k) => Math.abs(v - reference[k]) < 1e-3)) {
+                        exact += 1;
+                    }
                 }
             }
         }
-        return count;
+        // exact hits only break ties: fewer than 1000 labelled points per path
+        return count + exact / 1000;
     };
 }
 
@@ -2029,7 +2301,7 @@ function matchScore(segments, template) {
             let d = rowTimesMatrix(position.map((v, k) => v - reference.positions[s][k]), template.supercell);
             deviation += mat.vec_dot(d, d);
         });
-        return -Math.round(deviation * 1e4) * 1000 + (pointScore ? pointScore(match) : 0);
+        return -Math.round(deviation * 1e4) * 1e6 + (pointScore ? pointScore(match) : 0);
     };
 }
 

@@ -572,6 +572,7 @@ describe('mixing: presentation in the setting of material 1', () => {
             ['phonondb-NaCl-mp-22862.json.gz', 'NaCl', 'phonondb-NaInS2-mp-20289.json.gz', 'NaInS2'],
             ['phonondb-SrTiO3-mp-5229.json.gz', 'SrTiO3', 'phonondb-CaTiO3-mp-4019.json.gz', 'CaTiO3'],
             ['phonondb-Li2O-mp-1960.json.gz', 'Li2O', 'phonondb-LiMgN-mp-37906.json.gz', 'LiMgN'],
+            ['phonondb-TiO2-mp-2657.json.gz', 'TiO2', 'phonondb-ZnSb2O6-mp-3188.json.gz', 'ZnSb2O6'],
         ];
         for (let [f1, n1, f2, n2] of cases) {
             let raw = loadFixture(f1);
@@ -592,3 +593,106 @@ describe('mixing: presentation in the setting of material 1', () => {
     });
 });
 
+describe('rutile mixing', () => {
+    let gammaIndices = (sampled) => sampled.qpoints
+        .map((q, k) => (q.every((v) => Math.abs(v - Math.round(v)) < 1e-9) ? k : -1))
+        .filter((k) => k >= 0);
+    let opticalDiff = (a, b) => {
+        let worst = 0;
+        a.forEach((row, k) => row.forEach((v, n) => {
+            if (Math.abs(v) > 1) {
+                worst = Math.max(worst, Math.abs(v - b[k][n]));
+            }
+        }));
+        return worst;
+    };
+    let eigen = async (m) => (await solveComplexHermitianWithEigenWasm(m.real, m.imag)).values.sort((p, q) => p - q);
+
+    it('matches rutile and its CaCl2-type distortion, not marcasite', () => {
+        let tio2 = endpoint('phonondb-TiO2-mp-2657.json.gz', 'TiO2');
+        assert.equal(tio2.family, 'rutile');
+        assert.deepEqual(tio2.siteTypes, ['Ti', 'Ti', 'O', 'O', 'O', 'O']);
+        let cacl2 = endpoint('phonondb-CaCl2-Pnnm-mp-23214.json.gz', 'CaCl2');
+        assert.equal(cacl2.family, 'rutile');
+        // marcasite OsAs2 (As-As pairs): the anions are 0.15 of the cell off the rutile sites
+        assert.throws(() => endpoint('phonondb-OsAs2-mp-2455.json.gz', 'OsAs2'));
+        let znsb2o6 = endpoint('phonondb-ZnSb2O6-mp-3188.json.gz', 'ZnSb2O6');
+        assert.equal(znsb2o6.family, 'rutile-AB2X6');
+        assert.deepEqual(znsb2o6.siteTypes.slice(0, 6), ['Sb', 'Sb', 'Sb', 'Sb', 'Zn', 'Zn']);
+    });
+
+    it('aligns the CaCl2-type distortion whatever the setting of the file', () => {
+        // the orthorhombic distortion fits the tetragonal template in two senses, and
+        // which one a file lands in depends on its cell basis (the PhononDB and Materials
+        // Project files of CaCl2 differed); the reference distortion of the template picks
+        // the same one. Here the same crystal with the basis relabelled a, b, c -> b, c, a
+        // and the atoms in reverse order (without the reference: 0.06 apart)
+        let raw = loadFixture('phonondb-CaCl2-Pnnm-mp-23214.json.gz');
+        let reference = buildMixingEndpoint(raw, { name: 'CaCl2' }).structure;
+        let relabelled = loadFixture('phonondb-CaCl2-Pnnm-mp-23214.json.gz');
+        relabelled.lattice = [raw.lattice[1], raw.lattice[2], raw.lattice[0]];
+        relabelled.atom_pos_red = raw.atom_pos_red.map((p) => [p[1], p[2], p[0]]).reverse();
+        relabelled.atom_types = raw.atom_types.slice().reverse();
+        let structure = buildMixingEndpoint(relabelled, { name: 'CaCl2' }).structure;
+        structure.positionsRed.forEach((p, s) => p.forEach((v, k) => assert.ok(Math.abs(v - reference.positionsRed[s][k]) < 1e-6)));
+    });
+
+    it('folds a rutile into the trirutile cell', async () => {
+        // D of the 18-atom trirutile cell at Q has the eigenvalues of TiO2 at the 3 points Q + g
+        let tio2 = endpoint('phonondb-TiO2-mp-2657.json.gz', 'TiO2');
+        let folded = binaryAsSuperstructure(tio2, 'rutile-AB2X6');
+        let cell = tio2.structure.lattice;
+        let reciprocal = utils.rec_lat(folded.structure.lattice);
+        let Q = [0.13, -0.07, 0.21];
+        let qCart = [0, 1, 2].map((d) => Q[0] * reciprocal[0][d] + Q[1] * reciprocal[1][d] + Q[2] * reciprocal[2][d]);
+        let candidates = [];
+        for (let a = -2; a <= 2; a++) {
+            for (let b = -2; b <= 2; b++) {
+                for (let c = -2; c <= 2; c++) {
+                    candidates.push([0, 1, 2].map((d) => a * reciprocal[0][d] + b * reciprocal[1][d] + c * reciprocal[2][d]));
+                }
+            }
+        }
+        candidates.sort((g, h) => g.reduce((t, v) => t + v * v, 0) - h.reduce((t, v) => t + v * v, 0));
+        let seen = new Set();
+        let expected = [];
+        for (let g of candidates) {
+            let key = cell.map((p) => {
+                let t = p[0] * g[0] + p[1] * g[1] + p[2] * g[2];
+                return Math.round((t - Math.floor(t + 1e-9)) * 1e6) % 1000000;
+            }).join(',');
+            if (seen.has(key)) {
+                continue;
+            }
+            seen.add(key);
+            let k = cell.map((p) => p[0] * (qCart[0] + g[0]) + p[1] * (qCart[1] + g[1]) + p[2] * (qCart[2] + g[2]));
+            expected.push(...await eigen(tio2.sampleAtQ(k, null)));
+        }
+        assert.equal(seen.size, 3);
+        expected.sort((p, q) => p - q);
+        let actual = await eigen(folded.sampleAtQ(Q, null));
+        actual.forEach((v, i) => assert.ok(Math.abs(v - expected[i]) < 1e-8 * (1 + Math.abs(expected[i]))));
+    });
+
+    it('keeps end-members exact, acoustic modes at zero and mirror symmetry', async () => {
+        let tio2 = endpoint('phonondb-TiO2-mp-2657.json.gz', 'TiO2');
+        let sno2 = endpoint('phonondb-SnO2-mp-856.json.gz', 'SnO2');
+        let znsb2o6 = endpoint('phonondb-ZnSb2O6-mp-3188.json.gz', 'ZnSb2O6');
+        for (let [a, b] of [[sno2, tio2], [tio2, znsb2o6]]) {
+            let sampled = sampleMixingPair(a, b);
+            let reversed = sampleMixingPair(b, a);
+            assert.equal(sampled.recomputeNac, true);
+            let end0 = await computeMixedPhonon(sampled, 0);
+            assert.ok(opticalDiff(end0.eigenvalues, await computeReferenceEigenvalues(sampled)) < 1e-3);
+            let end1 = await computeMixedPhonon(sampled, 1);
+            assert.ok(opticalDiff(end1.eigenvalues, await computeReferenceEigenvalues(reversed)) < 1e-3);
+            let mixed = await computeMixedPhonon(sampled, 0.5, 0.3);
+            for (let k of gammaIndices(sampled)) {
+                let near = mixed.eigenvalues[k].map(Math.abs).sort((p, q) => p - q);
+                assert.ok(near[2] < 0.05, `${a.name} + ${b.name}: ${near[2]}`);
+            }
+            let mirrored = await computeMixedPhonon(reversed, 0.5, 0.7);
+            assert.ok(opticalDiff(mixed.eigenvalues, mirrored.eigenvalues) < 1e-6);
+        }
+    });
+});

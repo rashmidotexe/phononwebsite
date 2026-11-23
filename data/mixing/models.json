@@ -5618,5 +5618,432 @@
         "source": "mpdb",
         "spacegroup": "R3m",
         "family": "tmd-3R"
+    },
+    {
+        "id": "1249",
+        "name": "MgF2",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile"
+    },
+    {
+        "id": "1285",
+        "name": "PtO2",
+        "source": "phonondb",
+        "spacegroup": "Pnnm",
+        "family": "rutile"
+    },
+    {
+        "id": "13985",
+        "name": "Li2PdF6",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile-AB2X6"
+    },
+    {
+        "id": "13986",
+        "name": "Li2PtF6",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile-AB2X6"
+    },
+    {
+        "id": "1873",
+        "name": "ZnF2",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile"
+    },
+    {
+        "id": "22882",
+        "name": "YbBr2",
+        "source": "phonondb",
+        "spacegroup": "Pnnm",
+        "family": "rutile"
+    },
+    {
+        "id": "22888",
+        "name": "CaBr2",
+        "source": "phonondb",
+        "spacegroup": "Pnnm",
+        "family": "rutile"
+    },
+    {
+        "id": "22904",
+        "name": "CaCl2",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile"
+    },
+    {
+        "id": "23214",
+        "name": "CaCl2",
+        "source": "phonondb",
+        "spacegroup": "Pnnm",
+        "family": "rutile"
+    },
+    {
+        "id": "23710",
+        "name": "MgH2",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile"
+    },
+    {
+        "id": "2657",
+        "name": "TiO2",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile"
+    },
+    {
+        "id": "28931",
+        "name": "Ga2TeO6",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile-AB2X6"
+    },
+    {
+        "id": "29892",
+        "name": "LiSb3O8",
+        "source": "phonondb",
+        "spacegroup": "P2_1/c",
+        "family": "rutile-AB3X8"
+    },
+    {
+        "id": "3188",
+        "name": "ZnSb2O6",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile-AB2X6"
+    },
+    {
+        "id": "3653",
+        "name": "MgSb2O6",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile-AB2X6"
+    },
+    {
+        "id": "470",
+        "name": "GeO2",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile"
+    },
+    {
+        "id": "545598",
+        "name": "CdUO4",
+        "source": "phonondb",
+        "spacegroup": "Cmmm",
+        "family": "rutile-ABX4-Cmmm"
+    },
+    {
+        "id": "550172",
+        "name": "SnO2",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile"
+    },
+    {
+        "id": "571166",
+        "name": "CaBr2",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile"
+    },
+    {
+        "id": "752397",
+        "name": "Ba2SrI6",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile-AB2X6"
+    },
+    {
+        "id": "753000",
+        "name": "NaSb3O8",
+        "source": "phonondb",
+        "spacegroup": "P2_1/c",
+        "family": "rutile-AB3X8"
+    },
+    {
+        "id": "753731",
+        "name": "Ba2CaI6",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile-AB2X6"
+    },
+    {
+        "id": "754224",
+        "name": "BaSr2I6",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile-AB2X6"
+    },
+    {
+        "id": "754478",
+        "name": "HfZrO4",
+        "source": "phonondb",
+        "spacegroup": "Cmmm",
+        "family": "rutile-ABX4-Cmmm"
+    },
+    {
+        "id": "754572",
+        "name": "BaCa2I6",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile-AB2X6"
+    },
+    {
+        "id": "755684",
+        "name": "SrCa2I6",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile-AB2X6"
+    },
+    {
+        "id": "756131",
+        "name": "Sr2CaI6",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile-AB2X6"
+    },
+    {
+        "id": "756339",
+        "name": "Tm2TeO6",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile-AB2X6"
+    },
+    {
+        "id": "756389",
+        "name": "Lu2TeO6",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile-AB2X6"
+    },
+    {
+        "id": "756638",
+        "name": "NbRhO4",
+        "source": "phonondb",
+        "spacegroup": "I4_1md",
+        "family": "rutile-ABX4-I41md"
+    },
+    {
+        "id": "7603",
+        "name": "Li2TiF6",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile-AB2X6"
+    },
+    {
+        "id": "760402",
+        "name": "TaRhO4",
+        "source": "phonondb",
+        "spacegroup": "I4_1md",
+        "family": "rutile-ABX4-I41md"
+    },
+    {
+        "id": "776532",
+        "name": "HfO2",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile"
+    },
+    {
+        "id": "7791",
+        "name": "Li2GeF6",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile-AB2X6"
+    },
+    {
+        "id": "8081",
+        "name": "Na2SnF6",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile-AB2X6"
+    },
+    {
+        "id": "856",
+        "name": "SnO2",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile"
+    },
+    {
+        "id": "862868",
+        "name": "PbBr2",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile"
+    },
+    {
+        "id": "862871",
+        "name": "PbCl2",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile"
+    },
+    {
+        "id": "865716",
+        "name": "YbCl2",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile"
+    },
+    {
+        "id": "865934",
+        "name": "YbF2",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile"
+    },
+    {
+        "id": "867355",
+        "name": "TeBr2",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile"
+    },
+    {
+        "id": "9650",
+        "name": "MgTa2O6",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile-AB2X6"
+    },
+    {
+        "id": "978846",
+        "name": "SnI2",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile"
+    },
+    {
+        "id": "978985",
+        "name": "SnBr2",
+        "source": "phonondb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile"
+    },
+    {
+        "id": "571166",
+        "name": "CaBr2",
+        "source": "mpdb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile"
+    },
+    {
+        "id": "676861",
+        "name": "AlSbO4",
+        "source": "mpdb",
+        "spacegroup": "Cmmm",
+        "family": "rutile-ABX4-Cmmm"
+    },
+    {
+        "id": "776532",
+        "name": "HfO2",
+        "source": "mpdb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile"
+    },
+    {
+        "id": "862868",
+        "name": "PbBr2",
+        "source": "mpdb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile"
+    },
+    {
+        "id": "862871",
+        "name": "PbCl2",
+        "source": "mpdb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile"
+    },
+    {
+        "id": "978846",
+        "name": "SnI2",
+        "source": "mpdb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile"
+    },
+    {
+        "id": "470",
+        "name": "GeO2",
+        "source": "mpdb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile"
+    },
+    {
+        "id": "856",
+        "name": "SnO2",
+        "source": "mpdb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile"
+    },
+    {
+        "id": "1249",
+        "name": "MgF2",
+        "source": "mpdb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile"
+    },
+    {
+        "id": "1285",
+        "name": "PtO2",
+        "source": "mpdb",
+        "spacegroup": "Pnnm",
+        "family": "rutile"
+    },
+    {
+        "id": "1873",
+        "name": "ZnF2",
+        "source": "mpdb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile"
+    },
+    {
+        "id": "2657",
+        "name": "TiO2",
+        "source": "mpdb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile"
+    },
+    {
+        "id": "6947",
+        "name": "SiO2",
+        "source": "mpdb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile"
+    },
+    {
+        "id": "22888",
+        "name": "CaBr2",
+        "source": "mpdb",
+        "spacegroup": "Pnnm",
+        "family": "rutile"
+    },
+    {
+        "id": "22904",
+        "name": "CaCl2",
+        "source": "mpdb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile"
+    },
+    {
+        "id": "23214",
+        "name": "CaCl2",
+        "source": "mpdb",
+        "spacegroup": "Pnnm",
+        "family": "rutile"
+    },
+    {
+        "id": "23710",
+        "name": "MgH2",
+        "source": "mpdb",
+        "spacegroup": "P4_2/mnm",
+        "family": "rutile"
     }
 ]
