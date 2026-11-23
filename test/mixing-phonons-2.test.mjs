@@ -551,4 +551,44 @@ describe('mixing: presentation in the setting of material 1', () => {
             }
         }
     });
+
+    it('draws a binary folded into the ternary cell in the binary\'s own setting', async () => {
+        // material 1 a binary, material 2 an ordered ternary: at x = 0 the supercell holds
+        // the binary, every atom on an atom of its file, the cell vectors lattice vectors
+        // of the file (inverted GaN, rotated SrTiO3), and a fold into a cell of the same
+        // size (Li2O in the MgAgAs type cell) is the file itself
+        let inverse = (M) => {
+            let d = M[0][0] * (M[1][1] * M[2][2] - M[1][2] * M[2][1]) - M[0][1] * (M[1][0] * M[2][2] - M[1][2] * M[2][0]) + M[0][2] * (M[1][0] * M[2][1] - M[1][1] * M[2][0]);
+            return [
+                [(M[1][1] * M[2][2] - M[1][2] * M[2][1]) / d, (M[0][2] * M[2][1] - M[0][1] * M[2][2]) / d, (M[0][1] * M[1][2] - M[0][2] * M[1][1]) / d],
+                [(M[1][2] * M[2][0] - M[1][0] * M[2][2]) / d, (M[0][0] * M[2][2] - M[0][2] * M[2][0]) / d, (M[0][2] * M[1][0] - M[0][0] * M[1][2]) / d],
+                [(M[1][0] * M[2][1] - M[1][1] * M[2][0]) / d, (M[0][1] * M[2][0] - M[0][0] * M[2][1]) / d, (M[0][0] * M[1][1] - M[0][1] * M[1][0]) / d],
+            ];
+        };
+        let row = (v, M) => [0, 1, 2].map((j) => v[0] * M[0][j] + v[1] * M[1][j] + v[2] * M[2][j]);
+        let frac = (v) => Math.abs(v - Math.round(v));
+        let cases = [
+            ['phonondb-GaN-wurtzite-mp-804.json.gz', 'GaN', 'phonondb-ZnGeN2-mp-2979.json.gz', 'ZnGeN2'],
+            ['phonondb-NaCl-mp-22862.json.gz', 'NaCl', 'phonondb-NaInS2-mp-20289.json.gz', 'NaInS2'],
+            ['phonondb-SrTiO3-mp-5229.json.gz', 'SrTiO3', 'phonondb-CaTiO3-mp-4019.json.gz', 'CaTiO3'],
+            ['phonondb-Li2O-mp-1960.json.gz', 'Li2O', 'phonondb-LiMgN-mp-37906.json.gz', 'LiMgN'],
+        ];
+        for (let [f1, n1, f2, n2] of cases) {
+            let raw = loadFixture(f1);
+            let mixed = await computeMixedPhonon(sampleMixingPair(endpoint(f1, n1), endpoint(f2, n2)), 0);
+            let fileInverse = inverse(raw.lattice);
+            utils.red_car_list(mixed.atom_pos_red, mixed.lattice).forEach((cartesian, i) => {
+                let reduced = row(cartesian, fileInverse);
+                let onSite = raw.atom_pos_red.some((p, j) => raw.atom_types[j] === mixed.atom_types[i] &&
+                    reduced.every((v, k) => frac(v - p[k]) < 1e-6));
+                assert.ok(onSite, `${n1}: atom ${i} (${mixed.atom_types[i]}) is not on a site of the file`);
+            });
+            mixed.lattice.forEach((vector) => row(vector, fileInverse).forEach((v) => assert.ok(frac(v) < 1e-6, n1)));
+            if (mixed.natoms === raw.natoms) {
+                assert.deepEqual(mixed.atom_types, raw.atom_types);
+                mixed.lattice.forEach((r, i) => r.forEach((v, j) => assert.ok(Math.abs(v - raw.lattice[i][j]) < 1e-6)));
+            }
+        }
+    });
 });
+

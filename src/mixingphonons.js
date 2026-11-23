@@ -2664,6 +2664,10 @@ function foldIntoSupercell(primitive, family, superLattice, superPositionsRed, s
     return {
         family: family,
         anyQ: true,
+        // the binary it was folded from and the sublattice of every site, to draw the
+        // supercell in the binary's own setting (presentInFileFrame)
+        foldedFrom: primitive,
+        sublattice: sublattice,
         name: primitive.name,
         lattice: superLattice,
         structure: structure,
@@ -2731,8 +2735,11 @@ export function binaryAsSuperstructure(binary, family) {
         let inverse = mat.matrix_inverse(template.supercell);
         let positionsRed = template.sites.map((site) => rowTimesMatrix(
             binary.structure.positionsRed[site.sub].map((v, k) => v + site.n[k]), inverse));
-        return foldIntoSupercell(primitive, family, lattice, positionsRed, template.sites.map((site) => site.sub),
+        let folded = foldIntoSupercell(primitive, family, lattice, positionsRed, template.sites.map((site) => site.sub),
             { lattice: lattice, positionsRed: positionsRed });
+        // the proxy holds the canonical cell; the file setting is the binary's
+        folded.foldedFrom = binary;
+        return folded;
     }
     if (FCC_LAYOUTS[template.parent]) {
         // rocksalt, fluorite, antifluorite: the binary sites are the sublattices in order
@@ -3379,10 +3386,45 @@ function presentInFileFrame(data, endpoint) {
     points go back as F_x = U C_x T, p U^-1 + (origin of the file), q in the
     reciprocal basis of F_x, displacements T^T e, atoms in the order of the file.
     The eigenvectors are in the atom gauge, so wrapping a position back into the
-    cell needs no phase change. A binary folded into a supercell has no file
-    setting and stays canonical.
+    cell needs no phase change. A binary folded into a supercell (material 1 a
+    binary, material 2 an ordered ternary) is drawn in the supercell, but in the
+    binary's own setting: its axes, its inversion setting, and every site on the
+    position of an atom of the binary's file.
     */
-    if (endpoint.anyQ || !endpoint.positionsRed || !endpoint.order) {
+    if (endpoint.anyQ) {
+        let binary = endpoint.foldedFrom;
+        if (!binary || binary.anyQ || !binary.positionsRed || !binary.order || !endpoint.sublattice) {
+            return data;
+        }
+        let R = binary.rotation || [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+        let sign = binary.invert ? -1 : 1;
+        let T = R.map((row) => row.map((v) => sign * v));
+        let cell = endpointLattice(endpoint);
+        let sites = endpointPositions(endpoint);
+        // the supercell in the binary's cartesian frame, and the shift that puts a site
+        // of sublattice 0 on the atom of the binary's file that is its site 0
+        let fileCell = cell.map((row) => rowTimesMatrix(row, T));
+        let s0 = endpoint.sublattice.indexOf(0);
+        let fileAtom = rowTimesMatrix(binary.positionsRed[binary.order[0]], binary.lattice);
+        let siteAtom = rowTimesMatrix(rowTimesMatrix(sites[s0], cell), T);
+        let shift = rowTimesMatrix([0, 1, 2].map((k) => fileAtom[k] - siteAtom[k]), mat.matrix_inverse(fileCell));
+        // a fold into a cell of the same size (the MgAgAs type antifluorite) is the
+        // binary's own cell: drawn exactly as the file, its basis and atom order
+        let sameSize = sites.length === binary.order.length;
+        let order = sameSize ? endpoint.sublattice.map((sub) => binary.order[sub]) : sites.map((_, i) => i);
+        let positionsRed = new Array(sites.length);
+        sites.forEach((p, i) => { positionsRed[order[i]] = p.map((v, k) => v + shift[k]); });
+        return presentInFileFrame(data, {
+            lattice: sameSize ? binary.lattice : fileCell,
+            positionsRed: sameSize ? binary.positionsRed : positionsRed,
+            order: order,
+            rotation: binary.rotation,
+            invert: binary.invert,
+            structure: { lattice: cell, positionsRed: sites },
+            repetitions: data.repetitions,
+        });
+    }
+    if (!endpoint.positionsRed || !endpoint.order) {
         return data;
     }
     let R = endpoint.rotation || [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
