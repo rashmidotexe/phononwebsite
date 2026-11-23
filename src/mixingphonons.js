@@ -15,7 +15,8 @@
  * dichalcogenides mix within their polytype (2H, 1T, 3R; TMD_SUPERSTRUCTURES).
  * Rutiles (A X2, with the CaCl2-type distortion) mix with each other and fold into
  * the cation-ordered rutiles: trirutile A B2 X6, A B X4, A B3 X8
- * (RUTILE_SUPERSTRUCTURES). Force constants
+ * (RUTILE_SUPERSTRUCTURES). Corundums (A2 X3) mix with each other and fold into
+ * ilmenite (A B X3) and A3 B X6 on the same cell (CORUNDUM_SUPERSTRUCTURES). Force constants
  * and site masses are mixed separately:
  *
  *     Phi_k(q)   = M_k^1/2 D_k(q) M_k^1/2
@@ -1152,6 +1153,24 @@ const LAYERED_POLYTYPES = {
             { role: 'X', red: [0, 0, 0.625] },
         ],
     },
+    // corundum (Al2O3, R-3c): the rhombohedral primitive cell, cations at (0,0,+-z),
+    // (0,0,1/2+-z) and anions at (x,0,1/4) and equivalents in hexagonal axes, z = 0.352,
+    // x = 0.306, here relative to the first cation in the rhombohedral basis
+    corundum: {
+        cell: 'rhombohedral',
+        sites: [
+            { role: 'A', red: [0, 0, 0] },
+            { role: 'A', red: [0.296, 0.296, 0.296] },
+            { role: 'A', red: [0.5, 0.5, 0.5] },
+            { role: 'A', red: [-0.204, -0.204, -0.204] },
+            { role: 'X', red: [0.204, -0.408, -0.102] },
+            { role: 'X', red: [-0.102, 0.204, -0.408] },
+            { role: 'X', red: [-0.408, -0.102, 0.204] },
+            { role: 'X', red: [0.092, -0.296, 0.398] },
+            { role: 'X', red: [0.398, 0.092, -0.296] },
+            { role: 'X', red: [-0.296, 0.398, 0.092] },
+        ],
+    },
     'tmd-3R': {
         cell: 'rhombohedral',
         sites: [
@@ -1296,8 +1315,51 @@ export const RUTILE_SUPERSTRUCTURES = {
     },
 };
 
+// corundum: the 10-atom rhombohedral cell itself ('corundum', sub 0-3 cations, 4-9
+// anions, LAYERED_POLYTYPES.corundum) and the cation orderings on it: ilmenite
+// (A and B in alternate layers along c) and A3 B X6. The LiNbO3 type (R3c) is a third
+// ordering of the same cell; it is listed with the tilted perovskites. Derived with
+// analyzeSuperstructure from PhononDB mp-1143 (Al2O3), mp-3771 (MgTiO3) and
+// mp-675104 (Na3YCl6); referencePoints from Materials Project mp-974381 (Rh2S3).
+export const CORUNDUM_SUPERSTRUCTURES = {
+    'corundum': {
+        parent: 'corundum',
+        title: 'A2 X3 corundum (R-3c)',
+        supercell: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+        sites: superstructureSites([
+            ['A', 0, 0, 0, 0], ['A', 1, 0, 0, 0], ['A', 2, 0, 0, 0], ['A', 3, 0, 0, 0], ['X', 4, 0, 0, 0], ['X', 5, 0, 0, 0], ['X', 6, 0, 0, 0], ['X', 7, 0, 0, 0], ['X', 8, 0, 0, 0], ['X', 9, 0, 0, 0],
+        ]),
+        referencePoints: { L: [0, 0, 0.5], Z: [0.5, 0.5, 0.5], F: [0.5, 0, 0.5] },
+        specialPoints: null,
+        path: null,
+    },
+    'corundum-ABX3': {
+        parent: 'corundum',
+        title: 'ilmenite A B X3 (R-3)',
+        supercell: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+        sites: superstructureSites([
+            ['A', 0, 0, 0, 0], ['A', 1, 0, 0, 0], ['B', 2, 0, 0, 0], ['B', 3, 0, 0, 0], ['X', 4, 0, 0, 0], ['X', 5, 0, 0, 0], ['X', 6, 0, 0, 0], ['X', 7, 0, 0, 0], ['X', 8, 0, 0, 0], ['X', 9, 0, 0, 0],
+        ]),
+        referencePoints: { L: [0, 0, 0.5], Z: [0.5, 0.5, 0.5], F: [0.5, 0, 0.5] },
+        specialPoints: null,
+        path: null,
+    },
+    'corundum-A3BX6': {
+        parent: 'corundum',
+        title: 'A3 B X6 (R-3)',
+        supercell: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+        sites: superstructureSites([
+            ['A', 0, 0, 0, 0], ['A', 1, 0, 0, 0], ['A', 3, 0, 0, 0], ['B', 2, 0, 0, 0], ['X', 4, 0, 0, 0], ['X', 5, 0, 0, 0], ['X', 6, 0, 0, 0], ['X', 7, 0, 0, 0], ['X', 8, 0, 0, 0], ['X', 9, 0, 0, 0],
+        ]),
+        referencePoints: { L: [0, 0, 0.5], Z: [0.5, 0.5, 0.5], F: [0.5, 0, 0.5] },
+        specialPoints: null,
+        path: null,
+    },
+};
+
 export const SUPERSTRUCTURES = Object.assign({}, WURTZITE_SUPERSTRUCTURES, ROCKSALT_SUPERSTRUCTURES,
-    FLUORITE_SUPERSTRUCTURES, PEROVSKITE_SUPERSTRUCTURES, TMD_SUPERSTRUCTURES, RUTILE_SUPERSTRUCTURES);
+    FLUORITE_SUPERSTRUCTURES, PEROVSKITE_SUPERSTRUCTURES, TMD_SUPERSTRUCTURES, RUTILE_SUPERSTRUCTURES,
+    CORUNDUM_SUPERSTRUCTURES);
 
 function rowTimesMatrix(v, m) {
     return [0, 1, 2].map((j) => v[0] * m[0][j] + v[1] * m[1][j] + v[2] * m[2][j]);
@@ -1818,6 +1880,10 @@ function* layeredDescriptions(polytype, atomTypes, positionsRed, lattice, isAnio
     let c = polytype.cell === 'hexagonal' ? volume / hexagonalVolume : (3 * volume) / hexagonalVolume;
     let H = polytype.cell === 'hexagonal' ? wurtziteLattice(a, c) : rhombohedralLattice(a, c);
     let Hinverse = mat.matrix_inverse(H);
+    // every full reading, offered closest first: a site pattern that is nearly its own
+    // mirror image (the corundum cation column: -0.204, 0, 0.296, 0.5) also fits
+    // mirrored, with other roles, within the tolerance (ilmenite: 0.09 against 0.01)
+    let readings = [];
 
     for (let axis of inPlane) {
         for (let sign of [1, -1]) {
@@ -1858,15 +1924,59 @@ function* layeredDescriptions(polytype, atomTypes, positionsRed, lattice, isAnio
                         if (!found) {
                             break;
                         }
+                        found.deviation = best;
                         sites.push(found);
                     }
                     if (sites.length === natoms && new Set(sites.map((site) => site.sub)).size === natoms) {
-                        yield { T: T, origin: origin, H: H, M: M, sites: sites, a: a, c: c };
+                        readings.push({ deviation: Math.max.apply(null, sites.map((site) => site.deviation)),
+                            reading: { T: T, origin: origin, H: H, M: M, sites: sites, a: a, c: c } });
                     }
                 }
             }
         }
     }
+    readings.sort((p, q) => p.deviation - q.deviation);
+    for (let entry of readings) {
+        yield entry.reading;
+    }
+}
+
+function getCorundumRoles(atomTypes, positionsRed, lattice) {
+    /*
+    species -> role of a corundum-derived cell: X the anion (3/5 of the atoms, a
+    usual anion: anti-corundum Ca3N2 is left out), A the cation, or A and B for an
+    ordered ternary (ilmenite). Every cation must sit in an octahedron of six
+    anions (within a factor 1.35, the seventh farther): the calcite-type carbonates,
+    borates and nitrates (planar CO3 / BO3 / NO3) and the P2S6 / Si2Te6 layers have
+    the same site pattern but not this chemistry
+    */
+    let counts = {};
+    atomTypes.forEach((type) => { counts[type] = (counts[type] || 0) + 1; });
+    let species = Object.keys(counts);
+    let x = species.filter((type) => 5 * counts[type] === 3 * atomTypes.length && ANION_LIKE.has(type));
+    if (x.length !== 1 || species.length < 2 || species.length > 3) {
+        throw new Error('Not an A2 X3 corundum cell: ' + JSON.stringify(counts));
+    }
+    if (positionsRed && lattice) {
+        let positionsCar = utils.red_car_list(positionsRed, lattice);
+        let anions = atomTypes.map((type, i) => i).filter((i) => atomTypes[i] === x[0]);
+        atomTypes.forEach((type, i) => {
+            if (type === x[0]) {
+                return;
+            }
+            let d = getNearestBonds(i, anions, positionsCar, lattice, 7).map((v) => Math.sqrt(mat.vec_dot(v, v)));
+            if (!(d[5] / d[0] < 1.35 && d[6] / d[5] > 1.1)) {
+                throw new Error('No ' + type + ' ' + x[0] + '6 octahedra: not a corundum-type cell');
+            }
+        });
+    }
+    if (species.length === 3) {
+        return getSuperstructureRoles(atomTypes, 3 / 5);
+    }
+    let roles = {};
+    roles[species.find((type) => type !== x[0])] = 'A';
+    roles[x[0]] = 'X';
+    return roles;
 }
 
 const layeredParent = (name) => ({
@@ -2063,6 +2173,7 @@ const PARENT_STRUCTURES = {
     'tmd-1T': layeredParent('tmd-1T'),
     'tmd-2H': layeredParent('tmd-2H'),
     'tmd-3R': layeredParent('tmd-3R'),
+    corundum: Object.assign(layeredParent('corundum'), { xFraction: 3 / 5, getRoles: getCorundumRoles }),
 };
 
 function getParentRoles(parent, atomTypes, positionsRed, lattice) {
@@ -3057,7 +3168,23 @@ function findOverlap(segment, others) {
     `segment` into one of the other segment
     */
     let best = null;
-    for (let other of others) {
+    // time reversal: D(-q) = D(q)^* (real force constants, either gauge), so the
+    // image -q of another segment, sampled with the complex conjugate, covers the
+    // same physics; two files may run the same line in opposite halves (Gamma -> Z
+    // towards (1/2,1/2,1/2) in one, (-1/2,-1/2,-1/2) in the other, e.g. ilmenites,
+    // whose R-3 symmetry has inversion but not the two-fold axes of corundum)
+    let conjugate = (sampler) => sampler && ((t) => {
+        let matrix = sampler(t);
+        return { real: matrix.real, imag: matrix.imag.map((row) => row.map((v) => -v)) };
+    });
+    let reversed = others.map((other) => Object.assign({}, other, {
+        qA: other.qA.map((v) => -v),
+        qB: other.qB.map((v) => -v),
+        sample: conjugate(other.sample),
+        sampleShortRange: conjugate(other.sampleShortRange),
+    }));
+    // the segments themselves first: on a tie the direct one is kept
+    for (let other of others.concat(reversed)) {
         let tA = lineParameter(segment, other.qA);
         let tB = lineParameter(segment, other.qB);
         if (tA === null || tB === null) {

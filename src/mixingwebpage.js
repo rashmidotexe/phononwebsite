@@ -85,7 +85,8 @@ export class MixingWebpage extends PhononWebpage {
     antiperovskites (the 5-atom cell, cubic or polar, and the supercells of the
     octahedral tilts: Pnma, R-3c, ...), the 2H, 1T and 3R polytypes of the
     transition-metal dichalcogenides, and rutiles (with the CaCl2-type
-    distortion) with the trirutiles and other cation orderings on them in
+    distortion) with the trirutiles and other cation orderings on them, and
+    corundums with the ilmenites and A3BX6 ordering in
     data/mixing/models.json, drawn from the PhononDB (A. Togo) and Materials
     Project (G. Petretto et al.) databases. Materials mix within their family; a
     binary with force constants (PhononDB) can also be mixed with an ordered
@@ -350,13 +351,15 @@ export class MixingWebpage extends PhononWebpage {
             tag = family.slice(4);
         } else if (family === "rutile-AB2X6") {
             tag = "trirutile";
+        } else if (family === "corundum-ABX3") {
+            tag = "ilmenite";
         } else {
             let spacegroup = (material.spacegroup || "").replace(/_(\d)/g, "<sub>$1</sub>");
-            for (let parent of ["rocksalt", "fluorite", "antifluorite", "perovskite", "antiperovskite", "rutile"]) {
+            for (let parent of ["rocksalt", "fluorite", "antifluorite", "perovskite", "antiperovskite", "rutile", "corundum"]) {
                 if (family === parent) {
                     // the cubic cell is the default; a polar 5-atom perovskite names its group
                     let cubic = !spacegroup || spacegroup === "Fm-3m" || spacegroup === "Pm-3m" ||
-                        spacegroup === "P4<sub>2</sub>/mnm";
+                        spacegroup === "P4<sub>2</sub>/mnm" || spacegroup === "R-3c";
                     tag = parent + (cubic ? "" : " " + spacegroup);
                 } else if (family.indexOf(parent + "-") === 0) {
                     tag = parent + (spacegroup ? " " + spacegroup : "");
@@ -442,6 +445,7 @@ export class MixingWebpage extends PhononWebpage {
             perovskite: ["5-atom perovskite", "Tilted perovskites"],
             antiperovskite: ["5-atom antiperovskite", "Tilted antiperovskites"],
             rutile: ["rutile", "Ordered rutiles"],
+            corundum: ["corundum", "Ilmenites and ordered corundums"],
         };
         let family1 = material1 ? material1.family : "zincblende";
         let parent = FAMILY_NAMES[family1] ? family1 : getParentFamily(family1);
@@ -609,7 +613,7 @@ export class MixingWebpage extends PhononWebpage {
         let percent = Math.round(this.character * 100);
         let mass = this.massLinked ? "" : ", mass " + Math.round(this.massCharacter * 100) + " %";
         let familyName = this.pairCache ? this.pairCache.sampled.endpoint1.family : "";
-        let family = ["wurtzite", "rocksalt", "fluorite", "antifluorite", "perovskite", "antiperovskite", "rutile"]
+        let family = ["wurtzite", "rocksalt", "fluorite", "antifluorite", "perovskite", "antiperovskite", "rutile", "corundum"]
             .find((name) => familyName.indexOf(name) === 0);
         if (familyName.indexOf("tmd-") === 0) {
             family = familyName.slice(4);

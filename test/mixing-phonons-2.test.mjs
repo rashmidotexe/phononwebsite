@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, it } from 'node:test';
 
 import {
+    analyzeSuperstructure,
     buildMixingEndpoint,
     sampleMixingPair,
     computeMixedPhonon,
@@ -694,5 +695,120 @@ describe('rutile mixing', () => {
             let mirrored = await computeMixedPhonon(reversed, 0.5, 0.7);
             assert.ok(opticalDiff(mixed.eigenvalues, mirrored.eigenvalues) < 1e-6);
         }
+    });
+});
+
+describe('corundum mixing', () => {
+    let gammaIndices = (sampled) => sampled.qpoints
+        .map((q, k) => (q.every((v) => Math.abs(v - Math.round(v)) < 1e-9) ? k : -1))
+        .filter((k) => k >= 0);
+    let opticalDiff = (a, b) => {
+        let worst = 0;
+        a.forEach((row, k) => row.forEach((v, n) => {
+            if (Math.abs(v) > 1) {
+                worst = Math.max(worst, Math.abs(v - b[k][n]));
+            }
+        }));
+        return worst;
+    };
+    let eigen = async (m) => (await solveComplexHermitianWithEigenWasm(m.real, m.imag)).values.sort((p, q) => p - q);
+
+    it('matches corundum and ilmenite, not calcite', () => {
+        let al2o3 = endpoint('phonondb-Al2O3-mp-1143.json.gz', 'Al2O3');
+        assert.equal(al2o3.family, 'corundum');
+        assert.deepEqual(al2o3.siteTypes, ['Al', 'Al', 'Al', 'Al', 'O', 'O', 'O', 'O', 'O', 'O']);
+        // MgTiO3 and CdTiO3 (the face-sharing pair longer than the in-plane distance):
+        // ilmenite, the A and B layers alternating
+        for (let [file, name, a, b] of [['phonondb-MgTiO3-mp-3771.json.gz', 'MgTiO3', 'Mg', 'Ti'], ['phonondb-CdTiO3-mp-13641.json.gz', 'CdTiO3', 'Cd', 'Ti']]) {
+            let e = endpoint(file, name);
+            assert.equal(e.family, 'corundum-ABX3', name);
+            assert.deepEqual(e.siteTypes.slice(0, 4), [a, a, b, b], name);
+            // ilmenite: across every shared face an A and a B (the nearest cation of site 0 is B)
+            let cartesian = utils.red_car_list(e.structure.positionsRed, e.structure.lattice);
+            let lattice = e.structure.lattice;
+            let nearest = null;
+            for (let j = 1; j < 4; j++) {
+                for (let n0 = -1; n0 <= 1; n0++) {
+                    for (let n1 = -1; n1 <= 1; n1++) {
+                        for (let n2 = -1; n2 <= 1; n2++) {
+                            let d = [0, 1, 2].map((k) => cartesian[j][k] + n0 * lattice[0][k] + n1 * lattice[1][k] + n2 * lattice[2][k] - cartesian[0][k]);
+                            let r = Math.hypot(...d);
+                            // along the 3-fold axis: the face-sharing partner
+                            let along = Math.abs(d[0]) < 1e-3 && Math.abs(d[1]) < 1e-3;
+                            if (along && (!nearest || r < nearest.r)) {
+                                nearest = { r: r, type: e.siteTypes[j] };
+                            }
+                        }
+                    }
+                }
+            }
+            assert.equal(nearest.type, b, name);
+        }
+        // calcite has the corundum site pattern but planar CO3 groups, not octahedra
+        let calcite = JSON.parse(readFileSync(join(__dirname, 'fixtures', 'mixing', 'structure-CaCO3-calcite-mp-3953.json')));
+        assert.throws(() => analyzeSuperstructure('corundum', calcite.atom_types, calcite.atom_pos_red, calcite.lattice), /octahedra/);
+    });
+
+    it('folds a corundum into the ilmenite cell of the same size', async () => {
+        let al2o3 = endpoint('phonondb-Al2O3-mp-1143.json.gz', 'Al2O3');
+        let folded = binaryAsSuperstructure(al2o3, 'corundum-ABX3');
+        for (let q of [[0.13, -0.07, 0.21], [0.5, 0, 0]]) {
+            let expected = await eigen(al2o3.sampleAtQ(q, null));
+            let actual = await eigen(folded.sampleAtQ(q, null));
+            actual.forEach((v, i) => assert.ok(Math.abs(v - expected[i]) < 1e-8 * (1 + Math.abs(v))));
+        }
+    });
+
+    it('keeps end-members exact, acoustic modes at zero and mirror symmetry', async () => {
+        let al2o3 = endpoint('phonondb-Al2O3-mp-1143.json.gz', 'Al2O3');
+        let ga2o3 = endpoint('phonondb-Ga2O3-mp-1243.json.gz', 'Ga2O3');
+        let mgtio3 = endpoint('phonondb-MgTiO3-mp-3771.json.gz', 'MgTiO3');
+        let cdtio3 = endpoint('phonondb-CdTiO3-mp-13641.json.gz', 'CdTiO3');
+        for (let [a, b] of [[al2o3, ga2o3], [al2o3, mgtio3], [mgtio3, cdtio3]]) {
+            let sampled = sampleMixingPair(a, b);
+            let reversed = sampleMixingPair(b, a);
+            assert.equal(sampled.recomputeNac, true);
+            let end0 = await computeMixedPhonon(sampled, 0);
+            assert.ok(opticalDiff(end0.eigenvalues, await computeReferenceEigenvalues(sampled)) < 1e-3);
+            let end1 = await computeMixedPhonon(sampled, 1);
+            assert.ok(opticalDiff(end1.eigenvalues, await computeReferenceEigenvalues(reversed)) < 1e-3);
+            let mixed = await computeMixedPhonon(sampled, 0.5, 0.3);
+            for (let k of gammaIndices(sampled)) {
+                let near = mixed.eigenvalues[k].map(Math.abs).sort((p, q) => p - q);
+                assert.ok(near[2] < 0.05, `${a.name} + ${b.name}: ${near[2]}`);
+            }
+            let mirrored = await computeMixedPhonon(reversed, 0.5, 0.7);
+            assert.ok(opticalDiff(mixed.eigenvalues, mirrored.eigenvalues) < 1e-6);
+        }
+    });
+});
+
+describe('Materials Project paths related by time reversal', () => {
+    it('mixes two files whose paths run in opposite halves (q -> -q)', async () => {
+        // a Materials Project file and its own image under q -> -q (D(-q) = D(q)^*): before,
+        // they shared no segment; now they mix, and give the material's own frequencies
+        let raw = loadFixture('mpdb-NaInS2-mp-20289-trimmed.json.gz');
+        let e1 = buildMixingEndpoint(raw, { name: 'NaInS2' });
+        let e2 = buildMixingEndpoint(loadFixture('mpdb-NaInS2-mp-20289-trimmed.json.gz'), { name: 'NaInS2' });
+        e2.segments = e2.segments.map((segment) => Object.assign({}, segment, {
+            qA: segment.qA.map((v) => -v),
+            qB: segment.qB.map((v) => -v),
+            sample: (t) => {
+                let matrix = segment.sample(t);
+                return { real: matrix.real, imag: matrix.imag.map((row) => row.map((v) => -v)) };
+            },
+        }));
+        let sampled = sampleMixingPair(e1, e2);
+        let points = e1.segments.reduce((total, segment) => total + segment.npoints, 0);
+        assert.ok(sampled.qpoints.length >= 0.9 * points);
+        let mixed = await computeMixedPhonon(sampled, 0.5);
+        let own = await computeReferenceEigenvalues(sampled);
+        // up to the acoustic-sum-rule correction the mixture applies (the file's own
+        // small violation at Gamma, removed at every q): ~1e-5 relative
+        mixed.eigenvalues.forEach((row, k) => row.forEach((v, n) => {
+            if (Math.abs(v) > 1) {
+                assert.ok(Math.abs(v - own[k][n]) < 1e-2);
+            }
+        }));
     });
 });

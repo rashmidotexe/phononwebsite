@@ -6045,5 +6045,292 @@
         "source": "mpdb",
         "spacegroup": "P4_2/mnm",
         "family": "rutile"
+    },
+    {
+        "id": "1143",
+        "name": "Al2O3",
+        "source": "phonondb",
+        "spacegroup": "R-3c",
+        "family": "corundum"
+    },
+    {
+        "id": "1243",
+        "name": "Ga2O3",
+        "source": "phonondb",
+        "spacegroup": "R-3c",
+        "family": "corundum"
+    },
+    {
+        "id": "13641",
+        "name": "CdTiO3",
+        "source": "phonondb",
+        "spacegroup": "R-3",
+        "family": "corundum-ABX3"
+    },
+    {
+        "id": "14142",
+        "name": "ZnTiO3",
+        "source": "phonondb",
+        "spacegroup": "R-3",
+        "family": "corundum-ABX3"
+    },
+    {
+        "id": "14787",
+        "name": "Tm2S3",
+        "source": "phonondb",
+        "spacegroup": "R-3c",
+        "family": "corundum"
+    },
+    {
+        "id": "22323",
+        "name": "In2O3",
+        "source": "phonondb",
+        "spacegroup": "R-3c",
+        "family": "corundum"
+    },
+    {
+        "id": "23054",
+        "name": "NaBiO3",
+        "source": "phonondb",
+        "spacegroup": "R-3",
+        "family": "corundum-ABX3"
+    },
+    {
+        "id": "27176",
+        "name": "NaMnCl3",
+        "source": "phonondb",
+        "spacegroup": "R-3",
+        "family": "corundum-ABX3"
+    },
+    {
+        "id": "2826",
+        "name": "Lu2S3",
+        "source": "phonondb",
+        "spacegroup": "R-3c",
+        "family": "corundum"
+    },
+    {
+        "id": "35906",
+        "name": "Ag3YCl6",
+        "source": "phonondb",
+        "spacegroup": "R-3",
+        "family": "corundum-A3BX6"
+    },
+    {
+        "id": "3759",
+        "name": "MgGeO3",
+        "source": "phonondb",
+        "spacegroup": "R-3",
+        "family": "corundum-ABX3"
+    },
+    {
+        "id": "3771",
+        "name": "MgTiO3",
+        "source": "phonondb",
+        "spacegroup": "R-3",
+        "family": "corundum-ABX3"
+    },
+    {
+        "id": "4190",
+        "name": "CaSnO3",
+        "source": "phonondb",
+        "spacegroup": "R-3",
+        "family": "corundum-ABX3"
+    },
+    {
+        "id": "4482",
+        "name": "NaSbO3",
+        "source": "phonondb",
+        "spacegroup": "R-3",
+        "family": "corundum-ABX3"
+    },
+    {
+        "id": "542734",
+        "name": "Rh2O3",
+        "source": "phonondb",
+        "spacegroup": "R-3c",
+        "family": "corundum"
+    },
+    {
+        "id": "547792",
+        "name": "KSbO3",
+        "source": "phonondb",
+        "spacegroup": "R-3",
+        "family": "corundum-ABX3"
+    },
+    {
+        "id": "675104",
+        "name": "Na3YCl6",
+        "source": "phonondb",
+        "spacegroup": "R-3",
+        "family": "corundum-A3BX6"
+    },
+    {
+        "id": "754329",
+        "name": "CdSnO3",
+        "source": "phonondb",
+        "spacegroup": "R-3",
+        "family": "corundum-ABX3"
+    },
+    {
+        "id": "754701",
+        "name": "CaTiO3",
+        "source": "phonondb",
+        "spacegroup": "R-3",
+        "family": "corundum-ABX3"
+    },
+    {
+        "id": "755313",
+        "name": "Sc2O3",
+        "source": "phonondb",
+        "spacegroup": "R-3c",
+        "family": "corundum"
+    },
+    {
+        "id": "755478",
+        "name": "CdBiO3",
+        "source": "phonondb",
+        "spacegroup": "R-3",
+        "family": "corundum-ABX3"
+    },
+    {
+        "id": "8275",
+        "name": "CdGeO3",
+        "source": "phonondb",
+        "spacegroup": "R-3",
+        "family": "corundum-ABX3"
+    },
+    {
+        "id": "8285",
+        "name": "ZnGeO3",
+        "source": "phonondb",
+        "spacegroup": "R-3",
+        "family": "corundum-ABX3"
+    },
+    {
+        "id": "861979",
+        "name": "Ir2S3",
+        "source": "phonondb",
+        "spacegroup": "R-3c",
+        "family": "corundum"
+    },
+    {
+        "id": "9657",
+        "name": "LiAsO3",
+        "source": "phonondb",
+        "spacegroup": "R-3",
+        "family": "corundum-ABX3"
+    },
+    {
+        "id": "978093",
+        "name": "Ho2S3",
+        "source": "phonondb",
+        "spacegroup": "R-3c",
+        "family": "corundum"
+    },
+    {
+        "id": "547792",
+        "name": "KSbO3",
+        "source": "mpdb",
+        "spacegroup": "R-3",
+        "family": "corundum-ABX3"
+    },
+    {
+        "id": "675104",
+        "name": "Na3YCl6",
+        "source": "mpdb",
+        "spacegroup": "R-3",
+        "family": "corundum-A3BX6"
+    },
+    {
+        "id": "754329",
+        "name": "CdSnO3",
+        "source": "mpdb",
+        "spacegroup": "R-3",
+        "family": "corundum-ABX3"
+    },
+    {
+        "id": "755478",
+        "name": "CdBiO3",
+        "source": "mpdb",
+        "spacegroup": "R-3",
+        "family": "corundum-ABX3"
+    },
+    {
+        "id": "861979",
+        "name": "Ir2S3",
+        "source": "mpdb",
+        "spacegroup": "R-3c",
+        "family": "corundum"
+    },
+    {
+        "id": "974381",
+        "name": "Rh2S3",
+        "source": "mpdb",
+        "spacegroup": "R-3c",
+        "family": "corundum"
+    },
+    {
+        "id": "1143",
+        "name": "Al2O3",
+        "source": "mpdb",
+        "spacegroup": "R-3c",
+        "family": "corundum"
+    },
+    {
+        "id": "1243",
+        "name": "Ga2O3",
+        "source": "mpdb",
+        "spacegroup": "R-3c",
+        "family": "corundum"
+    },
+    {
+        "id": "3771",
+        "name": "MgTiO3",
+        "source": "mpdb",
+        "spacegroup": "R-3",
+        "family": "corundum-ABX3"
+    },
+    {
+        "id": "4190",
+        "name": "CaSnO3",
+        "source": "mpdb",
+        "spacegroup": "R-3",
+        "family": "corundum-ABX3"
+    },
+    {
+        "id": "4482",
+        "name": "NaSbO3",
+        "source": "mpdb",
+        "spacegroup": "R-3",
+        "family": "corundum-ABX3"
+    },
+    {
+        "id": "9657",
+        "name": "LiAsO3",
+        "source": "mpdb",
+        "spacegroup": "R-3",
+        "family": "corundum-ABX3"
+    },
+    {
+        "id": "13641",
+        "name": "CdTiO3",
+        "source": "mpdb",
+        "spacegroup": "R-3",
+        "family": "corundum-ABX3"
+    },
+    {
+        "id": "22323",
+        "name": "In2O3",
+        "source": "mpdb",
+        "spacegroup": "R-3c",
+        "family": "corundum"
+    },
+    {
+        "id": "23054",
+        "name": "NaBiO3",
+        "source": "mpdb",
+        "spacegroup": "R-3",
+        "family": "corundum-ABX3"
     }
 ]
