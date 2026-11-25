@@ -3255,7 +3255,6 @@ function foldIntoSupercell(primitive, family, superLattice, superPositionsRed, s
 
     let toCartesian = (q) => [0, 1, 2].map((d) => q[0] * superReciprocal[0][d] + q[1] * superReciprocal[1][d] + q[2] * superReciprocal[2][d]);
     let toPrimitive = (k) => primitiveLattice.map((p) => mat.vec_dot(k, p));
-
     let sampleAtQ = function(q, direction) {
         let qCart = toCartesian(q);
         let directionPrimitive = direction ? toPrimitive(toCartesian(direction)) : null;
@@ -3468,20 +3467,86 @@ function chalcopyriteWorldSupercell() {
     return mat.matrix_multiply(chalcopyriteLattice(1, 2), mat.matrix_inverse(rocksaltLattice(1))).map((row) => row.map(Math.round));
 }
 
-function familyWorldSupercell(family, world) {
+const IDENTITY3 = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+
+function cubicOperations() {
+    // the 48 orthogonal maps of the cube onto itself (signed permutations), identity first
+    let permutations = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]];
+    let out = [];
+    for (let permutation of permutations) {
+        for (let signs = 0; signs < 8; signs++) {
+            out.push([0, 1, 2].map((i) => [0, 1, 2].map((j) => (j === permutation[i] ? ((signs >> i) & 1 ? -1 : 1) : 0))));
+        }
+    }
+    return out;
+}
+
+let worldOperationCache = {};
+function worldOperations(world) {
     /*
-    the cell of a family in the parent basis of the world, and whether it has to be
-    folded to get there (CsCl in the fcc world: the doubled cell, det 2)
+    the point operations of the world's parent: O (cartesian) and P, the same map
+    in the parent basis (H O^T = P H, rows of H the parent lattice vectors)
+    */
+    if (!worldOperationCache[world]) {
+        let H = world === 'fcc' ? rocksaltLattice(1) : IDENTITY3;
+        let Hinverse = mat.matrix_inverse(H);
+        worldOperationCache[world] = cubicOperations().map((O) => ({
+            O: O,
+            P: mat.matrix_multiply(mat.matrix_multiply(H, mat.matrix_transpose(O)), Hinverse).map((row) => row.map(Math.round)),
+        }));
+    }
+    return worldOperationCache[world];
+}
+
+function transformWorldSite(site, P, world) {
+    // a world site (sublattice, n) under the operation P of the parent basis
+    let sites = LATTICE_WORLDS[world].sites;
+    let v = rowTimesMatrix(sites[site.sub].red.map((x, k) => x + site.n[k]), P);
+    let sub = sites.findIndex((candidate) => v.every((x, k) => Math.abs(x - candidate.red[k] - Math.round(x - candidate.red[k])) < 1e-6));
+    return { sub: sub, n: v.map((x, k) => Math.round(x - sites[sub].red[k])) };
+}
+
+function csclFccSites() {
+    // the world sites of CsCl folded into the doubled cell (csclInFccWorld), in its order
+    let inverse = mat.matrix_inverse(CSCL_TO_FCC);
+    let sites = [];
+    for (let m of cellTranslations(CSCL_TO_FCC)) {
+        CSCL_SITES.forEach((site) => {
+            let p = rowTimesMatrix(site.red.map((v, k) => v + m[k]), inverse);
+            let sub = HEUSLER_SITES.findIndex((h) => p.every((v, k) => Math.abs(v - h.red[k] - Math.round(v - h.red[k])) < 1e-6));
+            sites.push({ sub: sub, n: p.map((v, k) => Math.round(v - HEUSLER_SITES[sub].red[k])) });
+        });
+    }
+    return sites;
+}
+
+function familyWorldCell(family, world) {
+    /*
+    the cell of a family in the world's parent basis and the world sites of its
+    canonical sites, as worldCell gives them for an end-member; CsCl in the fcc world
+    is already folded into the doubled cell (prefolded: needs force constants)
     */
     let member = LATTICE_WORLDS[world].members[worldMemberKey(family)];
     if (member === 'cscl-fold') {
-        return { supercell: [[1, 0, 0], [0, 1, 0], [0, 0, 1]], fold: true };
+        return { supercell: IDENTITY3, sites: csclFccSites(), prefolded: true };
     }
     if (member === 'chalcopyrite') {
-        return { supercell: chalcopyriteWorldSupercell(), fold: false };
+        let S = chalcopyriteWorldSupercell();
+        return {
+            supercell: S,
+            sites: chalcopyritePositions(1, 2, 0.25).map((p, s) => {
+                let sub = CHALCOPYRITE_SITES[s].role === 'X' ? 2 : 0;
+                let parent = rowTimesMatrix(p, S);
+                return { sub: sub, n: parent.map((v, k) => Math.round(v - HEUSLER_SITES[sub].red[k])) };
+            }),
+            prefolded: false,
+        };
     }
     let template = SUPERSTRUCTURES[family];
-    return { supercell: template ? template.supercell : [[1, 0, 0], [0, 1, 0], [0, 0, 1]], fold: false };
+    if (template) {
+        return { supercell: template.supercell, sites: template.sites.map((site) => ({ sub: member[site.sub], n: site.n.slice() })), prefolded: false };
+    }
+    return { supercell: IDENTITY3, sites: member.map((sub) => ({ sub: sub, n: [0, 0, 0] })), prefolded: false };
 }
 
 function sameIntegerMatrix(p, q) {
@@ -3494,46 +3559,138 @@ function supercellRatio(big, small) {
     return isIntegerMatrix(R) ? R.map((row) => row.map(Math.round)) : null;
 }
 
+function determinant(S) {
+    return Math.abs(Math.round(mat.matrix_determinant(S)));
+}
+
+function commonSupercell(S1, S2) {
+    /*
+    the smallest cell that is a supercell of both (the intersection of the two
+    lattices): one of the two if it contains the other (S1 when they are the same
+    lattice), else the Hermite normal form of the smallest such lattice
+    */
+    if (supercellRatio(S2, S1)) {
+        return supercellRatio(S1, S2) ? S1 : S2;
+    }
+    if (supercellRatio(S1, S2)) {
+        return S1;
+    }
+    let d1 = determinant(S1);
+    let d2 = determinant(S2);
+    let gcd = (a, b) => (b ? gcd(b, a % b) : a);
+    let lcm = d1 / gcd(d1, d2) * d2;
+    for (let N = lcm; N <= d1 * d2; N += lcm) {
+        for (let h11 = 1; h11 <= N; h11++) {
+            if (N % h11) {
+                continue;
+            }
+            for (let h22 = 1; h22 <= N / h11; h22++) {
+                if ((N / h11) % h22) {
+                    continue;
+                }
+                let h33 = N / h11 / h22;
+                for (let h12 = 0; h12 < h22; h12++) {
+                    for (let h13 = 0; h13 < h33; h13++) {
+                        for (let h23 = 0; h23 < h33; h23++) {
+                            let S = [[h11, h12, h13], [0, h22, h23], [0, 0, h33]];
+                            if (supercellRatio(S, S1) && supercellRatio(S, S2)) {
+                                return S;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return null;
+}
+
+function foldWorldSites(sites, S, target) {
+    // the world sites of a cell S repeated over the supercell target (as foldIntoWorld)
+    let R = supercellRatio(target, S);
+    let out = [];
+    for (let m of cellTranslations(R)) {
+        let shift = rowTimesMatrix(m, S);
+        sites.forEach((site) => out.push({ sub: site.sub, n: site.n.map((v, k) => v + shift[k]) }));
+    }
+    return out;
+}
+
+function worldSiteKey(site, S) {
+    return site.sub + ':' + reduceIntoCell(site.n, S).join(',');
+}
+
+function shiftWorldSite(site, j, world) {
+    // a site moved by j quarters of the body diagonal (the fcc world's cycle)
+    let cycle = LATTICE_WORLDS[world].cycle;
+    if (!j) {
+        return site;
+    }
+    let p = cycle.indexOf(site.sub) + j;
+    let carry = Math.floor(p / cycle.length);
+    return { sub: cycle[p % cycle.length], n: site.n.map((v) => v + carry) };
+}
+
+let worldPlanCache = new Map();
 export function getWorldMixing(family1, family2) {
     /*
-    how two families of different structures mix in a common lattice world: null if
-    they share none, else the world and which material (1 or 2) is folded into the
-    cell of the other, in order of preference ([] when the cells are the same).
-    Folding evaluates D off the band path, so the folded one needs force constants.
+    how two families of different structures mix in a common lattice world, or null.
+    Material 2 may be turned by any of the 48 operations of the cube (the same tilted
+    cell along other axes) and both are placed in the smallest common supercell S;
+    a material whose cell is smaller than S is folded into it, which evaluates D off
+    the band path and needs its force constants (a cell of the same size in another
+    basis is only relabelled). Returns the world and the options, best first: the
+    operation, S, whether each material is folded, and how many sites coincide
+    (after the best shift). The options run from the smallest common cell and the
+    fewest folds to the most shared sites.
     */
+    let cacheKey = family1 + '|' + family2;
+    if (worldPlanCache.has(cacheKey)) {
+        return worldPlanCache.get(cacheKey);
+    }
     let worlds = getLatticeWorlds(family1).filter((world) => getLatticeWorlds(family2).indexOf(world) !== -1);
-    if (!worlds.length) {
-        return null;
-    }
-    // CsCl with a perovskite: the cubic world, no fold
-    let world = worlds.indexOf('cubic') !== -1 ? 'cubic' : worlds[0];
-    let cell1 = familyWorldSupercell(family1, world);
-    let cell2 = familyWorldSupercell(family2, world);
-    if (cell1.fold && cell2.fold) {
-        return null;
-    }
-    let S1 = cell1.supercell;
-    let S2 = cell2.supercell;
-    let det1 = Math.abs(Math.round(mat.matrix_determinant(S1)));
-    let det2 = Math.abs(Math.round(mat.matrix_determinant(S2)));
-    let folds = [];
-    if (cell1.fold || cell2.fold) {
-        // the CsCl cell is folded, into the other's cell
-        folds = [cell1.fold ? 1 : 2];
-    } else if (!sameIntegerMatrix(S1, S2)) {
-        // fold the smaller cell into the larger one (either, for two cells of the same
-        // size in different bases: material 2 preferred, material 1 kept as it is)
-        if (det1 <= det2 && supercellRatio(S2, S1)) {
-            folds.push(1);
+    let plan = null;
+    if (worlds.length) {
+        // CsCl with a perovskite: the cubic world, no fold
+        let world = worlds.indexOf('cubic') !== -1 ? 'cubic' : worlds[0];
+        let cell1 = familyWorldCell(family1, world);
+        let cell2 = familyWorldCell(family2, world);
+        let shifts = LATTICE_WORLDS[world].cycle ? [0, 1, 2, 3] : [0];
+        let options = [];
+        if (!(cell1.prefolded && cell2.prefolded)) {
+            worldOperations(world).forEach((operation, index) => {
+                let S2 = mat.matrix_multiply(cell2.supercell, operation.P).map((row) => row.map(Math.round));
+                let S = commonSupercell(cell1.supercell, S2);
+                if (!S) {
+                    return;
+                }
+                let det = determinant(S);
+                let fold1 = cell1.prefolded || det > determinant(cell1.supercell);
+                let fold2 = cell2.prefolded || det > determinant(S2);
+                let keys1 = new Set(foldWorldSites(cell1.sites, cell1.supercell, S).map((site) => worldSiteKey(site, S)));
+                let sites2 = foldWorldSites(cell2.sites.map((site) => transformWorldSite(site, operation.P, world)), S2, S);
+                // the most sites in common over the translations prepareWorldPair tries
+                // (quarters of the body diagonal and lattice vectors modulo S), so that
+                // the options are the same whichever material comes first
+                let shared = 0;
+                for (let j of shifts) {
+                    let moved = sites2.map((site) => shiftWorldSite(site, j, world));
+                    for (let n of cellTranslations(S)) {
+                        let count = moved.filter((site) => keys1.has(worldSiteKey({ sub: site.sub, n: site.n.map((v, k) => v + n[k]) }, S))).length;
+                        shared = Math.max(shared, count);
+                    }
+                }
+                options.push({ index: index, O: operation.O, P: operation.P, supercell: S, det: det, fold1: fold1, fold2: fold2, shared: shared });
+            });
         }
-        if (det2 <= det1 && supercellRatio(S1, S2)) {
-            folds.unshift(2);
-        }
-        if (!folds.length) {
-            return null;
+        options.sort((p, q) => p.det - q.det || (p.fold1 + p.fold2) - (q.fold1 + q.fold2) ||
+            q.shared - p.shared || p.index - q.index);
+        if (options.length) {
+            plan = { world: world, options: options };
         }
     }
-    return { world: world, folds: folds };
+    worldPlanCache.set(cacheKey, plan);
+    return plan;
 }
 
 function worldCell(endpoint, world) {
@@ -3616,9 +3773,8 @@ function foldIntoWorld(endpoint, info, R, worldSitesOf = null) {
     worldSitesOf for CsCl, whose cell is not one of the world's)
     */
     let evaluate = endpoint.sampleAtQ || endpoint.evaluate;
-    if (endpoint.family === 'chalcopyrite') {
-        // its file cell is not the canonical one: the others are folded into it instead
-        throw new Error('A chalcopyrite cannot be folded into a larger cell');
+    if (endpoint.family === 'chalcopyrite' && !chalcopyriteInCanonicalBasis(endpoint)) {
+        throw new Error('Unsupported chalcopyrite setting: not the standard body-centred tetragonal cell');
     }
     if (!evaluate) {
         throw new Error('Mixing ' + endpoint.name + ' with a material of another structure needs its force constants ' +
@@ -3645,6 +3801,16 @@ function foldIntoWorld(endpoint, info, R, worldSitesOf = null) {
     let folded = foldIntoSupercell(primitive, endpoint.family, superLattice, positions, sublattice,
         { lattice: superLattice, positionsRed: positions });
     folded.foldedFrom = endpoint;
+    // its band path in the supercell's reduced q (q R^T), in case the other material
+    // is folded too and has no path of its own
+    let toSuper = (q) => rowTimesMatrix(q, mat.matrix_transpose(R));
+    folded.pathSegments = (endpoint.pathSegments || endpoint.segments).map((segment) => ({
+        qA: toSuper(segment.qA),
+        qB: toSuper(segment.qB),
+        labelA: segment.labelA,
+        labelB: segment.labelB,
+        npoints: segment.npoints,
+    }));
     return {
         endpoint: folded,
         info: {
@@ -3685,96 +3851,273 @@ function reduceIntoCell(n, S) {
     return n.map((v, k) => Math.round(v - back[k]));
 }
 
+function hermiteRows(S) {
+    // the Hermite normal form of an integer lattice basis (rows): upper triangular,
+    // positive diagonal, entries above the diagonal reduced; the same for any basis
+    let A = S.map((row) => row.map(Math.round));
+    let r = 0;
+    for (let c = 0; c < 3 && r < 3; c++) {
+        for (;;) {
+            let pivot = -1;
+            for (let i = r; i < 3; i++) {
+                if (A[i][c] !== 0 && (pivot < 0 || Math.abs(A[i][c]) < Math.abs(A[pivot][c]))) {
+                    pivot = i;
+                }
+            }
+            if (pivot < 0) {
+                break;
+            }
+            [A[r], A[pivot]] = [A[pivot], A[r]];
+            let done = true;
+            for (let i = r + 1; i < 3; i++) {
+                let q = Math.floor(A[i][c] / A[r][c]);
+                A[i] = A[i].map((v, k) => v - q * A[r][k]);
+                if (A[i][c] !== 0) {
+                    done = false;
+                }
+            }
+            if (done) {
+                break;
+            }
+        }
+        if (A[r][c] < 0) {
+            A[r] = A[r].map((v) => -v);
+        }
+        for (let i = 0; i < r; i++) {
+            let q = Math.floor(A[i][c] / A[r][c]);
+            A[i] = A[i].map((v, k) => v - q * A[r][k]);
+        }
+        r += 1;
+    }
+    return A;
+}
+
 function isAnionSite(type) {
     return bccAnionRank(type) > 0;
 }
 
+function reframeEndpoint(endpoint, info, O, M) {
+    /*
+    an end-member turned by the cube operation O (cartesian) and expressed in the
+    basis M C O^T of its cell (M integer, det +-1): blocks of D and the Born and
+    dielectric tensors rotated, O D O^T; reduced positions p M^-1 and reduced q
+    q M^T. The reduced coordinates do not change under the rotation itself.
+    */
+    if (sameIntegerMatrix(O, IDENTITY3) && sameIntegerMatrix(M, IDENTITY3)) {
+        return { endpoint: endpoint, info: info };
+    }
+    let rotateBlocks = (matrix) => {
+        let n = matrix.real.length / 3;
+        let out = zeroMatrix(3 * n);
+        for (let i = 0; i < n; i++) {
+            for (let j = 0; j < n; j++) {
+                for (let part of ['real', 'imag']) {
+                    let block = [0, 1, 2].map((a) => [0, 1, 2].map((b) => matrix[part][3 * i + a][3 * j + b]));
+                    let rotated = rotateTensor(O, block);
+                    for (let a = 0; a < 3; a++) {
+                        for (let b = 0; b < 3; b++) {
+                            out[part][3 * i + a][3 * j + b] = rotated[a][b];
+                        }
+                    }
+                }
+            }
+        }
+        return out;
+    };
+    let canonical = (matrix) => rotateBlocks(toCanonical(endpoint, matrix));
+    let back = mat.matrix_transpose(mat.matrix_inverse(M));
+    let toOld = (q) => q && rowTimesMatrix(q, back);
+    let toNew = (q) => rowTimesMatrix(q, mat.matrix_transpose(M));
+    let evaluate = endpoint.sampleAtQ || endpoint.evaluate;
+    let evaluateShortRange = endpoint.sampleShortRangeAtQ || endpoint.evaluateShortRange;
+    let sampleAtQ = evaluate ? (q, direction) => canonical(evaluate(toOld(q), toOld(direction))) : null;
+    let sampleShortRangeAtQ = evaluateShortRange ? (q, direction) => canonical(evaluateShortRange(toOld(q), toOld(direction))) : null;
+    let lattice = mat.matrix_multiply(M, info.cell.map((row) => matrixTimesVector(O, row)));
+    let Minverse = mat.matrix_inverse(M);
+    let positions = info.positions.map((p) => rowTimesMatrix(p, Minverse));
+    let nac = endpoint.nac ? Object.assign({}, endpoint.nac, {
+        siteBorn: endpoint.nac.siteBorn.map((born) => rotateTensor(O, born)),
+        siteDielectric: rotateTensor(O, endpoint.nac.siteDielectric),
+    }) : null;
+    let reframed = {
+        family: endpoint.family,
+        name: endpoint.name,
+        anyQ: endpoint.anyQ,
+        siteTypes: endpoint.siteTypes,
+        siteMasses: endpoint.siteMasses,
+        order: endpoint.siteTypes.map((_, i) => i),
+        invert: false,
+        rotation: null,
+        lattice: lattice,
+        positionsRed: positions,
+        structure: { lattice: lattice, positionsRed: positions },
+        nac: nac,
+        frequencyFactor: endpoint.frequencyFactor,
+        segments: endpoint.segments.map((segment) => Object.assign({}, segment, {
+            qA: toNew(segment.qA),
+            qB: toNew(segment.qB),
+            sample: (t) => canonical(segment.sample(t)),
+            sampleShortRange: segment.sampleShortRange ? (t) => canonical(segment.sampleShortRange(t)) : null,
+        })),
+        pathSegments: endpoint.pathSegments ? endpoint.pathSegments.map((segment) => Object.assign({}, segment, {
+            qA: toNew(segment.qA),
+            qB: toNew(segment.qB),
+        })) : null,
+        sampleAtQ: sampleAtQ,
+        sampleShortRangeAtQ: sampleShortRangeAtQ,
+        evaluate: sampleAtQ,
+        evaluateShortRange: sampleShortRangeAtQ,
+    };
+    return {
+        endpoint: reframed,
+        info: {
+            supercell: mat.matrix_multiply(M, info.supercell).map((row) => row.map(Math.round)),
+            cell: lattice,
+            positions: positions,
+            sites: info.sites,
+        },
+    };
+}
+
+function chalcopyriteInCanonicalBasis(endpoint) {
+    /*
+    a chalcopyrite file evaluated at canonical reduced q: its cell is the canonical
+    body-centred tetragonal one, turned (as zincblendeAsChalcopyrite assumes)
+    */
+    let T = endpoint.rotation || IDENTITY3;
+    let rotated = endpoint.lattice.map((row) => matrixTimesVector(T, row));
+    let U = mat.matrix_multiply(rotated, mat.matrix_inverse(endpointLattice(endpoint)));
+    return U.every((row, i) => row.every((v, j) => Math.abs(v - (i === j ? 1 : 0)) < 1e-3));
+}
+
+function canFold(endpoint) {
+    return !!(endpoint.sampleAtQ || endpoint.evaluate) &&
+        (endpoint.family !== 'chalcopyrite' || chalcopyriteInCanonicalBasis(endpoint));
+}
+
 function prepareWorldPair(endpoint1, endpoint2) {
     /*
-    two end-members of different structures in their common lattice world: the one
-    with the smaller cell folded into the cell of the other (getWorldMixing), and the
-    union of their sites. Material 2 may be shifted by a translation that maps the
-    world's site set onto itself (a quarter of the body diagonal in the fcc world):
-    the shift that leaves the fewest vacancies, then puts anions on anions. Returns
-    the end-members, and for every union site its index in each (-1: vacancy).
+    two end-members of different structures in their common lattice world
+    (getWorldMixing): material 2 turned by the chosen cube operation, both folded
+    into the common supercell where their cells are smaller, and the union of their
+    sites. Material 2 may also be shifted by a translation that maps the world's
+    site set onto itself (a quarter of the body diagonal in the fcc world). Of the
+    options that need only the force constants available and share the most sites,
+    the one that puts anions on anions; on a tie the same relative arrangement
+    whichever material comes first. Returns the end-members, and for every union site
+    its index in each (-1: vacancy).
     */
-    let relation = getWorldMixing(endpoint1.family, endpoint2.family);
-    if (!relation) {
+    let plan = getWorldMixing(endpoint1.family, endpoint2.family);
+    if (!plan) {
         return null;
     }
-    let world = relation.world;
+    let world = plan.world;
+    let feasible = plan.options.filter((option) => (!option.fold1 || canFold(endpoint1)) && (!option.fold2 || canFold(endpoint2)));
+    if (!feasible.length) {
+        let missing = !canFold(endpoint1) ? endpoint1 : endpoint2;
+        throw new Error('Mixing ' + missing.name + ' with ' + (missing === endpoint1 ? endpoint2 : endpoint1).name +
+            ' folds it into a larger cell, which needs its force constants (PhononDB); the Materials Project files only cover the band path');
+    }
+    let top = feasible.filter((option) => option.det === feasible[0].det &&
+        option.fold1 + option.fold2 === feasible[0].fold1 + feasible[0].fold2 && option.shared === feasible[0].shared);
     let place = (endpoint) => (LATTICE_WORLDS[world].members[worldMemberKey(endpoint.family)] === 'cscl-fold'
         ? csclInFccWorld(endpoint)
         : { endpoint: endpoint, info: worldCell(endpoint, world) });
-    let placed = [place(endpoint1), place(endpoint2)];
-    let error = null;
-    let folded = false;
-    for (let which of relation.folds) {
-        if (folded) {
-            break;
+    let into = (placed, S) => {
+        // folded into S, or (the same lattice in another basis) relabelled
+        let R = supercellRatio(S, placed.info.supercell);
+        if (sameIntegerMatrix(R, IDENTITY3)) {
+            return placed;
         }
-        let k = which - 1;
-        let other = placed[1 - k];
-        let R = supercellRatio(other.info.supercell, placed[k].info.supercell);
-        if (!R) {
-            continue;
+        if (Math.abs(determinant(R)) === 1) {
+            return reframeEndpoint(placed.endpoint, placed.info, IDENTITY3, R);
         }
-        if (sameIntegerMatrix(R, [[1, 0, 0], [0, 1, 0], [0, 0, 1]])) {
-            // already the same cell
-            folded = true;
-            break;
-        }
-        try {
-            placed[k] = foldIntoWorld(placed[k].endpoint, placed[k].info, R);
-            folded = true;
-        } catch (caught) {
-            error = caught;
-        }
-    }
-    if (relation.folds.length && !folded && !sameIntegerMatrix(placed[0].info.supercell, placed[1].info.supercell)) {
-        throw error || new Error('Cannot place ' + endpoint1.name + ' and ' + endpoint2.name + ' in a common cell');
-    }
-    let [p1, p2] = placed;
-    let S = p1.info.supercell;
-    let key = (site) => site.sub + ':' + reduceIntoCell(site.n, S).join(',');
-    let keys1 = p1.info.sites.map(key);
-    let p1info = (j) => p1.info.positions[j];
-    let index1 = new Map(keys1.map((k, i) => [k, i]));
-
-    // material 2 shifted along the cycle of the world's sites
-    let cycle = LATTICE_WORLDS[world].cycle;
-    let shifts = cycle ? [0, 1, 2, 3] : [0];
-    let shiftSite = (site, j) => {
-        if (!j) {
-            return site;
-        }
-        let p = cycle.indexOf(site.sub) + j;
-        let carry = Math.floor(p / cycle.length);
-        return { sub: cycle[p % cycle.length], n: site.n.map((v) => v + carry) };
+        return foldIntoWorld(placed.endpoint, placed.info, R);
     };
+    let base1 = place(endpoint1);
+    let base2 = place(endpoint2);
+    let shifts = LATTICE_WORLDS[world].cycle ? [0, 1, 2, 3] : [0];
+    let order = (endpoint1.name || '') <= (endpoint2.name || '');
     let best = null;
-    for (let j of shifts) {
-        let keys2 = p2.info.sites.map((site) => key(shiftSite(site, j)));
-        let shared = keys2.filter((k) => index1.has(k)).length;
-        let agree = 0;
-        keys2.forEach((k, i) => {
-            if (index1.has(k) && isAnionSite(p1.endpoint.siteTypes[index1.get(k)]) === isAnionSite(p2.endpoint.siteTypes[i])) {
-                agree += 1;
+    // ties: the same arrangement whichever material comes first. Material 2 turned by
+    // O and translated by t is, seen from material 2, material 1 turned by O^-1 and
+    // translated by -O^-1 t; both are described from the material first by name, with
+    // t split into quarters of the body diagonal and a lattice vector of the parent,
+    // reduced modulo the common cell (in its Hermite normal form, so that the same
+    // coset is described the same way in any basis)
+    let operations = worldOperations(world);
+    let quarter = [0.25, 0.25, 0.25];
+    let isInteger = (v) => v.every((x) => Math.abs(x - Math.round(x)) < 1e-6);
+    let tieKey = (option, t, S) => {
+        let index = option.index;
+        let cell = S;
+        if (!order) {
+            index = operations.findIndex((operation) => sameIntegerMatrix(operation.O, mat.matrix_transpose(option.O)));
+            let P = operations[index].P;
+            t = rowTimesMatrix(t, P).map((v) => -v);
+            cell = mat.matrix_multiply(S, P).map((row) => row.map(Math.round));
+        }
+        let j = shifts.find((jj) => isInteger(t.map((v, k) => v - jj * quarter[k])));
+        let n = reduceIntoCell(t.map((v, k) => Math.round(v - j * quarter[k])), hermiteRows(cell));
+        return [index, j].concat(n);
+    };
+    let before = (p, q) => {
+        for (let i = 0; i < p.length; i++) {
+            if (p[i] !== q[i]) {
+                return p[i] < q[i];
             }
-        });
-        // on a tie (shifts by +1/4 and -1/4) the same relative arrangement whichever
-        // material comes first: by the order of the names
-        let tieKey = (endpoint1.name || '') <= (endpoint2.name || '') ? j : (shifts.length - j) % shifts.length;
-        let score = shared * 1000 + agree;
-        if (!best || score > best.score || (score === best.score && tieKey < best.tieKey)) {
-            best = { score: score, shift: j, keys2: keys2, tieKey: tieKey };
+        }
+        return false;
+    };
+    for (let option of top) {
+        let S = option.supercell;
+        let p1 = into(base1, S);
+        let turned = reframeEndpoint(base2.endpoint, Object.assign({}, base2.info, {
+            sites: base2.info.sites.map((site) => transformWorldSite(site, option.P, world)),
+            supercell: mat.matrix_multiply(base2.info.supercell, option.P).map((row) => row.map(Math.round)),
+        }), option.O, IDENTITY3);
+        // reframeEndpoint keeps supercell M S; here the cell is S2 P after the rotation
+        turned.info.supercell = mat.matrix_multiply(base2.info.supercell, option.P).map((row) => row.map(Math.round));
+        let p2 = into(turned, S);
+        let keys1 = p1.info.sites.map((site) => worldSiteKey(site, S));
+        let index1 = new Map(keys1.map((k, i) => [k, i]));
+        // translations of material 2: quarters of the body diagonal (the fcc world's
+        // site cycle) and lattice vectors of the parent modulo the common cell (an
+        // ordering is not invariant under them)
+        let lattice = cellTranslations(S);
+        for (let j of shifts) {
+            for (let n of lattice) {
+                let keys2 = p2.info.sites.map((site) => {
+                    let moved = shiftWorldSite(site, j, world);
+                    return worldSiteKey({ sub: moved.sub, n: moved.n.map((v, k) => v + n[k]) }, S);
+                });
+                let shared = 0;
+                let agree = 0;
+                keys2.forEach((k, i) => {
+                    if (index1.has(k)) {
+                        shared += 1;
+                        if (isAnionSite(p1.endpoint.siteTypes[index1.get(k)]) === isAnionSite(p2.endpoint.siteTypes[i])) {
+                            agree += 1;
+                        }
+                    }
+                });
+                let score = shared * 1000 + agree;
+                let t = quarter.map((v, k) => v * j + n[k]);
+                if (best && score < best.score) {
+                    continue;
+                }
+                let tie = tieKey(option, t, S);
+                if (!best || score > best.score || before(tie, best.tie)) {
+                    best = { option: option, score: score, tie: tie, shift: j, translation: n, t: t,
+                        keys1: keys1, keys2: keys2, index1: index1, p1: p1, p2: p2, S: S };
+                }
+            }
         }
     }
-    // the shift in reduced coordinates of the common cell: j quarters of the body
-    // diagonal of the fcc basis
-    let shiftRed = rowTimesMatrix([0.25, 0.25, 0.25].map((v) => v * best.shift), mat.matrix_inverse(S));
+    let { p1, p2, S, keys1, index1 } = best;
+    // the translation in reduced coordinates of the common cell
+    let shiftRed = rowTimesMatrix(best.t, mat.matrix_inverse(S));
     let positions2 = p2.info.positions.map((p) => p.map((v, k) => v + shiftRed[k]));
-
     let map1 = keys1.map((_, i) => i);
     let map2 = keys1.map(() => -1);
     best.keys2.forEach((k, i) => {
@@ -3783,8 +4126,8 @@ function prepareWorldPair(endpoint1, endpoint2) {
             map2[j] = i;
             // the same site may lie a lattice vector away in the other cell: put it on
             // material 1's copy, so that the mixture does not move it across the cell
-            let p1 = p1info(j);
-            positions2[i] = positions2[i].map((v, d) => v - Math.round(v - p1[d]));
+            let target = p1.info.positions[j];
+            positions2[i] = positions2[i].map((v, d) => v - Math.round(v - target[d]));
         } else {
             map1.push(-1);
             map2.push(i);
@@ -3805,6 +4148,8 @@ function prepareWorldPair(endpoint1, endpoint2) {
             ownPositions1: p1.info.positions,
             ownPositions2: p2.info.positions,
             shift2: best.shift,
+            // the chosen arrangement (operation index, shift) and its tie key, for checks
+            arrangement: { operation: best.option.index, shift: best.shift, translation: best.translation, tie: best.tie, score: best.score },
         },
     };
 }
@@ -3921,6 +4266,29 @@ export function buildCommonPath(endpoint1, endpoint2) {
             // both known at any q, no standard path: the path of the file of one of
             // them, the same one whichever material comes first
             let hasPath = [endpoint1, endpoint2].filter((endpoint) => endpoint.segments.length);
+            if (!hasPath.length) {
+                // both folded into a common cell (two orderings): the path of one of
+                // them, the same one whichever material comes first, evaluated for both
+                let source = [endpoint1, endpoint2].filter((endpoint) => endpoint.pathSegments && endpoint.pathSegments.length)
+                    .sort((p, q) => (p.name < q.name ? -1 : p.name > q.name ? 1 : 0))[0];
+                if (source) {
+                    return source.pathSegments.map((segment) => {
+                        let direction = [0, 1, 2].map((d) => segment.qB[d] - segment.qA[d]);
+                        let atQ = (sampler) => sampler && ((t) => sampler(lerpQ(segment.qA, segment.qB, t), direction));
+                        return {
+                            qA: segment.qA,
+                            qB: segment.qB,
+                            labelA: segment.labelA,
+                            labelB: segment.labelB,
+                            npoints: segment.npoints,
+                            sample1: atQ(endpoint1.sampleAtQ),
+                            sample2: atQ(endpoint2.sampleAtQ),
+                            sampleShortRange1: atQ(endpoint1.sampleShortRangeAtQ),
+                            sampleShortRange2: atQ(endpoint2.sampleShortRangeAtQ),
+                        };
+                    });
+                }
+            }
             real = hasPath.length === 2
                 ? (endpoint2.name < endpoint1.name ? endpoint2 : endpoint1)
                 : hasPath[0] || endpoint1;
@@ -4347,10 +4715,12 @@ function imposeAcousticSumRule(matrices, qpoints, masses, positionsRed, lattice 
             }
             let d = positionsRed[j].map((v, k) => v - positionsRed[i][k]);
             let base = d.map((v) => -Math.round(v));
+            // a skewed cell (the Hermite form of a common supercell) can put the
+            // shortest image a few cells away from the rounded difference
             let candidates = [];
-            for (let n0 = -1; n0 <= 1; n0++) {
-                for (let n1 = -1; n1 <= 1; n1++) {
-                    for (let n2 = -1; n2 <= 1; n2++) {
+            for (let n0 = -3; n0 <= 3; n0++) {
+                for (let n1 = -3; n1 <= 3; n1++) {
+                    for (let n2 = -3; n2 <= 3; n2++) {
                         let shift = [base[0] + n0, base[1] + n1, base[2] + n2];
                         let cartesian = rowTimesMatrix(d.map((v, k) => v + shift[k]), lattice);
                         candidates.push({ shift: shift, length: mat.vec_dot(cartesian, cartesian) });

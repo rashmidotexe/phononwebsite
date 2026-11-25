@@ -967,12 +967,13 @@ describe('ternary rocksalt dynamical-matrix mixing', () => {
         }
     });
 
-    it('refuses pairs on different lattices or without force constants', () => {
+    it('refuses pairs on different lattices or without force constants, mixes orderings', () => {
         let nains2 = endpoint('phonondb-NaInS2-mp-20289.json.gz', 'NaInS2');
         let lisco2 = endpoint('phonondb-LiScO2-mp-5840.json.gz', 'LiScO2');
         let zngen2 = endpoint('phonondb-ZnGeN2-mp-2979.json.gz', 'ZnGeN2');
         let gap = endpoint('phonondb-GaP-mp-2490.json.gz', 'GaP');
-        assert.throws(() => sampleMixingPair(nains2, lisco2), /Cannot mix/);
+        // two orderings on different cells: both folded into the smallest common cell
+        assert.equal(sampleMixingPair(nains2, lisco2).union.map1.length, 16);
         assert.throws(() => sampleMixingPair(zngen2, nains2), /Cannot mix/);
         // a zinc blende with force constants folds into the cell, with vacancies
         assert.ok(sampleMixingPair(gap, nains2).union);

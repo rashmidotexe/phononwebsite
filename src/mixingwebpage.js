@@ -565,12 +565,12 @@ export class MixingWebpage extends PhononWebpage {
         }
         // other structures on a common lattice, with vacancies on the sites only one
         // of them fills; a material folded into the other's cell needs force constants
-        let world = getWorldMixing(family1 || "zincblende", material2.family || "zincblende");
-        if (!world || !material1) {
+        let plan = getWorldMixing(family1 || "zincblende", material2.family || "zincblende");
+        if (!plan || !material1) {
             return false;
         }
-        return !world.folds.length ||
-            world.folds.some((which) => (which === 1 ? material1 : material2).source === "phonondb");
+        return plan.options.some((option) => (!option.fold1 || material1.source === "phonondb") &&
+            (!option.fold2 || material2.source === "phonondb"));
     }
 
     findMaterial(url) {

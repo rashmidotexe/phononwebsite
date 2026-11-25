@@ -182,11 +182,68 @@ describe('mixing two structures on a common lattice (vacancies)', () => {
     });
 
     it('tells which pairs mix and which material is folded', () => {
-        assert.deepEqual(getWorldMixing('rocksalt', 'zincblende'), { world: 'fcc', folds: [] });
-        assert.deepEqual(getWorldMixing('perovskite', 'antiperovskite'), { world: 'cubic', folds: [] });
-        assert.deepEqual(getWorldMixing('cscl', 'perovskite'), { world: 'cubic', folds: [] });
-        assert.deepEqual(getWorldMixing('cscl', 'heusler'), { world: 'fcc', folds: [1] });
-        assert.deepEqual(getWorldMixing('zincblende', 'rocksalt-ABX2-R3m').folds, [1]);
+        let best = (f1, f2) => {
+            let plan = getWorldMixing(f1, f2);
+            let option = plan.options[0];
+            return [plan.world, option.det, option.fold1, option.fold2];
+        };
+        assert.deepEqual(best('rocksalt', 'zincblende'), ['fcc', 1, false, false]);
+        assert.deepEqual(best('perovskite', 'antiperovskite'), ['cubic', 1, false, false]);
+        assert.deepEqual(best('cscl', 'perovskite'), ['cubic', 1, false, false]);
+        assert.deepEqual(best('cscl', 'heusler'), ['fcc', 1, true, false]);
+        assert.deepEqual(best('zincblende', 'rocksalt-ABX2-R3m'), ['fcc', 2, true, false]);
+        // the same tilted cell along other axes: turned, relabelled, no fold
+        assert.deepEqual(best('perovskite-Pnma', 'antiperovskite-Pnma'), ['cubic', 4, false, false]);
+        // two orderings on different cells: the smallest common supercell, both folded
+        let rocksalts = getWorldMixing('rocksalt-ABX2-R3m', 'rocksalt-ABX2-I41amd').options[0];
+        assert.ok(rocksalts.fold1 && rocksalts.det % 2 === 0);
         assert.equal(getWorldMixing('wurtzite', 'rocksalt'), null);
+    });
+});
+
+describe('mixing orderings on different cells or along other axes', () => {
+    let opticalDiff = (a, b) => {
+        let worst = 0;
+        a.forEach((row, k) => row.forEach((v, n) => {
+            if (Math.abs(v) > 1) {
+                worst = Math.max(worst, Math.abs(v - b[k][n]));
+            }
+        }));
+        return worst;
+    };
+    let atZero = (sampled, mixed) => {
+        let worst = 0;
+        sampled.qpoints.forEach((q, k) => {
+            if (q.every((v) => Math.abs(v) < 1e-9)) {
+                worst = Math.max(worst, mixed.eigenvalues[k].map(Math.abs).sort((p, r) => p - r)[2]);
+            }
+        });
+        return worst;
+    };
+
+    it('mixes two rocksalt orderings in their common supercell', async () => {
+        // R-3m (2 cations) and I4_1/amd (4): both folded into the 16-site common cell,
+        // the path of one of them carried into it
+        let nains2 = () => endpoint('phonondb-NaInS2-mp-20289.json.gz', 'NaInS2');
+        let lisco2 = () => endpoint('phonondb-LiScO2-mp-5840.json.gz', 'LiScO2');
+        let sampled = sampleMixingPair(nains2(), lisco2());
+        let reversed = sampleMixingPair(lisco2(), nains2());
+        assert.equal(sampled.union.map1.length, 16);
+        assert.ok(sampled.qpoints.length > 50);
+        let end0 = await computeMixedPhonon(sampled, 0);
+        assert.ok(opticalDiff(end0.eigenvalues, await computeReferenceEigenvalues(sampled)) < 1e-3);
+        let mixed = await computeMixedPhonon(sampled, 0.4, 0.6);
+        assert.ok(atZero(sampled, mixed) < 0.05);
+        let mirrored = await computeMixedPhonon(reversed, 0.6, 0.4);
+        assert.ok(opticalDiff(mixed.eigenvalues, mirrored.eigenvalues) < 1e-6);
+    });
+
+    it('turns a tilted cell onto the axes of the other', () => {
+        // perovskite-Pnma and antiperovskite-Pnma: the same cell along other axes
+        let plan = getWorldMixing('perovskite-Pnma', 'antiperovskite-Pnma');
+        let option = plan.options[0];
+        assert.equal(option.det, 4);
+        assert.ok(!option.fold1 && !option.fold2);
+        assert.ok(option.index > 0);
     });
 });
