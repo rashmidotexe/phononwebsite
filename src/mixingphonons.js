@@ -16,7 +16,9 @@
  * Rutiles (A X2, with the CaCl2-type distortion) mix with each other and fold into
  * the cation-ordered rutiles: trirutile A B2 X6, A B X4, A B3 X8
  * (RUTILE_SUPERSTRUCTURES). Corundums (A2 X3) mix with each other and fold into
- * ilmenite (A B X3) and A3 B X6 on the same cell (CORUNDUM_SUPERSTRUCTURES). Force constants
+ * ilmenite (A B X3) and A3 B X6 on the same cell (CORUNDUM_SUPERSTRUCTURES). On the
+ * body-centred cubic lattice, CsCl-type A X mix with each other, and Li3Bi-type A3 X
+ * fold into the full and inverse Heuslers A2 B X (BCC_SUPERSTRUCTURES). Force constants
  * and site masses are mixed separately:
  *
  *     Phi_k(q)   = M_k^1/2 D_k(q) M_k^1/2
@@ -1357,9 +1359,57 @@ export const CORUNDUM_SUPERSTRUCTURES = {
     },
 };
 
+// body-centred cubic parents (BCC_LAYOUTS): the CsCl type A X on its 2-atom simple
+// cubic cell, and the Li3Bi (BiF3, D0_3) type A3 X on the 4-atom fcc cell with the
+// Heusler orderings A2 B X on it: B on the octahedral site (full Heusler, Cu2MnAl
+// type: K2CsSb, Li2NaSb, Ba2AuSb) or on a tetrahedral one (inverse Heusler, Hg2CuTi
+// type: Li2CuSb). Derived with analyzeSuperstructure from PhononDB mp-22865
+// (CsCl), mp-2074 (Li3Sb), mp-581024 (K2CsSb) and Materials Project mp-15988
+// (Li2CuSb). referencePoints: the standard simple cubic and fcc points.
+const SIMPLE_CUBIC_POINTS = { X: [0, 0.5, 0], M: [0.5, 0.5, 0], R: [0.5, 0.5, 0.5] };
+const FCC_POINTS = { X: [0.5, 0, 0.5], L: [0.5, 0.5, 0.5], W: [0.5, 0.25, 0.75], K: [0.375, 0.375, 0.75], U: [0.625, 0.25, 0.625] };
+export const BCC_SUPERSTRUCTURES = {
+    'cscl': {
+        parent: 'cscl',
+        title: 'CsCl type A X (Pm-3m)',
+        supercell: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+        sites: superstructureSites([['A', 0, 0, 0, 0], ['X', 1, 0, 0, 0]]),
+        referencePoints: SIMPLE_CUBIC_POINTS,
+        specialPoints: null,
+        path: null,
+    },
+    'heusler': {
+        parent: 'heusler',
+        title: 'Li3Bi type A3 X (Fm-3m)',
+        supercell: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+        sites: superstructureSites([['A', 1, 0, 0, 0], ['A', 2, 0, 0, 0], ['A', 3, 0, 0, 0], ['X', 0, 0, 0, 0]]),
+        referencePoints: FCC_POINTS,
+        specialPoints: null,
+        path: null,
+    },
+    'heusler-A2BX': {
+        parent: 'heusler',
+        title: 'full Heusler A2 B X (Cu2MnAl type, Fm-3m)',
+        supercell: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+        sites: superstructureSites([['A', 2, 0, 0, 0], ['A', 3, 0, 0, 0], ['B', 1, 0, 0, 0], ['X', 0, 0, 0, 0]]),
+        referencePoints: FCC_POINTS,
+        specialPoints: null,
+        path: null,
+    },
+    'heusler-A2BX-inverse': {
+        parent: 'heusler',
+        title: 'inverse Heusler A2 B X (Hg2CuTi type, F-43m)',
+        supercell: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+        sites: superstructureSites([['A', 1, 0, 0, 0], ['A', 3, 0, 0, 0], ['B', 2, 0, 0, 0], ['X', 0, 0, 0, 0]]),
+        referencePoints: FCC_POINTS,
+        specialPoints: null,
+        path: null,
+    },
+};
+
 export const SUPERSTRUCTURES = Object.assign({}, WURTZITE_SUPERSTRUCTURES, ROCKSALT_SUPERSTRUCTURES,
     FLUORITE_SUPERSTRUCTURES, PEROVSKITE_SUPERSTRUCTURES, TMD_SUPERSTRUCTURES, RUTILE_SUPERSTRUCTURES,
-    CORUNDUM_SUPERSTRUCTURES);
+    CORUNDUM_SUPERSTRUCTURES, BCC_SUPERSTRUCTURES);
 
 function rowTimesMatrix(v, m) {
     return [0, 1, 2].map((j) => v[0] * m[0][j] + v[1] * m[1][j] + v[2] * m[2][j]);
@@ -1665,6 +1715,182 @@ function* fccDescriptions(layout, atomTypes, positionsRed, lattice, isAnion) {
             }
         }
     }
+}
+
+// parents with every site of a body-centred cubic lattice (edge b) occupied.
+// CsCl (B2, Pm-3m): the simple cubic cell b I, cation at the origin, anion at
+// (1/2,1/2,1/2). Li3Bi / BiF3 (D0_3, Fm-3m) and the Heuslers ordered on it: the
+// fcc cell rocksaltLattice(2 b) with the anion on the fcc site, then the
+// octahedral site (1/2,1/2,1/2) and the two tetrahedral sites (1/4,1/4,1/4),
+// (3/4,3/4,3/4); a full Heusler A2 B X (Cu2MnAl type, K2CsSb) has B on the
+// octahedral site, an inverse Heusler (Hg2CuTi type, Li2CuSb) on a tetrahedral one.
+const CSCL_SITES = [
+    { red: [0, 0, 0] },
+    { red: [0.5, 0.5, 0.5] },
+];
+const HEUSLER_SITES = [
+    { red: [0, 0, 0] },
+    { red: [0.5, 0.5, 0.5] },
+    { red: [0.25, 0.25, 0.25] },
+    { red: [0.75, 0.75, 0.75] },
+];
+const BCC_LAYOUTS = {
+    cscl: { sites: CSCL_SITES, fcc: false },
+    heusler: { sites: HEUSLER_SITES, fcc: true },
+};
+
+function getBccCubicAxes(positionsCar, lattice) {
+    /*
+    the cube edges (length b) of a cell whose atoms fill a body-centred cubic
+    lattice: the eight nearest neighbours of an atom lie along the body diagonals,
+    +-d_1 ... +-d_4 with the d_k towards the corners of a tetrahedron, and
+    d_1 + d_k (k = 2, 3, 4) are the edges. The diagonals are averaged over the
+    neighbours of every atom, so a homogeneous strain drops out as in
+    fccDescriptions. Null when the neighbours are not along the diagonals.
+    */
+    let all = positionsCar.map((_, i) => i);
+    let cosine = (p, q) => mat.vec_dot(p, q) / Math.sqrt(mat.vec_dot(p, p) * mat.vec_dot(q, q));
+    let diagonals = [];
+    for (let bond of getNearestBonds(0, all, positionsCar, lattice, 8)) {
+        // the corners of a tetrahedron: cos = -1/3 between any two
+        if (!diagonals.length || (diagonals.length < 4 && diagonals.every((d) => {
+            let c = cosine(d, bond);
+            return c < -0.1 && c > -0.6;
+        }))) {
+            diagonals.push(bond);
+        }
+    }
+    if (diagonals.length !== 4) {
+        return null;
+    }
+    let sums = diagonals.map(() => [0, 0, 0]);
+    for (let i of all) {
+        for (let bond of getNearestBonds(i, all, positionsCar, lattice, 8)) {
+            let cosines = diagonals.map((d) => cosine(d, bond));
+            let k = [0, 1, 2, 3].reduce((best, j) => (Math.abs(cosines[j]) > Math.abs(cosines[best]) ? j : best), 0);
+            if (Math.abs(cosines[k]) < 0.85) {
+                return null;
+            }
+            let sign = cosines[k] > 0 ? 1 : -1;
+            sums[k] = sums[k].map((v, d) => v + sign * bond[d]);
+        }
+    }
+    let average = sums.map((v) => mat.vec_scale(v, 1 / (2 * all.length)));
+    return [1, 2, 3].map((k) => average[0].map((v, d) => v + average[k][d]));
+}
+
+function* bccDescriptions(layout, atomTypes, positionsRed, lattice) {
+    /*
+    every way of reading the cell as a supercell of a parent on the
+    body-centred cubic lattice (BCC_LAYOUTS), as in fccDescriptions: the cube
+    edges from getBccCubicAxes, assigned to x, y, z in every order and with either
+    sign. Atoms are placed on the sites by position alone (the species decide the
+    roles); any atom can be the origin.
+    */
+    let natoms = atomTypes.length;
+    let positionsCar = utils.red_car_list(positionsRed, lattice);
+    let axes = getBccCubicAxes(positionsCar, lattice);
+    if (!axes) {
+        return;
+    }
+    let volume = Math.abs(mat.matrix_determinant(lattice));
+    let edge = Math.cbrt((2 * volume) / natoms);
+    let H = layout.fcc ? rocksaltLattice(2 * edge) : [[edge, 0, 0], [0, edge, 0], [0, 0, edge]];
+    let permutations = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]];
+    let add = (p, q) => p.map((v, d) => v + q[d]);
+    for (let permutation of permutations) {
+        for (let signs = 0; signs < 8; signs++) {
+            let e = permutation.map((k, i) => mat.vec_scale(axes[k], (signs >> i) & 1 ? -1 : 1));
+            let basis = layout.fcc ? [add(e[1], e[2]), add(e[0], e[2]), add(e[0], e[1])] : e;
+            let inverse = mat.matrix_inverse(basis);
+            let Mraw = lattice.map((row) => rowTimesMatrix(row, inverse));
+            let M = Mraw.map((row) => row.map(Math.round));
+            if (Mraw.some((row, r) => row.some((v, k) => Math.abs(v - M[r][k]) > 0.1)) ||
+                Math.round(Math.abs(mat.matrix_determinant(M))) * layout.sites.length !== natoms) {
+                continue;
+            }
+            let T = orthogonalPolarFactor(e.map((v) => mat.vec_scale(v, 1 / Math.sqrt(mat.vec_dot(v, v)))));
+            for (let origin = 0; origin < natoms; origin++) {
+                let sites = [];
+                for (let n = 0; n < natoms; n++) {
+                    let d = [0, 1, 2].map((k) => positionsCar[n][k] - positionsCar[origin][k]);
+                    let f = rowTimesMatrix(d, inverse);
+                    // the sites are 1/4 apart (Heusler) or 1/2 (CsCl)
+                    let found = null;
+                    let best = 0.1;
+                    layout.sites.forEach((site, sub) => {
+                        let r = f.map((v, k) => v - site.red[k]);
+                        let rounded = r.map(Math.round);
+                        let deviation = Math.max.apply(null, r.map((v, k) => Math.abs(v - rounded[k])));
+                        if (deviation < best) {
+                            best = deviation;
+                            found = { sub: sub, n: rounded };
+                        }
+                    });
+                    if (!found) {
+                        break;
+                    }
+                    sites.push(found);
+                }
+                if (sites.length === natoms) {
+                    yield { T: T, origin: origin, H: H, M: M, sites: sites, a: layout.fcc ? 2 * edge : edge };
+                }
+            }
+        }
+    }
+}
+
+// how strongly a species takes the anion site of a CsCl or Heusler cell: a usual
+// anion, then a p-block element (Sb in K3Sb, Sn in Sr2HgSn), then gold (the auride
+// in CsAu, Ba2AuSb)
+const bccAnionRank = (type) => (ANION_CHARGE[type] ? 3 : ANION_LIKE.has(type) ? 2 : type === 'Au' ? 1 : 0);
+
+function getCsClRoles(atomTypes) {
+    /*
+    species -> role of a CsCl-type A X cell: X the anion (bccAnionRank), A the
+    cation; intermetallics (no anion) are not read
+    */
+    let species = atomTypes.filter((type, i) => atomTypes.indexOf(type) === i);
+    let count = (type) => atomTypes.filter((t) => t === type).length;
+    if (species.length !== 2 || count(species[0]) !== count(species[1])) {
+        throw new Error('Not an A X cell');
+    }
+    let ranks = species.map(bccAnionRank);
+    if (ranks[0] === ranks[1]) {
+        throw new Error('No anion in ' + species.join(''));
+    }
+    let x = ranks[0] > ranks[1] ? species[0] : species[1];
+    let roles = {};
+    species.forEach((type) => { roles[type] = type === x ? 'X' : 'A'; });
+    return roles;
+}
+
+function getHeuslerRoles(atomTypes) {
+    /*
+    species -> role of an A3 X (Li3Bi type) or A2 B X (Heusler) cell: X the
+    anion with a quarter of the atoms (bccAnionRank; Sb rather than Au in Ba2AuSb,
+    Cs in K2CsSb), A the cation with three quarters or half of them, B the other
+    */
+    let counts = {};
+    atomTypes.forEach((type) => { counts[type] = (counts[type] || 0) + 1; });
+    let species = Object.keys(counts);
+    let quarter = species.filter((type) => 4 * counts[type] === atomTypes.length);
+    let x = quarter.filter((type) => bccAnionRank(type) > 0)
+        .sort((p, q) => bccAnionRank(q) - bccAnionRank(p));
+    if (!x.length || (x.length > 1 && bccAnionRank(x[0]) === bccAnionRank(x[1]))) {
+        throw new Error('No anion with a quarter of the atoms: ' + JSON.stringify(counts));
+    }
+    let roles = {};
+    roles[x[0]] = 'X';
+    let cations = species.filter((type) => type !== x[0]);
+    if (cations.length === 1 && 4 * counts[cations[0]] === 3 * atomTypes.length) {
+        roles[cations[0]] = 'A';
+    } else if (cations.length === 2 && cations.some((type) => 2 * counts[type] === atomTypes.length)) {
+        cations.forEach((type) => { roles[type] = 2 * counts[type] === atomTypes.length ? 'A' : 'B'; });
+    } else {
+        throw new Error('Not an A3 X or A2 B X cell: ' + JSON.stringify(counts));
+    }
+    return roles;
 }
 
 // the parent lattices of the ordered ternaries: how to read a cell as a
@@ -2149,6 +2375,14 @@ const fccParent = (name) => ({
     originRole: FCC_LAYOUTS[name].centerIsX ? 'X' : 'A',
     lattice: true,
 });
+const bccParent = (name, xFraction, originRole, getRoles) => ({
+    describe: (atomTypes, positionsRed, lattice) => bccDescriptions(BCC_LAYOUTS[name], atomTypes, positionsRed, lattice),
+    sitePosition: (site) => site.n.map((v, k) => v + BCC_LAYOUTS[name].sites[site.sub].red[k]),
+    frameTolerance: 25,
+    xFraction: xFraction,
+    originRole: originRole,
+    getRoles: getRoles,
+});
 const PARENT_STRUCTURES = {
     wurtzite: {
         describe: wurtziteDescriptions,
@@ -2174,6 +2408,8 @@ const PARENT_STRUCTURES = {
     'tmd-2H': layeredParent('tmd-2H'),
     'tmd-3R': layeredParent('tmd-3R'),
     corundum: Object.assign(layeredParent('corundum'), { xFraction: 3 / 5, getRoles: getCorundumRoles }),
+    cscl: bccParent('cscl', 1 / 2, 'A', getCsClRoles),
+    heusler: bccParent('heusler', 1 / 4, 'X', getHeuslerRoles),
 };
 
 function getParentRoles(parent, atomTypes, positionsRed, lattice) {
@@ -2786,9 +3022,28 @@ export function buildMixingEndpoint(raw, entry, dielectric = null) {
             chalcopyriteError = error;
         }
     }
-    if (natoms === 2) {
-        let cationSymbol = getCationSymbol(entry && entry.name, endpoint.atomTypes);
-        canonical = getCanonicalSites(endpoint.atomTypes, endpoint.positionsRed, cationSymbol, endpoint.lattice);
+    // a 2-atom cell that is neither zinc blende nor rocksalt (CsCl), a 4-atom one
+    // that is not wurtzite (Li3Sb) is read on the superstructure templates
+    let twoAtom = null;
+    let fourAtom = null;
+    if (natoms === 2 && !hint) {
+        try {
+            twoAtom = getCanonicalSites(endpoint.atomTypes, endpoint.positionsRed,
+                getCationSymbol(entry && entry.name, endpoint.atomTypes), endpoint.lattice);
+        } catch (error) {
+            chalcopyriteError = error;
+        }
+    }
+    if (natoms === 4 && nspecies <= 2 && !hint) {
+        try {
+            fourAtom = matchWurtziteSites(endpoint.atomTypes, endpoint.positionsRed, endpoint.lattice,
+                getCationSymbol(entry && entry.name, endpoint.atomTypes));
+        } catch (error) {
+            chalcopyriteError = error;
+        }
+    }
+    if (twoAtom) {
+        canonical = twoAtom;
         endpoint.family = canonical.family;
         endpoint.rotation = null;
         if (canonical.family === 'rocksalt') {
@@ -2799,9 +3054,8 @@ export function buildMixingEndpoint(raw, entry, dielectric = null) {
         endpoint.family = canonical.family;
         endpoint.rotation = null;
         endpoint.structure = { a: Math.SQRT2 * Math.sqrt(mat.vec_dot(endpoint.lattice[0], endpoint.lattice[0])) };
-    } else if (natoms === 4 && nspecies <= 2) {
-        let cationSymbol = getCationSymbol(entry && entry.name, endpoint.atomTypes);
-        canonical = matchWurtziteSites(endpoint.atomTypes, endpoint.positionsRed, endpoint.lattice, cationSymbol);
+    } else if (fourAtom) {
+        canonical = fourAtom;
         endpoint.family = 'wurtzite';
         endpoint.rotation = canonical.rotation;
         endpoint.structure = canonical.structure;
@@ -2826,9 +3080,9 @@ export function buildMixingEndpoint(raw, entry, dielectric = null) {
             }
         }
         if (!family) {
-            throw lastError || new Error('Mixing supports 2-atom zinc blende and rocksalt, 3-atom fluorite, ' +
-                '4-atom wurtzite, 5-atom perovskite, 8-atom chalcopyrite and ternary wurtzite, rocksalt, ' +
-                'fluorite and perovskite cells');
+            throw lastError || new Error('Mixing supports 2-atom zinc blende, rocksalt and CsCl, 3-atom fluorite, ' +
+                '4-atom wurtzite and Li3Bi type, 5-atom perovskite, 8-atom chalcopyrite and ternary wurtzite, rocksalt, ' +
+                'fluorite, perovskite and Heusler cells');
         }
         let template = SUPERSTRUCTURES[family];
         endpoint.family = family;

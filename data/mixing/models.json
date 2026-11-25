@@ -6332,5 +6332,418 @@
         "source": "mpdb",
         "spacegroup": "R-3",
         "family": "corundum-ABX3"
+    },
+    {
+        "id": "22865",
+        "name": "CsCl",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "22875",
+        "name": "TlBr",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "581024",
+        "name": "K2CsSb",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler-A2BX"
+    },
+    {
+        "id": "865101",
+        "name": "Li2NaBi",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler-A2BX"
+    },
+    {
+        "id": "984761",
+        "name": "Rb2CsSb",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler-A2BX"
+    },
+    {
+        "id": "867168",
+        "name": "Sr2AuSb",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler-A2BX"
+    },
+    {
+        "id": "2667",
+        "name": "CsAu",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "2074",
+        "name": "Li3Sb",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler"
+    },
+    {
+        "id": "632319",
+        "name": "CsH",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "23302",
+        "name": "RbI",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "5077",
+        "name": "Li2NaSb",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler-A2BX"
+    },
+    {
+        "id": "23167",
+        "name": "TlCl",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "861937",
+        "name": "Ba2AuAs",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler-A2BX"
+    },
+    {
+        "id": "22906",
+        "name": "CsBr",
+        "source": "phonondb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "15724",
+        "name": "Na2KSb",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler-A2BX"
+    },
+    {
+        "id": "862631",
+        "name": "Ba2AuSb",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler-A2BX"
+    },
+    {
+        "id": "976148",
+        "name": "K2RbSb",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler-A2BX"
+    },
+    {
+        "id": "867192",
+        "name": "Sr2AuAs",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler-A2BX"
+    },
+    {
+        "id": "10378",
+        "name": "Cs3Sb",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler"
+    },
+    {
+        "id": "10159",
+        "name": "K3Sb",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler"
+    },
+    {
+        "id": "975275",
+        "name": "Na2RbSb",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler-A2BX"
+    },
+    {
+        "id": "30373",
+        "name": "RbAu",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "570891",
+        "name": "KBr",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "581024",
+        "name": "K2CsSb",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler-A2BX"
+    },
+    {
+        "id": "632319",
+        "name": "CsH",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "861937",
+        "name": "Ba2AuAs",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler-A2BX"
+    },
+    {
+        "id": "862631",
+        "name": "Ba2AuSb",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler-A2BX"
+    },
+    {
+        "id": "862947",
+        "name": "Ba2AuBi",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler-A2BX"
+    },
+    {
+        "id": "866132",
+        "name": "Na2TlSb",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler-A2BX"
+    },
+    {
+        "id": "866141",
+        "name": "Fe2TiSi",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler-A2BX"
+    },
+    {
+        "id": "867168",
+        "name": "Sr2AuSb",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler-A2BX"
+    },
+    {
+        "id": "867169",
+        "name": "Sr2HgSn",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler-A2BX"
+    },
+    {
+        "id": "867193",
+        "name": "Sr2AuBi",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler-A2BX"
+    },
+    {
+        "id": "867339",
+        "name": "K2CsBi",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler-A2BX"
+    },
+    {
+        "id": "984761",
+        "name": "Rb2CsSb",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler-A2BX"
+    },
+    {
+        "id": "2064",
+        "name": "RbF",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "2074",
+        "name": "Li3Sb",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler"
+    },
+    {
+        "id": "2600",
+        "name": "BaTe",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "2667",
+        "name": "CsAu",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "5077",
+        "name": "Li2NaSb",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler-A2BX"
+    },
+    {
+        "id": "8454",
+        "name": "KF",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "8455",
+        "name": "CsF",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "10159",
+        "name": "K3Sb",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler"
+    },
+    {
+        "id": "10378",
+        "name": "Cs3Sb",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler"
+    },
+    {
+        "id": "10627",
+        "name": "SrS",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "10680",
+        "name": "BaSe",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "15724",
+        "name": "Na2KSb",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler-A2BX"
+    },
+    {
+        "id": "15988",
+        "name": "Li2CuSb",
+        "source": "mpdb",
+        "spacegroup": "F-43m",
+        "family": "heusler-A2BX-inverse"
+    },
+    {
+        "id": "22865",
+        "name": "CsCl",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "22875",
+        "name": "TlBr",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "22901",
+        "name": "KI",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "22906",
+        "name": "CsBr",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "23167",
+        "name": "TlCl",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "23197",
+        "name": "TlI",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "23222",
+        "name": "Li3Bi",
+        "source": "mpdb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler"
+    },
+    {
+        "id": "23289",
+        "name": "KCl",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "23299",
+        "name": "RbCl",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "23302",
+        "name": "RbI",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "23303",
+        "name": "RbBr",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
     }
 ]

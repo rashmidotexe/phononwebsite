@@ -85,8 +85,9 @@ export class MixingWebpage extends PhononWebpage {
     antiperovskites (the 5-atom cell, cubic or polar, and the supercells of the
     octahedral tilts: Pnma, R-3c, ...), the 2H, 1T and 3R polytypes of the
     transition-metal dichalcogenides, and rutiles (with the CaCl2-type
-    distortion) with the trirutiles and other cation orderings on them, and
-    corundums with the ilmenites and A3BX6 ordering in
+    distortion) with the trirutiles and other cation orderings on them,
+    corundums with the ilmenites and A3BX6 ordering, CsCl-type binaries, and
+    Li3Bi-type (D0_3) binaries with the full and inverse Heuslers on them in
     data/mixing/models.json, drawn from the PhononDB (A. Togo) and Materials
     Project (G. Petretto et al.) databases. Materials mix within their family; a
     binary with force constants (PhononDB) can also be mixed with an ordered
@@ -353,6 +354,14 @@ export class MixingWebpage extends PhononWebpage {
             tag = "trirutile";
         } else if (family === "corundum-ABX3") {
             tag = "ilmenite";
+        } else if (family === "cscl") {
+            tag = "CsCl type";
+        } else if (family === "heusler") {
+            tag = "Li<sub>3</sub>Bi type";
+        } else if (family === "heusler-A2BX") {
+            tag = "Heusler";
+        } else if (family === "heusler-A2BX-inverse") {
+            tag = "inverse Heusler";
         } else {
             let spacegroup = (material.spacegroup || "").replace(/_(\d)/g, "<sub>$1</sub>");
             for (let parent of ["rocksalt", "fluorite", "antifluorite", "perovskite", "antiperovskite", "rutile", "corundum"]) {
@@ -446,6 +455,7 @@ export class MixingWebpage extends PhononWebpage {
             antiperovskite: ["5-atom antiperovskite", "Tilted antiperovskites"],
             rutile: ["rutile", "Ordered rutiles"],
             corundum: ["corundum", "Ilmenites and ordered corundums"],
+            heusler: ["Li<sub>3</sub>Bi-type compound", "Full and inverse Heuslers"],
         };
         let family1 = material1 ? material1.family : "zincblende";
         let parent = FAMILY_NAMES[family1] ? family1 : getParentFamily(family1);
@@ -469,7 +479,7 @@ export class MixingWebpage extends PhononWebpage {
             return "";
         }
         return "Only " + phonondb + " " + binaryName + "s are listed: mixing with a "
-            + ternaryName.toLowerCase().replace(/s$/, "") + " requires their force constants.";
+            + (ternaryName.charAt(0).toLowerCase() + ternaryName.slice(1)).replace(/s$/, "") + " requires their force constants.";
     }
 
     markSelectedMaterials() {
@@ -617,6 +627,12 @@ export class MixingWebpage extends PhononWebpage {
             .find((name) => familyName.indexOf(name) === 0);
         if (familyName.indexOf("tmd-") === 0) {
             family = familyName.slice(4);
+        } else if (familyName === "cscl") {
+            family = "CsCl type";
+        } else if (familyName === "heusler") {
+            family = "Li<sub>3</sub>Bi type";
+        } else if (familyName.indexOf("heusler-") === 0) {
+            family = "Heusler";
         }
         family = family ? family + ", " : "";
         return utils.format_formula_html(this.material1.name) +
