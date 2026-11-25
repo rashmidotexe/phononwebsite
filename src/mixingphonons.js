@@ -16,9 +16,11 @@
  * Rutiles (A X2, with the CaCl2-type distortion) mix with each other and fold into
  * the cation-ordered rutiles: trirutile A B2 X6, A B X4, A B3 X8
  * (RUTILE_SUPERSTRUCTURES). Corundums (A2 X3) mix with each other and fold into
- * ilmenite (A B X3) and A3 B X6 on the same cell (CORUNDUM_SUPERSTRUCTURES). On the
- * body-centred cubic lattice, CsCl-type A X mix with each other, and Li3Bi-type A3 X
- * fold into the full and inverse Heuslers A2 B X (BCC_SUPERSTRUCTURES). Force constants
+ * ilmenite (A B X3) and A3 B X6 on the same cell (CORUNDUM_SUPERSTRUCTURES). CsCl-type
+ * A X mix with each other; the zinc-blende-derived (stuffed tetrahedral) cells with
+ * all four fcc sites filled, Li3Bi-type A3 X, fold into the full and inverse Heuslers
+ * A2 B X (BCC_SUPERSTRUCTURES; the half-Heuslers, three sites, are the MgAgAs type
+ * of FLUORITE_SUPERSTRUCTURES). Force constants
  * and site masses are mixed separately:
  *
  *     Phi_k(q)   = M_k^1/2 D_k(q) M_k^1/2
@@ -1359,11 +1361,12 @@ export const CORUNDUM_SUPERSTRUCTURES = {
     },
 };
 
-// body-centred cubic parents (BCC_LAYOUTS): the CsCl type A X on its 2-atom simple
-// cubic cell, and the Li3Bi (BiF3, D0_3) type A3 X on the 4-atom fcc cell with the
-// Heusler orderings A2 B X on it: B on the octahedral site (full Heusler, Cu2MnAl
-// type: K2CsSb, Li2NaSb, Ba2AuSb) or on a tetrahedral one (inverse Heusler, Hg2CuTi
-// type: Li2CuSb). Derived with analyzeSuperstructure from PhononDB mp-22865
+// the CsCl type A X on its 2-atom simple cubic cell, and the zinc-blende-derived
+// cells with all four sites of the fcc cell filled (BCC_LAYOUTS): the Li3Bi (BiF3,
+// D0_3) type A3 X and the Heusler orderings A2 B X on it, B on the octahedral site
+// (full Heusler, Cu2MnAl type: K2CsSb, Li2NaSb, Ba2AuSb) or on a tetrahedral one
+// (inverse Heusler, Hg2CuTi type: Li2CuSb). The half-Heuslers fill three of the four
+// sites; they are ordered fluorites ('antifluorite-ABX-F43m'). Derived with analyzeSuperstructure from PhononDB mp-22865
 // (CsCl), mp-2074 (Li3Sb), mp-581024 (K2CsSb) and Materials Project mp-15988
 // (Li2CuSb). referencePoints: the standard simple cubic and fcc points.
 const SIMPLE_CUBIC_POINTS = { X: [0, 0.5, 0], M: [0.5, 0.5, 0], R: [0.5, 0.5, 0.5] };
@@ -1717,13 +1720,18 @@ function* fccDescriptions(layout, atomTypes, positionsRed, lattice, isAnion) {
     }
 }
 
-// parents with every site of a body-centred cubic lattice (edge b) occupied.
 // CsCl (B2, Pm-3m): the simple cubic cell b I, cation at the origin, anion at
-// (1/2,1/2,1/2). Li3Bi / BiF3 (D0_3, Fm-3m) and the Heuslers ordered on it: the
-// fcc cell rocksaltLattice(2 b) with the anion on the fcc site, then the
-// octahedral site (1/2,1/2,1/2) and the two tetrahedral sites (1/4,1/4,1/4),
-// (3/4,3/4,3/4); a full Heusler A2 B X (Cu2MnAl type, K2CsSb) has B on the
-// octahedral site, an inverse Heusler (Hg2CuTi type, Li2CuSb) on a tetrahedral one.
+// (1/2,1/2,1/2). Li3Bi / BiF3 (D0_3, Fm-3m) and the Heuslers ordered on it: the fcc
+// cell rocksaltLattice(a) with the anion on the fcc site, then the octahedral site
+// (1/2,1/2,1/2) and the two tetrahedral sites (1/4,1/4,1/4), (3/4,3/4,3/4). Zinc
+// blende fills the fcc site and one tetrahedral site, a half-Heusler adds the
+// octahedral one (an ordered fluorite, FLUORITE_SUPERSTRUCTURES), and these cells
+// fill all four; a full Heusler A2 B X (Cu2MnAl type, K2CsSb) has B on the octahedral
+// site, an inverse Heusler (Hg2CuTi type, Li2CuSb) on a tetrahedral one. A zinc blende
+// itself cannot be folded into them: the two empty sites would be vacancies, which
+// the virtual crystal (masses on every site) does not describe. In both cells every
+// site of a body-centred cubic lattice of edge b (= a / 2 for the fcc cell) is
+// occupied, which is how the cell is read (bccDescriptions).
 const CSCL_SITES = [
     { red: [0, 0, 0] },
     { red: [0.5, 0.5, 0.5] },
