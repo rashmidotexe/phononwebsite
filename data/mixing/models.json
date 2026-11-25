@@ -6745,5 +6745,54 @@
         "source": "mpdb",
         "spacegroup": "Pm-3m",
         "family": "cscl"
+    },
+    {
+        "id": "1009009",
+        "name": "LiF",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "1009127",
+        "name": "MgO",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "1009220",
+        "name": "NaH",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "1009819",
+        "name": "SrO",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "10653",
+        "name": "SrTe",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "22851",
+        "name": "NaCl",
+        "source": "mpdb",
+        "spacegroup": "Pm-3m",
+        "family": "cscl"
+    },
+    {
+        "id": "984352",
+        "name": "Al2CoOs",
+        "source": "phonondb",
+        "spacegroup": "Fm-3m",
+        "family": "heusler-A2BX"
     }
 ]

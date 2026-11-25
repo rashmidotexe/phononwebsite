@@ -9,6 +9,7 @@ import {
     computeMixedPhonon,
     computeReferenceEigenvalues,
     getParentFamily,
+    getWorldMixing,
 } from './mixingphonons.js';
 import { loadMaterialsProjectDielectric } from './mpdielectric.js';
 import * as utils from './utils.js';
@@ -94,7 +95,10 @@ export class MixingWebpage extends PhononWebpage {
     Project (G. Petretto et al.) databases. Materials mix within their family; a
     binary with force constants (PhononDB) can also be mixed with an ordered
     ternary on its lattice (zinc blende with chalcopyrite, the others with their
-    ternaries), folded into the cell of the ternary.
+    ternaries), folded into the cell of the ternary. Materials of different
+    structures on the same lattice (the fcc-site families, or perovskite,
+    antiperovskite and CsCl) mix site by site on a common cell, with a vacancy
+    on every site only one of them fills (getWorldMixing).
 
     Material 1 is picked in the regular list, material 2 in the second list and
     the character slider sets the fraction x of material 2 in the virtual
@@ -140,13 +144,28 @@ export class MixingWebpage extends PhononWebpage {
         // with its cause: a PhononDB file without Born charges, or Materials Project
         // charges that could not be loaded
         let note = "";
+        let union = sampled && sampled.union;
+        if (union && this.material2) {
+            // two structures on a common lattice: say which sites only one of them fills
+            let only1 = union.map2.filter((i) => i < 0).length;
+            let only2 = union.map1.filter((i) => i < 0).length;
+            let parts = [];
+            if (only1) {
+                parts.push(only1 + " filled only in " + sampled.endpoint1.name);
+            }
+            if (only2) {
+                parts.push(only2 + " only in " + sampled.endpoint2.name);
+            }
+            note = "Mixed site by site on a common cell of " + union.map1.length + " sites" +
+                (parts.length ? " (" + parts.join(", ") + "; vacancies in the other, occupied in proportion to the mixture)" : "") + ". ";
+        }
         if (nacMode === 'interpolated' && this.material2) {
             let missing = sampled ? [sampled.endpoint1, sampled.endpoint2].filter((endpoint) => !endpoint.nac) : [];
             let phonondb = missing.filter((endpoint) => endpoint.evaluate || endpoint.anyQ);
-            note = phonondb.length && phonondb.length === missing.length
+            note += (phonondb.length && phonondb.length === missing.length
                 ? "LO–TO splitting interpolated: no Born charges in the PhononDB file of " +
                     phonondb.map((endpoint) => endpoint.name).join(" and ") + "."
-                : "LO–TO splitting interpolated: the Materials Project Born charges could not be loaded.";
+                : "LO–TO splitting interpolated: the Materials Project Born charges could not be loaded.");
         }
         this.dom_mixing_note.text(note);
     }
@@ -229,14 +248,30 @@ export class MixingWebpage extends PhononWebpage {
         let e2 = pair.endpoint2;
         // one entry per distinct site (2 in zinc blende, A / B / anion in chalcopyrite)
         let sites = [];
-        e1.siteTypes.forEach((type, s) => {
-            let mass = (1 - y) * e1.siteMasses[s] + y * e2.siteMasses[s];
-            let types = type === e2.siteTypes[s] ? type : type + "/" + e2.siteTypes[s];
-            let entry = types + " " + mass.toFixed(2);
+        let add = (entry) => {
             if (sites.indexOf(entry) < 0) {
                 sites.push(entry);
             }
-        });
+        };
+        if (pair.union) {
+            // two structures on a common cell: the sites of the union, a vacancy ("–")
+            // where only one of them has an atom, occupied with the character x
+            let x = this.character;
+            pair.union.map1.forEach((i1, s) => {
+                let i2 = pair.union.map2[s];
+                let mass = i1 >= 0 && i2 >= 0 ? (1 - y) * e1.siteMasses[i1] + y * e2.siteMasses[i2]
+                    : i1 >= 0 ? (1 - x) * e1.siteMasses[i1] : x * e2.siteMasses[i2];
+                let t1 = i1 >= 0 ? e1.siteTypes[i1] : "–";
+                let t2 = i2 >= 0 ? e2.siteTypes[i2] : "–";
+                add((t1 === t2 ? t1 : t1 + "/" + t2) + " " + mass.toFixed(2));
+            });
+        } else {
+            e1.siteTypes.forEach((type, s) => {
+                let mass = (1 - y) * e1.siteMasses[s] + y * e2.siteMasses[s];
+                let types = type === e2.siteTypes[s] ? type : type + "/" + e2.siteTypes[s];
+                add(types + " " + mass.toFixed(2));
+            });
+        }
         let prefix = this.massLinked ? "" : percent + " % " + utils.format_formula_html(this.material2.name) + ": ";
         this.dom_mass_value.html(prefix + sites.join(" · ") + " amu");
     }
@@ -525,7 +560,17 @@ export class MixingWebpage extends PhononWebpage {
         let binary = getParentFamily(material2.family) === family1 ? material1
             : getParentFamily(family1) === material2.family ? material2
             : null;
-        return !!binary && binary.source === "phonondb";
+        if (binary) {
+            return binary.source === "phonondb";
+        }
+        // other structures on a common lattice, with vacancies on the sites only one
+        // of them fills; a material folded into the other's cell needs force constants
+        let world = getWorldMixing(family1 || "zincblende", material2.family || "zincblende");
+        if (!world || !material1) {
+            return false;
+        }
+        return !world.folds.length ||
+            world.folds.some((which) => (which === 1 ? material1 : material2).source === "phonondb");
     }
 
     findMaterial(url) {
@@ -631,6 +676,7 @@ export class MixingWebpage extends PhononWebpage {
         let percent = Math.round(this.character * 100);
         let mass = this.massLinked ? "" : ", mass " + Math.round(this.massCharacter * 100) + " %";
         let familyName = this.pairCache ? this.pairCache.sampled.endpoint1.family : "";
+        let union = this.pairCache ? this.pairCache.sampled.union : null;
         let family = ["wurtzite", "rocksalt", "fluorite", "antifluorite", "perovskite", "antiperovskite", "rutile", "corundum"]
             .find((name) => familyName.indexOf(name) === 0);
         if (familyName.indexOf("tmd-") === 0) {
@@ -643,6 +689,10 @@ export class MixingWebpage extends PhononWebpage {
             family = "Heusler";
         } else if (familyName === "antifluorite-ABX-F43m") {
             family = "half-Heusler";
+        }
+        if (union) {
+            // two structures on a common cell
+            family = union.world === "fcc" ? "common fcc cell" : "common cubic cell";
         }
         family = family ? family + ", " : "";
         return utils.format_formula_html(this.material1.name) +
@@ -703,6 +753,8 @@ export class MixingWebpage extends PhononWebpage {
 
             this.phonon = phonon;
             this.k = Math.min(this.k, phonon.kpoints.length - 1);
+            // a mixture of two structures has fewer bands at 0 and 100 % (no vacancy sites)
+            this.n = Math.min(this.n, data.eigenvalues[0].length - 1);
             delete this.link;
             if (pairChanged) {
                 this.finishLoadingFeedback();

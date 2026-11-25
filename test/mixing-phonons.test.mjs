@@ -832,10 +832,14 @@ describe('rocksalt dynamical-matrix mixing', () => {
         }
     });
 
-    it('does not mix a rocksalt with a zinc blende', () => {
+    it('mixes a rocksalt with a zinc blende on the common fcc cell', () => {
+        // the anion sites differ (1/2 and 1/4): three sites, one vacancy in each
         let nacl = endpoint('phonondb-NaCl-mp-22862.json.gz', 'NaCl');
         let gap = endpoint('phonondb-GaP-mp-2490.json.gz', 'GaP');
-        assert.throws(() => sampleMixingPair(nacl, gap), /Cannot mix/);
+        let union = sampleMixingPair(nacl, gap).union;
+        assert.equal(union.map1.length, 3);
+        assert.equal(union.map1.filter((i) => i < 0).length, 1);
+        assert.equal(union.map2.filter((i) => i < 0).length, 1);
     });
 });
 
@@ -970,7 +974,8 @@ describe('ternary rocksalt dynamical-matrix mixing', () => {
         let gap = endpoint('phonondb-GaP-mp-2490.json.gz', 'GaP');
         assert.throws(() => sampleMixingPair(nains2, lisco2), /Cannot mix/);
         assert.throws(() => sampleMixingPair(zngen2, nains2), /Cannot mix/);
-        assert.throws(() => sampleMixingPair(gap, nains2), /Cannot mix/);
+        // a zinc blende with force constants folds into the cell, with vacancies
+        assert.ok(sampleMixingPair(gap, nains2).union);
         let rows = JSON.parse(readFileSync(join(__dirname, 'fixtures', 'mixing', 'mp-dfpt-dielectric-CaO.json')));
         let cao = buildMixingEndpoint(loadFixture('mpdb-CaO-mp-2605-trimmed.json.gz'), { name: 'CaO' }, indexDielectricRows(rows).get(2605));
         assert.throws(() => sampleMixingPair(cao, nains2), /force constants/);
@@ -1013,12 +1018,18 @@ describe('fluorite dynamical-matrix mixing', () => {
         assert.ok(maxAbsDiff(mixed.eigenvalues, mirrored.eigenvalues) < 1e-4);
     });
 
-    it('does not mix a fluorite with an antifluorite or a rocksalt', () => {
+    it('mixes a fluorite with an antifluorite or a rocksalt on the common fcc cell', () => {
         let caf2 = endpoint('phonondb-CaF2-mp-2741.json.gz', 'CaF2');
         let li2o = endpoint('phonondb-Li2O-mp-1960.json.gz', 'Li2O');
         let nacl = endpoint('phonondb-NaCl-mp-22862.json.gz', 'NaCl');
-        assert.throws(() => sampleMixingPair(caf2, li2o), /Cannot mix/);
-        assert.throws(() => sampleMixingPair(nacl, caf2), /Cannot mix/);
+        // the same three sites: no vacancy
+        let same = sampleMixingPair(caf2, li2o).union;
+        assert.equal(same.map1.length, 3);
+        assert.ok(same.map1.every((i) => i >= 0) && same.map2.every((i) => i >= 0));
+        // rocksalt in fluorite: both rocksalt sites on fluorite sites (shifted), Ca alone
+        let union = sampleMixingPair(nacl, caf2).union;
+        assert.equal(union.map1.length, 3);
+        assert.equal(union.map1.filter((i) => i < 0).length, 1);
     });
 });
 
@@ -1136,13 +1147,15 @@ describe('ternary fluorite dynamical-matrix mixing', () => {
         }
     });
 
-    it('refuses pairs across the fluorite and antifluorite lattices', () => {
+    it('mixes across the fluorite and antifluorite lattices site by site', () => {
+        // the same sites with cations and anions swapped: the smaller cell folded into
+        // the larger one (mixing-phonons-3 checks the physics)
         let caf2 = endpoint('phonondb-CaF2-mp-2741.json.gz', 'CaF2');
         let li2o = endpoint('phonondb-Li2O-mp-1960.json.gz', 'Li2O');
         let limgn = endpoint('phonondb-LiMgN-mp-37906.json.gz', 'LiMgN');
         let caznf4 = endpoint('phonondb-CaZnF4-mp-5104.json.gz', 'CaZnF4');
-        assert.throws(() => sampleMixingPair(caf2, limgn), /Cannot mix/);
-        assert.throws(() => sampleMixingPair(li2o, caznf4), /Cannot mix/);
-        assert.throws(() => sampleMixingPair(limgn, caznf4), /Cannot mix/);
+        assert.equal(sampleMixingPair(caf2, limgn).union.map1.length, 3);
+        assert.equal(sampleMixingPair(li2o, caznf4).union.map1.length, 12);
+        assert.equal(sampleMixingPair(limgn, caznf4).union.map1.length, 12);
     });
 });

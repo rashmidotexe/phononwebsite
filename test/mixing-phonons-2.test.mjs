@@ -157,12 +157,14 @@ describe('perovskite dynamical-matrix mixing', () => {
         }
     });
 
-    it('refuses a perovskite with an antiperovskite', () => {
+    it('mixes a perovskite with an antiperovskite site by site', () => {
+        // the same five sites with cations and anions swapped (see mixing-phonons-3)
         let srtio3 = endpoint('phonondb-SrTiO3-mp-5229.json.gz', 'SrTiO3');
         let li3clo = endpoint('phonondb-Li3ClO-mp-985585.json.gz', 'Li3ClO');
         let catio3 = endpoint('phonondb-CaTiO3-mp-4019.json.gz', 'CaTiO3');
-        assert.throws(() => sampleMixingPair(srtio3, li3clo), /Cannot mix/);
-        assert.throws(() => sampleMixingPair(li3clo, catio3), /Cannot mix/);
+        assert.equal(sampleMixingPair(srtio3, li3clo).union.map1.length, 5);
+        // the 5-atom antiperovskite folded into the 20-atom tilted cell
+        assert.equal(sampleMixingPair(li3clo, catio3).union.map1.length, 20);
     });
 });
 
