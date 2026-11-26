@@ -2777,6 +2777,9 @@ function buildPhononDBEndpoint(raw, entry) {
             // phonopy: nac_factor = unit_conversion * 4 pi / volume
             unitConversion: payload.nac.nac_factor * volume / (4 * Math.PI),
             tolerance: payload.nac.q_direction_tolerance || 1e-5,
+            // force constants split with another Ewald parameter than phonopy's rule
+            // (QE, the Zumba Zn2Mo3O8): the short-range part is the rest of that split
+            lambda: payload.nac.lambda_fixed ? payload.nac.lambda : null,
         };
         shortRangePayload = Object.assign({}, payload, { nac: null });
     }
@@ -3005,6 +3008,32 @@ function buildMaterialsProjectEndpoint(raw, dielectric) {
     };
 }
 
+// families whose file is its own canonical cell (a single material of that
+// structure, read as it is): the Zumba Zn2Mo3O8, P6_3mc, 26 atoms
+const FILE_FRAME_FAMILIES = { zmo: { title: 'Zn2Mo3O8 type (P6_3mc)' } };
+
+function fileFrameEndpoint(endpoint, raw, entry) {
+    // the file as the canonical cell: sites in file order, no rotation, file q
+    endpoint.family = entry.family;
+    endpoint.rotation = null;
+    endpoint.structure = { lattice: endpoint.lattice, positionsRed: endpoint.positionsRed };
+    endpoint.name = entry.name || utils.get_formula(endpoint.atomTypes);
+    endpoint.repetitions = raw.repetitions || [2, 2, 1];
+    endpoint.order = endpoint.atomTypes.map((_, i) => i);
+    endpoint.invert = false;
+    endpoint.siteTypes = endpoint.atomTypes.slice();
+    endpoint.siteMasses = endpoint.masses.slice();
+    if (endpoint.evaluate) {
+        endpoint.sampleAtQ = endpoint.evaluate;
+        endpoint.sampleShortRangeAtQ = endpoint.evaluateShortRange;
+    }
+    if (endpoint.nac) {
+        endpoint.nac.siteBorn = endpoint.nac.born.slice();
+        endpoint.nac.siteDielectric = endpoint.nac.dielectric;
+    }
+    return endpoint;
+}
+
 export function buildMixingEndpoint(raw, entry, dielectric = null) {
     /*
     raw is the parsed json of a PhononDB (internal format with a dynamical_matrix)
@@ -3026,6 +3055,9 @@ export function buildMixingEndpoint(raw, entry, dielectric = null) {
     // the menu entry names the family of an ordered ternary; several share the
     // composition and cell size (e.g. 8-atom chalcopyrite and gamma-LiFeO2 type)
     let hint = entry && SUPERSTRUCTURES[entry.family] ? entry.family : null;
+    if (entry && FILE_FRAME_FAMILIES[entry.family]) {
+        return fileFrameEndpoint(endpoint, raw, entry);
+    }
     let chalcopyriteError = null;
     if (natoms === 8 && !hint) {
         try {
@@ -3228,25 +3260,32 @@ function foldIntoSupercell(primitive, family, superLattice, superPositionsRed, s
 
     // folding vectors: supercell reciprocal vectors, distinct modulo the primitive
     // reciprocal lattice; the shortest of each class, so that Q = 0 maps onto k = 0 exactly
-    let candidates = [];
-    for (let n0 = -3; n0 <= 3; n0++) {
-        for (let n1 = -3; n1 <= 3; n1++) {
-            for (let n2 = -3; n2 <= 3; n2++) {
-                candidates.push([0, 1, 2].map((d) => n0 * superReciprocal[0][d] + n1 * superReciprocal[1][d] + n2 * superReciprocal[2][d]));
+    // (a skewed supercell, a common cell of two orderings, needs a wider search)
+    let folding = [];
+    for (let reach of [3, 8]) {
+        let candidates = [];
+        for (let n0 = -reach; n0 <= reach; n0++) {
+            for (let n1 = -reach; n1 <= reach; n1++) {
+                for (let n2 = -reach; n2 <= reach; n2++) {
+                    candidates.push([0, 1, 2].map((d) => n0 * superReciprocal[0][d] + n1 * superReciprocal[1][d] + n2 * superReciprocal[2][d]));
+                }
             }
         }
-    }
-    candidates.sort((g, h) => mat.vec_dot(g, g) - mat.vec_dot(h, h));
-    let folding = [];
-    let seen = new Set();
-    for (let g of candidates) {
-        let key = primitiveLattice.map((p) => {
-            let f = mat.vec_dot(g, p);
-            return Math.round((f - Math.floor(f + 1e-9)) * 1e6) % 1000000;
-        }).join(',');
-        if (!seen.has(key)) {
-            seen.add(key);
-            folding.push(g);
+        candidates.sort((g, h) => mat.vec_dot(g, g) - mat.vec_dot(h, h));
+        folding = [];
+        let seen = new Set();
+        for (let g of candidates) {
+            let key = primitiveLattice.map((p) => {
+                let f = mat.vec_dot(g, p);
+                return Math.round((f - Math.floor(f + 1e-9)) * 1e6) % 1000000;
+            }).join(',');
+            if (!seen.has(key)) {
+                seen.add(key);
+                folding.push(g);
+            }
+        }
+        if (folding.length >= count) {
+            break;
         }
     }
     if (folding.length !== count) {
@@ -3428,9 +3467,16 @@ export function binaryAsSuperstructure(binary, family) {
 // cubic: the simple cubic cell a I with the corner, the centre and the three face
 //      centres (PEROVSKITE_SITES): perovskite and antiperovskite fill all five,
 //      CsCl the corner and the centre.
+// hex: close-packed layers of any stacking. One grid holds every site: in a layer
+//      the A, B and C positions (a triangular net of spacing a_cp / sqrt(3)), along
+//      the stacking axis quarters of the layer spacing d (an anion layer at 0, the
+//      tetrahedral sites at +-3d/4, the octahedral ones at d/2). Wurtzite (AB), zinc
+//      blende, rocksalt and the fluorites (ABC, along [111]), the perovskites (AX3
+//      layers, ABC), NiAs-like and CdI2-like layers, corundum, the dichalcogenides and
+//      the 4H Zn2Mo3O8 all sit on it (HEX_GRID).
 // For each member: the world sublattice of each of its own sublattices (binaries:
 // its sites in canonical order; templates: the parent's sublattices), or how its
-// cell is placed in the world ('cscl-fold', 'chalcopyrite').
+// cell is placed in the world ('cscl-fold', 'chalcopyrite', 'grid').
 const LATTICE_WORLDS = {
     fcc: {
         sites: HEUSLER_SITES,
@@ -3447,9 +3493,20 @@ const LATTICE_WORLDS = {
         members: { perovskite: [0, 1, 2, 3, 4], antiperovskite: [0, 1, 2, 3, 4], cscl: [0, 1] },
         cycle: null,
     },
+    hex: {
+        sites: [{ red: [0, 0, 0] }],
+        members: {
+            zincblende: 'grid', rocksalt: 'grid', fluorite: 'grid', antifluorite: 'grid', heusler: 'grid',
+            chalcopyrite: 'grid', perovskite: 'grid', antiperovskite: 'grid', wurtzite: 'grid',
+            'tmd-1T': 'grid', 'tmd-2H': 'grid', 'tmd-3R': 'grid', corundum: 'grid', zmo: 'grid',
+        },
+        cycle: null,
+    },
 };
 // the doubled CsCl cell of the fcc world: rows of rocksaltLattice(2 b) in the basis b I
 const CSCL_TO_FCC = [[0, 1, 1], [1, 0, 1], [1, 1, 0]];
+// mixtures of more sites are not offered (a slider step would take too long)
+const MAX_UNION_SITES = 96;
 
 function worldMemberKey(family) {
     let template = SUPERSTRUCTURES[family];
@@ -3481,6 +3538,24 @@ function cubicOperations() {
     return out;
 }
 
+function hexagonalOperations() {
+    // the 24 operations of the hexagonal lattice (6/mmm) about z, identity first
+    let out = [];
+    for (let inversion of [1, -1]) {
+        for (let flip of [1, -1]) {
+            for (let k = 0; k < 6; k++) {
+                let c = Math.cos(k * Math.PI / 3);
+                let si = Math.sin(k * Math.PI / 3);
+                let R = [[c, -si, 0], [si, c, 0], [0, 0, 1]];
+                // flip: the two-fold axis along x
+                let F = [[1, 0, 0], [0, flip, 0], [0, 0, flip]];
+                out.push(mat.matrix_multiply(R, F).map((row) => row.map((v) => inversion * v)));
+            }
+        }
+    }
+    return out;
+}
+
 let worldOperationCache = {};
 function worldOperations(world) {
     /*
@@ -3488,15 +3563,234 @@ function worldOperations(world) {
     in the parent basis (H O^T = P H, rows of H the parent lattice vectors)
     */
     if (!worldOperationCache[world]) {
-        let H = world === 'fcc' ? rocksaltLattice(1) : IDENTITY3;
+        let H = world === 'fcc' ? rocksaltLattice(1) : world === 'hex' ? HEX_GRID.unit : IDENTITY3;
         let Hinverse = mat.matrix_inverse(H);
-        worldOperationCache[world] = cubicOperations().map((O) => ({
+        let operations = world === 'hex' ? hexagonalOperations() : cubicOperations();
+        worldOperationCache[world] = operations.map((O) => ({
             O: O,
             P: mat.matrix_multiply(mat.matrix_multiply(H, mat.matrix_transpose(O)), Hinverse).map((row) => row.map(Math.round)),
         }));
     }
     return worldOperationCache[world];
 }
+
+// the close-packed grid (the hex world): in-plane g1 = (2 b1 + b2) / 3,
+// g2 = (b1 + 2 b2) / 3 for the close-packed net b1 = a_cp x, b2 at 120 degrees, and
+// g3 = d / 4 along z, the stacking axis
+function hexGridBasis(acp, d) {
+    let b1 = [acp, 0, 0];
+    let b2 = [-acp / 2, acp * Math.sqrt(3) / 2, 0];
+    return [
+        b1.map((v, k) => (2 * v + b2[k]) / 3),
+        b1.map((v, k) => (v + 2 * b2[k]) / 3),
+        [0, 0, d / 4],
+    ];
+}
+
+function rotationZ(theta) {
+    return [[Math.cos(theta), -Math.sin(theta), 0], [Math.sin(theta), Math.cos(theta), 0], [0, 0, 1]];
+}
+
+const HEX_GRID = (() => {
+    // the cubic families along [111]: x along [1 -1 0], z along [1 1 1]; with a = 1 the
+    // close-packed spacing is 1/sqrt(2) and the layer spacing 1/sqrt(3)
+    let x = [1, -1, 0].map((v) => v / Math.SQRT2);
+    let z = [1, 1, 1].map((v) => v / Math.sqrt(3));
+    let y = [z[1] * x[2] - z[2] * x[1], z[2] * x[0] - z[0] * x[2], z[0] * x[1] - z[1] * x[0]];
+    let frame = [x, y, z];
+    let grid = hexGridBasis(1 / Math.SQRT2, 1 / Math.sqrt(3));
+    let toGrid = (rows) => {
+        let S = mat.matrix_multiply(rows.map((row) => matrixTimesVector(frame, row)), mat.matrix_inverse(grid));
+        if (!isIntegerMatrix(S, 1e-8)) {
+            throw new Error('The cubic cell is not a supercell of the close-packed grid');
+        }
+        return S.map((row) => row.map(Math.round));
+    };
+    return {
+        unit: hexGridBasis(1, 1),
+        cubicFrame: frame,
+        fcc: toGrid(rocksaltLattice(1)),
+        cubic: toGrid(IDENTITY3),
+    };
+})();
+
+// hexagonal in-plane cells a = T b of the close-packed net (a1 = p b1 + q b2, a2 the
+// same turned by 120 degrees), by size: 1, 3 (sqrt 3, turned 30 degrees), 4, 7, 9, 12
+const HEX_IN_PLANE = [[1, 0], [2, 1], [2, 0], [3, 1], [3, 0], [4, 2]];
+// rows of the hexagonal cell in the basis of the rhombohedral one (obverse setting
+// of rhombohedralLattice)
+const RHOMBOHEDRAL_TO_HEXAGONAL = [[1, -1, 0], [0, 1, -1], [1, 1, 1]];
+
+function anionLayers(positions, isAnion) {
+    // the number of distinct heights (mod 1) of the anions: the close-packed layers
+    let heights = [];
+    positions.forEach((r, i) => {
+        if (!isAnion[i]) {
+            return;
+        }
+        let z = r[2] - Math.floor(r[2]);
+        if (!heights.some((h) => Math.abs(h - z) < 0.04 || Math.abs(Math.abs(h - z) - 1) < 0.04)) {
+            heights.push(z);
+        }
+    });
+    return heights.length;
+}
+
+function readHexagonalGrid(positions, isAnion, tolerance) {
+    /*
+    a hexagonal cell (a1 along x, a2 at 120 degrees, c along z) read on the
+    close-packed grid: as many layers as anion heights (the grid step along z is a
+    quarter of the layer spacing), and the smallest in-plane cell T with every atom
+    within 0.2 grid units of its own grid point in the layer and `tolerance` along the
+    stacking axis, after a common offset (the
+    grid origin need not be on an atom). Returns the cell in the grid basis, the grid
+    point of every atom, the offset, and the rotation that puts b1 along x.
+    */
+    let ell = anionLayers(positions, isAnion);
+    if (!ell) {
+        return null;
+    }
+    for (let [p, q] of HEX_IN_PLANE) {
+        let supercell = [[2 * p - q, -p + 2 * q, 0], [-p - q, 2 * p - q, 0], [0, 0, 4 * ell]];
+        let raw = positions.map((r) => {
+            let xb = r[0] * p - r[1] * q;
+            let yb = r[0] * q + r[1] * (p - q);
+            return [2 * xb - yb, -xb + 2 * yb, 4 * ell * r[2]];
+        });
+        let best = null;
+        for (let origin of raw) {
+            let offset = origin.map((v) => v - Math.round(v));
+            let residual = raw.map((g) => g.map((v, k) => v - offset[k] - Math.round(v - offset[k])));
+            // centre the residuals, so that the offset does not favour one atom
+            let mean = [0, 1, 2].map((k) => residual.reduce((sum, r) => sum + r[k], 0) / residual.length);
+            offset = offset.map((v, k) => v + mean[k]);
+            // in the layers the atoms sit close to the net; along the stacking axis
+            // buckled layers and displaced cations (corundum, Zn2Mo3O8) are further off
+            let deviation = Math.max.apply(null, raw.map((g) => Math.max.apply(null, g.map((v, k) =>
+                Math.abs(v - offset[k] - Math.round(v - offset[k])) * (k < 2 ? tolerance / 0.2 : 1)))));
+            if (!best || deviation < best.deviation) {
+                best = { deviation: deviation, offset: offset };
+            }
+        }
+        if (best.deviation >= tolerance) {
+            continue;
+        }
+        let sites = raw.map((g) => ({ sub: 0, n: g.map((v, k) => Math.round(v - best.offset[k])) }));
+        // every atom on its own grid point
+        if (new Set(sites.map((site) => reduceIntoCell(site.n, supercell).join(','))).size !== sites.length) {
+            continue;
+        }
+        // b1 from a = T b: b1 = ((p - q) a1 - q a2) / (p^2 - p q + q^2)
+        let det = p * p - p * q + q * q;
+        let b1 = [((p - q) - q * -0.5) / det, (-q * Math.sqrt(3) / 2) / det];
+        return { supercell: supercell, sites: sites, origin: best.offset, frame: rotationZ(-Math.atan2(b1[1], b1[0])) };
+    }
+    return null;
+}
+
+function readRhombohedralGrid(positions, isAnion, tolerance) {
+    // a rhombohedral cell (rhombohedralLattice) read on its hexagonal cell
+    let U = RHOMBOHEDRAL_TO_HEXAGONAL;
+    let inverse = mat.matrix_inverse(U);
+    let hexagonal = [];
+    let anions = [];
+    for (let m of cellTranslations(U)) {
+        positions.forEach((r, i) => {
+            hexagonal.push(rowTimesMatrix(r.map((v, k) => v + m[k]), inverse));
+            anions.push(isAnion[i]);
+        });
+    }
+    let read = readHexagonalGrid(hexagonal, anions, tolerance);
+    if (!read) {
+        return null;
+    }
+    let S = mat.matrix_multiply(inverse, read.supercell);
+    if (!isIntegerMatrix(S, 1e-8)) {
+        return null;
+    }
+    return Object.assign(read, { supercell: S.map((row) => row.map(Math.round)), sites: read.sites.slice(0, positions.length) });
+}
+
+// the Zumba Zn2Mo3O8 (P6_3mc), in the order of its file: Zn, Mo, O
+const ZMO_POSITIONS = [[0.333333, 0.666667, 0.518254], [0.666667, 0.333333, 0.018254], [0.333333, 0.666667, 0.947731],
+    [0.666667, 0.333333, 0.447731], [0.145756, 0.854244, 0.250286], [0.145756, 0.291512, 0.250286],
+    [0.708488, 0.854244, 0.250286], [0.854244, 0.145756, 0.750286], [0.854244, 0.708489, 0.750286],
+    [0.291511, 0.145756, 0.750286], [0, 0, 0.889383], [0, 0, 0.389383], [0.333333, 0.666667, 0.145099],
+    [0.666667, 0.333333, 0.645099], [0.487867, 0.512133, 0.364694], [0.487867, 0.975735, 0.364694],
+    [0.024265, 0.512133, 0.364694], [0.512132, 0.487868, 0.864694], [0.512132, 0.024265, 0.864694],
+    [0.975735, 0.487868, 0.864694], [0.16651, 0.83349, 0.634565], [0.16651, 0.33302, 0.634565],
+    [0.66698, 0.83349, 0.634565], [0.83349, 0.16651, 0.134565], [0.83349, 0.666981, 0.134565],
+    [0.333019, 0.16651, 0.134565]];
+
+let hexFamilyCache = new Map();
+function hexFamilyCell(family) {
+    /*
+    a family on the close-packed grid: its cell in the grid basis, the grid point of
+    each of its canonical sites, the grid offset of its canonical positions and the
+    rotation of its canonical frame onto the grid frame. The cubic families through
+    their fcc or simple cubic world cell along [111]; the hexagonal and rhombohedral
+    ones read from their ideal cell.
+    */
+    if (hexFamilyCache.has(family)) {
+        return hexFamilyCache.get(family);
+    }
+    let key = worldMemberKey(family);
+    let template = SUPERSTRUCTURES[family];
+    let cell = null;
+    let fromCubic = (world, S) => {
+        let base = familyWorldCell(family, world);
+        let sites = LATTICE_WORLDS[world].sites;
+        return {
+            supercell: mat.matrix_multiply(base.supercell, S).map((row) => row.map(Math.round)),
+            sites: base.sites.map((site) => ({ sub: 0, n: rowTimesMatrix(sites[site.sub].red.map((v, k) => v + site.n[k]), S).map(Math.round) })),
+            origin: [0, 0, 0],
+            frame: HEX_GRID.cubicFrame,
+        };
+    };
+    if (LATTICE_WORLDS.fcc.members[key] && key !== 'cscl') {
+        cell = fromCubic('fcc', HEX_GRID.fcc);
+    } else if (LATTICE_WORLDS.cubic.members[key] && key !== 'cscl') {
+        cell = fromCubic('cubic', HEX_GRID.cubic);
+    } else if (key === 'wurtzite') {
+        if (!template) {
+            cell = readHexagonalGrid(wurtzitePositions(0.375), WURTZITE_SITES.map((site) => site.role === 'X'), 0.5);
+        } else {
+            // the four sublattice sites with the first cation at the origin, as the
+            // canonical positions of a ternary wurtzite are
+            let parent = readHexagonalGrid(WURTZITE_SITES.map((site, sub) =>
+                templateParentPosition({ sub: sub, n: [0, 0, 0], role: site.role }, 0.375)),
+            WURTZITE_SITES.map((site) => site.role === 'X'), 0.5);
+            cell = {
+                supercell: mat.matrix_multiply(template.supercell, parent.supercell).map((row) => row.map(Math.round)),
+                sites: template.sites.map((site) => ({
+                    sub: 0,
+                    n: parent.sites[site.sub].n.map((v, k) => v + rowTimesMatrix(site.n, parent.supercell)[k]),
+                })),
+                origin: parent.origin,
+                frame: parent.frame,
+            };
+        }
+    } else if (key === 'zmo') {
+        // oxygen (the last 16) in four layers
+        cell = readHexagonalGrid(ZMO_POSITIONS, ZMO_POSITIONS.map((_, i) => i >= 10), 0.5);
+    } else if (LAYERED_POLYTYPES[key]) {
+        let polytype = LAYERED_POLYTYPES[key];
+        let reds = polytype.sites.map((site) => site.red);
+        let anions = polytype.sites.map((site) => site.role === 'X');
+        let read = polytype.cell === 'hexagonal' ? readHexagonalGrid(reds, anions, 0.5) : readRhombohedralGrid(reds, anions, 0.5);
+        if (read && template) {
+            read = Object.assign({}, read, {
+                supercell: mat.matrix_multiply(template.supercell, read.supercell).map((row) => row.map(Math.round)),
+                sites: template.sites.map((site) => ({ sub: 0, n: read.sites[site.sub].n.map((v, k) => v + rowTimesMatrix(site.n, read.supercell)[k]) })),
+            });
+        }
+        cell = read;
+    }
+    hexFamilyCache.set(family, cell);
+    return cell;
+}
+
+
 
 function transformWorldSite(site, P, world) {
     // a world site (sublattice, n) under the operation P of the parent basis
@@ -3526,6 +3820,10 @@ function familyWorldCell(family, world) {
     canonical sites, as worldCell gives them for an end-member; CsCl in the fcc world
     is already folded into the doubled cell (prefolded: needs force constants)
     */
+    if (world === 'hex') {
+        let cell = hexFamilyCell(family);
+        return cell ? Object.assign({ prefolded: false }, cell) : null;
+    }
     let member = LATTICE_WORLDS[world].members[worldMemberKey(family)];
     if (member === 'cscl-fold') {
         return { supercell: IDENTITY3, sites: csclFccSites(), prefolded: true };
@@ -3563,11 +3861,23 @@ function determinant(S) {
     return Math.abs(Math.round(mat.matrix_determinant(S)));
 }
 
+function intersectLattices(S1, S2) {
+    /*
+    the intersection of two integer lattices (rows of S1, S2), in Hermite normal form:
+    its dual is the sum of the duals, D (S_k^-1)^T with D = det S1 det S2 integer
+    */
+    let D = determinant(S1) * determinant(S2);
+    let dual = (S) => mat.matrix_transpose(mat.matrix_inverse(S)).map((row) => row.map((v) => Math.round(v * D)));
+    let B = hermiteRows(dual(S1).concat(dual(S2)));
+    let X = mat.matrix_transpose(mat.matrix_inverse(B)).map((row) => row.map((v) => Math.round(v * D)));
+    return hermiteRows(X);
+}
+
 function commonSupercell(S1, S2) {
     /*
     the smallest cell that is a supercell of both (the intersection of the two
     lattices): one of the two if it contains the other (S1 when they are the same
-    lattice), else the Hermite normal form of the smallest such lattice
+    lattice), else the Hermite normal form of the intersection
     */
     if (supercellRatio(S2, S1)) {
         return supercellRatio(S1, S2) ? S1 : S2;
@@ -3575,34 +3885,8 @@ function commonSupercell(S1, S2) {
     if (supercellRatio(S1, S2)) {
         return S1;
     }
-    let d1 = determinant(S1);
-    let d2 = determinant(S2);
-    let gcd = (a, b) => (b ? gcd(b, a % b) : a);
-    let lcm = d1 / gcd(d1, d2) * d2;
-    for (let N = lcm; N <= d1 * d2; N += lcm) {
-        for (let h11 = 1; h11 <= N; h11++) {
-            if (N % h11) {
-                continue;
-            }
-            for (let h22 = 1; h22 <= N / h11; h22++) {
-                if ((N / h11) % h22) {
-                    continue;
-                }
-                let h33 = N / h11 / h22;
-                for (let h12 = 0; h12 < h22; h12++) {
-                    for (let h13 = 0; h13 < h33; h13++) {
-                        for (let h23 = 0; h23 < h33; h23++) {
-                            let S = [[h11, h12, h13], [0, h22, h23], [0, 0, h33]];
-                            if (supercellRatio(S, S1) && supercellRatio(S, S2)) {
-                                return S;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    return null;
+    let S = intersectLattices(S1, S2);
+    return supercellRatio(S, S1) && supercellRatio(S, S2) ? S : null;
 }
 
 function foldWorldSites(sites, S, target) {
@@ -3618,6 +3902,41 @@ function foldWorldSites(sites, S, target) {
 
 function worldSiteKey(site, S) {
     return site.sub + ':' + reduceIntoCell(site.n, S).join(',');
+}
+
+function sharedSites(sites1, sites2, S) {
+    /*
+    the translations t (lattice vectors of the parent, modulo S) that put the most
+    sites of sites2 on sites of sites1, and that number: a histogram of the
+    differences between sites on the same sublattice
+    */
+    let counts = new Map();
+    for (let a of sites1) {
+        for (let b of sites2) {
+            if (a.sub === b.sub) {
+                let t = reduceIntoCell(a.n.map((v, k) => v - b.n[k]), S);
+                let key = t.join(',');
+                let entry = counts.get(key);
+                if (entry) {
+                    entry.count += 1;
+                } else {
+                    counts.set(key, { t: t, count: 1 });
+                }
+            }
+        }
+    }
+    let best = 0;
+    counts.forEach((entry) => { best = Math.max(best, entry.count); });
+    let translations = [];
+    counts.forEach((entry) => {
+        if (entry.count === best) {
+            translations.push(entry.t);
+        }
+    });
+    if (!best) {
+        translations = [[0, 0, 0]];
+    }
+    return { count: best, translations: translations };
 }
 
 function shiftWorldSite(site, j, world) {
@@ -3651,13 +3970,15 @@ export function getWorldMixing(family1, family2) {
     let worlds = getLatticeWorlds(family1).filter((world) => getLatticeWorlds(family2).indexOf(world) !== -1);
     let plan = null;
     if (worlds.length) {
-        // CsCl with a perovskite: the cubic world, no fold
+        // CsCl with a perovskite: the cubic world, no fold; then the fcc world; the
+        // close-packed grid for the rest (wurtzite with zinc blende, perovskite with
+        // rocksalt, ...)
         let world = worlds.indexOf('cubic') !== -1 ? 'cubic' : worlds[0];
         let cell1 = familyWorldCell(family1, world);
         let cell2 = familyWorldCell(family2, world);
         let shifts = LATTICE_WORLDS[world].cycle ? [0, 1, 2, 3] : [0];
         let options = [];
-        if (!(cell1.prefolded && cell2.prefolded)) {
+        if (cell1 && cell2 && !(cell1.prefolded && cell2.prefolded)) {
             worldOperations(world).forEach((operation, index) => {
                 let S2 = mat.matrix_multiply(cell2.supercell, operation.P).map((row) => row.map(Math.round));
                 let S = commonSupercell(cell1.supercell, S2);
@@ -3667,18 +3988,17 @@ export function getWorldMixing(family1, family2) {
                 let det = determinant(S);
                 let fold1 = cell1.prefolded || det > determinant(cell1.supercell);
                 let fold2 = cell2.prefolded || det > determinant(S2);
-                let keys1 = new Set(foldWorldSites(cell1.sites, cell1.supercell, S).map((site) => worldSiteKey(site, S)));
+                let sites1 = foldWorldSites(cell1.sites, cell1.supercell, S);
                 let sites2 = foldWorldSites(cell2.sites.map((site) => transformWorldSite(site, operation.P, world)), S2, S);
                 // the most sites in common over the translations prepareWorldPair tries
                 // (quarters of the body diagonal and lattice vectors modulo S), so that
                 // the options are the same whichever material comes first
                 let shared = 0;
                 for (let j of shifts) {
-                    let moved = sites2.map((site) => shiftWorldSite(site, j, world));
-                    for (let n of cellTranslations(S)) {
-                        let count = moved.filter((site) => keys1.has(worldSiteKey({ sub: site.sub, n: site.n.map((v, k) => v + n[k]) }, S))).length;
-                        shared = Math.max(shared, count);
-                    }
+                    shared = Math.max(shared, sharedSites(sites1, sites2.map((site) => shiftWorldSite(site, j, world)), S).count);
+                }
+                if (sites1.length + sites2.length - shared > MAX_UNION_SITES) {
+                    return;
                 }
                 options.push({ index: index, O: operation.O, P: operation.P, supercell: S, det: det, fold1: fold1, fold2: fold2, shared: shared });
             });
@@ -3699,6 +4019,24 @@ function worldCell(endpoint, world) {
     lattice = S H), canonical lattice and reduced positions, and the world site
     (sublattice, lattice vector n in the parent basis) of each of its sites
     */
+    if (world === 'hex') {
+        // the grid sites of the family; the canonical cell and positions of the
+        // end-member (through its fcc or cubic world cell for the cubic families, which
+        // checks the setting)
+        let family = hexFamilyCell(endpoint.family);
+        let key = worldMemberKey(endpoint.family);
+        let own = LATTICE_WORLDS.fcc.members[key] ? worldCell(endpoint, 'fcc')
+            : LATTICE_WORLDS.cubic.members[key] ? worldCell(endpoint, 'cubic')
+            : { cell: endpointLattice(endpoint), positions: endpointPositions(endpoint) };
+        return {
+            supercell: family.supercell,
+            cell: own.cell,
+            positions: own.positions,
+            sites: family.sites,
+            origin: family.origin,
+            frame: family.frame,
+        };
+    }
     let member = LATTICE_WORLDS[world].members[worldMemberKey(endpoint.family)];
     let template = SUPERSTRUCTURES[endpoint.family];
     let identity = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
@@ -3741,27 +4079,20 @@ function worldCell(endpoint, world) {
 }
 
 function cellTranslations(R) {
-    // the lattice vectors m (integer, basis of the small cell) distinct modulo the supercell R
-    let count = Math.abs(Math.round(mat.matrix_determinant(R)));
-    let inverse = mat.matrix_inverse(R);
-    let reach = Math.max.apply(null, R.map((row) => row.reduce((s, v) => s + Math.abs(v), 0)));
-    let found = new Map();
-    for (let m0 = -reach; m0 <= reach; m0++) {
-        for (let m1 = -reach; m1 <= reach; m1++) {
-            for (let m2 = -reach; m2 <= reach; m2++) {
-                let m = [m0, m1, m2];
-                let f = rowTimesMatrix(m, inverse).map((v) => Math.floor(v + 1e-9));
-                let back = rowTimesMatrix(f, R);
-                let reduced = m.map((v, k) => Math.round(v - back[k]));
-                found.set(reduced.join(','), reduced);
+    /*
+    the lattice vectors m (integer, basis of the small cell) distinct modulo the
+    supercell R: the box of the Hermite normal form of R, the smallest first
+    */
+    let H = cachedHermite(R);
+    let list = [];
+    for (let a = 0; a < H[0][0]; a++) {
+        for (let b = 0; b < H[1][1]; b++) {
+            for (let c = 0; c < H[2][2]; c++) {
+                list.push([a, b, c]);
             }
         }
     }
-    let list = Array.from(found.values());
-    if (list.length !== count) {
-        throw new Error('Expected ' + count + ' translations of the supercell, found ' + list.length);
-    }
-    list.sort((p, q) => Math.abs(p[0]) + Math.abs(p[1]) + Math.abs(p[2]) - Math.abs(q[0]) - Math.abs(q[1]) - Math.abs(q[2]));
+    list.sort((p, q) => p[0] + p[1] + p[2] - q[0] - q[1] - q[2]);
     return list;
 }
 
@@ -3773,8 +4104,8 @@ function foldIntoWorld(endpoint, info, R, worldSitesOf = null) {
     worldSitesOf for CsCl, whose cell is not one of the world's)
     */
     let evaluate = endpoint.sampleAtQ || endpoint.evaluate;
-    if (endpoint.family === 'chalcopyrite' && !chalcopyriteInCanonicalBasis(endpoint)) {
-        throw new Error('Unsupported chalcopyrite setting: not the standard body-centred tetragonal cell');
+    if (!fileInCanonicalBasis(endpoint)) {
+        throw new Error('Unsupported ' + endpoint.family + ' setting: the file cell is not the canonical one');
     }
     if (!evaluate) {
         throw new Error('Mixing ' + endpoint.name + ' with a material of another structure needs its force constants ' +
@@ -3845,21 +4176,42 @@ function csclInFccWorld(endpoint) {
     return placed;
 }
 
+let hermiteCache = new Map();
+function cachedHermite(S) {
+    let key = S.map((row) => row.join(',')).join(';');
+    if (!hermiteCache.has(key)) {
+        hermiteCache.set(key, hermiteRows(S));
+    }
+    return hermiteCache.get(key);
+}
+
 function reduceIntoCell(n, S) {
-    let f = rowTimesMatrix(n, mat.matrix_inverse(S)).map((v) => Math.floor(v + 1e-6));
-    let back = rowTimesMatrix(f, S);
-    return n.map((v, k) => Math.round(v - back[k]));
+    /*
+    the representative of n modulo the lattice of S in the box [0, h11) x [0, h22)
+    x [0, h33) of its Hermite normal form: the same for any basis of the lattice
+    */
+    let H = cachedHermite(S);
+    let v = n.map(Math.round);
+    for (let k = 0; k < 3; k++) {
+        let q = Math.floor(v[k] / H[k][k]);
+        if (q) {
+            v = v.map((x, j) => x - q * H[k][j]);
+        }
+    }
+    return v;
 }
 
 function hermiteRows(S) {
-    // the Hermite normal form of an integer lattice basis (rows): upper triangular,
-    // positive diagonal, entries above the diagonal reduced; the same for any basis
+    // the Hermite normal form of the lattice spanned by integer rows (three or more,
+    // full rank): upper triangular, positive diagonal, entries above the diagonal
+    // reduced; the same for any basis
     let A = S.map((row) => row.map(Math.round));
+    let m = A.length;
     let r = 0;
-    for (let c = 0; c < 3 && r < 3; c++) {
+    for (let c = 0; c < 3 && r < m; c++) {
         for (;;) {
             let pivot = -1;
-            for (let i = r; i < 3; i++) {
+            for (let i = r; i < m; i++) {
                 if (A[i][c] !== 0 && (pivot < 0 || Math.abs(A[i][c]) < Math.abs(A[pivot][c]))) {
                     pivot = i;
                 }
@@ -3869,7 +4221,7 @@ function hermiteRows(S) {
             }
             [A[r], A[pivot]] = [A[pivot], A[r]];
             let done = true;
-            for (let i = r + 1; i < 3; i++) {
+            for (let i = r + 1; i < m; i++) {
                 let q = Math.floor(A[i][c] / A[r][c]);
                 A[i] = A[i].map((v, k) => v - q * A[r][k]);
                 if (A[i][c] !== 0) {
@@ -3889,7 +4241,7 @@ function hermiteRows(S) {
         }
         r += 1;
     }
-    return A;
+    return A.slice(0, 3);
 }
 
 function isAnionSite(type) {
@@ -3979,20 +4331,29 @@ function reframeEndpoint(endpoint, info, O, M) {
     };
 }
 
-function chalcopyriteInCanonicalBasis(endpoint) {
+function fileInCanonicalBasis(endpoint) {
     /*
-    a chalcopyrite file evaluated at canonical reduced q: its cell is the canonical
-    body-centred tetragonal one, turned (as zincblendeAsChalcopyrite assumes)
+    a binary file evaluated at canonical reduced q: its cell is the canonical one,
+    turned (the standard fcc, hexagonal or body-centred tetragonal cell; as
+    zincblendeAsChalcopyrite assumes)
     */
+    if (endpoint.sampleAtQ) {
+        return true;
+    }
     let T = endpoint.rotation || IDENTITY3;
     let rotated = endpoint.lattice.map((row) => matrixTimesVector(T, row));
     let U = mat.matrix_multiply(rotated, mat.matrix_inverse(endpointLattice(endpoint)));
     return U.every((row, i) => row.every((v, j) => Math.abs(v - (i === j ? 1 : 0)) < 1e-3));
 }
 
+function materialOrderKey(endpoint) {
+    // which of two materials comes first in the choices that must not depend on their
+    // order (path, arrangement): by name, then by family (ZnO wurtzite and zinc blende)
+    return (endpoint.name || '') + '|' + (endpoint.family || '');
+}
+
 function canFold(endpoint) {
-    return !!(endpoint.sampleAtQ || endpoint.evaluate) &&
-        (endpoint.family !== 'chalcopyrite' || chalcopyriteInCanonicalBasis(endpoint));
+    return !!(endpoint.sampleAtQ || endpoint.evaluate) && fileInCanonicalBasis(endpoint);
 }
 
 function prepareWorldPair(endpoint1, endpoint2) {
@@ -4020,9 +4381,18 @@ function prepareWorldPair(endpoint1, endpoint2) {
     }
     let top = feasible.filter((option) => option.det === feasible[0].det &&
         option.fold1 + option.fold2 === feasible[0].fold1 + feasible[0].fold2 && option.shared === feasible[0].shared);
-    let place = (endpoint) => (LATTICE_WORLDS[world].members[worldMemberKey(endpoint.family)] === 'cscl-fold'
-        ? csclInFccWorld(endpoint)
-        : { endpoint: endpoint, info: worldCell(endpoint, world) });
+    let place = (endpoint) => {
+        if (LATTICE_WORLDS[world].members[worldMemberKey(endpoint.family)] === 'cscl-fold') {
+            return csclInFccWorld(endpoint);
+        }
+        let info = worldCell(endpoint, world);
+        // the close-packed grid has its own frame (z the stacking axis): turn into it
+        let placed = info.frame && !sameIntegerMatrix(info.frame, IDENTITY3)
+            ? reframeEndpoint(endpoint, info, info.frame, IDENTITY3)
+            : { endpoint: endpoint, info: info };
+        placed.info.origin = info.origin || [0, 0, 0];
+        return placed;
+    };
     let into = (placed, S) => {
         // folded into S, or (the same lattice in another basis) relabelled
         let R = supercellRatio(S, placed.info.supercell);
@@ -4037,7 +4407,7 @@ function prepareWorldPair(endpoint1, endpoint2) {
     let base1 = place(endpoint1);
     let base2 = place(endpoint2);
     let shifts = LATTICE_WORLDS[world].cycle ? [0, 1, 2, 3] : [0];
-    let order = (endpoint1.name || '') <= (endpoint2.name || '');
+    let order = materialOrderKey(endpoint1) <= materialOrderKey(endpoint2);
     let best = null;
     // ties: the same arrangement whichever material comes first. Material 2 turned by
     // O and translated by t is, seen from material 2, material 1 turned by O^-1 and
@@ -4083,10 +4453,11 @@ function prepareWorldPair(endpoint1, endpoint2) {
         let index1 = new Map(keys1.map((k, i) => [k, i]));
         // translations of material 2: quarters of the body diagonal (the fcc world's
         // site cycle) and lattice vectors of the parent modulo the common cell (an
-        // ordering is not invariant under them)
-        let lattice = cellTranslations(S);
+        // ordering is not invariant under them); of these, the ones that share the
+        // most sites (the others cannot win)
         for (let j of shifts) {
-            for (let n of lattice) {
+            let moved = p2.info.sites.map((site) => shiftWorldSite(site, j, world));
+            for (let n of sharedSites(p1.info.sites, moved, S).translations) {
                 let keys2 = p2.info.sites.map((site) => {
                     let moved = shiftWorldSite(site, j, world);
                     return worldSiteKey({ sub: moved.sub, n: moved.n.map((v, k) => v + n[k]) }, S);
@@ -4115,8 +4486,11 @@ function prepareWorldPair(endpoint1, endpoint2) {
         }
     }
     let { p1, p2, S, keys1, index1 } = best;
-    // the translation in reduced coordinates of the common cell
-    let shiftRed = rowTimesMatrix(best.t, mat.matrix_inverse(S));
+    // the translation in reduced coordinates of the common cell, with the offsets of
+    // the two grids (the close-packed grid need not have its origin on an atom)
+    let origin1 = base1.info.origin || [0, 0, 0];
+    let origin2 = rowTimesMatrix(base2.info.origin || [0, 0, 0], best.option.P);
+    let shiftRed = rowTimesMatrix(best.t.map((v, k) => v + origin1[k] - origin2[k]), mat.matrix_inverse(S));
     let positions2 = p2.info.positions.map((p) => p.map((v, k) => v + shiftRed[k]));
     let map1 = keys1.map((_, i) => i);
     let map2 = keys1.map(() => -1);
@@ -4250,8 +4624,9 @@ export function buildCommonPath(endpoint1, endpoint2) {
     move with c/a, so a segment ending there is cut at the nearer of the two.
     */
     let template = SUPERSTRUCTURES[endpoint1.family];
-    if (endpoint1.sampleAtQ && endpoint2.sampleAtQ && template && template.path) {
-        // both known at any q: the standard path of the canonical cell
+    if (endpoint1.sampleAtQ && endpoint2.sampleAtQ && template && template.path && endpoint1.family === endpoint2.family) {
+        // both known at any q: the standard path of the canonical cell (of the same
+        // family: two structures on a common cell take the path of one of their files)
         return buildTemplatePath(endpoint1, endpoint2, template);
     }
     if (endpoint1.sampleAtQ || endpoint2.sampleAtQ) {
@@ -4270,7 +4645,7 @@ export function buildCommonPath(endpoint1, endpoint2) {
                 // both folded into a common cell (two orderings): the path of one of
                 // them, the same one whichever material comes first, evaluated for both
                 let source = [endpoint1, endpoint2].filter((endpoint) => endpoint.pathSegments && endpoint.pathSegments.length)
-                    .sort((p, q) => (p.name < q.name ? -1 : p.name > q.name ? 1 : 0))[0];
+                    .sort((p, q) => (materialOrderKey(p) < materialOrderKey(q) ? -1 : 1))[0];
                 if (source) {
                     return source.pathSegments.map((segment) => {
                         let direction = [0, 1, 2].map((d) => segment.qB[d] - segment.qA[d]);
@@ -4626,8 +5001,27 @@ function buildMixedNacPayload(endpoint1, endpoint2, x, lattice, masses, position
         born, dielectric,
         mix(nac1.unitConversion, nac2.unitConversion),
         lattice, masses, utils.red_car_list(positionsRed, lattice),
-        nac1.tolerance
+        nac1.tolerance, mix(endpointLambda(endpoint1), endpointLambda(endpoint2))
     );
+}
+
+function endpointLambda(endpoint) {
+    /*
+    the Ewald parameter the end-member's short-range part was split with: the fixed
+    one of its file, else phonopy's rule for its cell. The full dipole-dipole sum does
+    not depend on it but for truncation (~0.05 cm^-1); taking the mixture's parameter
+    between the two keeps the end-members exact.
+    */
+    if (endpoint.nac.lambda) {
+        return endpoint.nac.lambda;
+    }
+    if (!endpoint.defaultLambda) {
+        let lattice = endpointLattice(endpoint);
+        endpoint.defaultLambda = buildNacPayload(endpoint.nac.siteBorn, endpoint.nac.siteDielectric,
+            endpoint.nac.unitConversion, lattice, endpoint.siteMasses,
+            utils.red_car_list(endpointPositions(endpoint), lattice), endpoint.nac.tolerance).nac.lambda;
+    }
+    return endpoint.defaultLambda;
 }
 
 export function buildNacPayload(born, dielectric, unitConversion, lattice, masses, positionsCar, tolerance, lambdaOverride = null) {
@@ -4785,7 +5179,8 @@ function subtractRealSpaceDipole(endpoint, matrices, qpoints) {
     let lattice = endpointLattice(endpoint);
     let positions = endpointPositions(endpoint);
     let payload = buildNacPayload(endpoint.nac.siteBorn, endpoint.nac.siteDielectric, endpoint.nac.unitConversion,
-        lattice, endpoint.siteMasses, utils.red_car_list(positions, lattice), endpoint.nac.tolerance);
+        lattice, endpoint.siteMasses, utils.red_car_list(positions, lattice), endpoint.nac.tolerance,
+        endpoint.nac.lambda || null);
     let factorSq = endpoint.frequencyFactor * endpoint.frequencyFactor;
     return matrices.map((matrix, k) => {
         let out = { real: matrix.real.map((row) => row.slice()), imag: matrix.imag.map((row) => row.slice()) };
@@ -5047,7 +5442,11 @@ export async function computeMixedPhonon(sampled, x, massFraction = x) {
             masses, x
         );
     });
-    imposeAcousticSumRule(matrices, sampled.qpoints, masses, positionsRed);
+    if (x !== 0 && x !== 1) {
+        // a pure end-member is drawn as it is (a file's own residual, e.g. the 0.02 cm^-1
+        // of the QE Zn2Mo3O8, is not the mixture's)
+        imposeAcousticSumRule(matrices, sampled.qpoints, masses, positionsRed);
+    }
 
     let eigenvalues = [];
     let vectors = [];
@@ -5182,7 +5581,8 @@ async function computeUnionMixedPhonon(sampled, x, massFraction) {
         )));
         let dielectric = [0, 1, 2].map((a) => [0, 1, 2].map((b) => (1 - x) * nac1.siteDielectric[a][b] + x * nac2.siteDielectric[a][b]));
         nacPayload = buildNacPayload(born, dielectric, (1 - x) * nac1.unitConversion + x * nac2.unitConversion,
-            lattice, activeMasses, utils.red_car_list(activePositions, lattice), nac1.tolerance);
+            lattice, activeMasses, utils.red_car_list(activePositions, lattice), nac1.tolerance,
+            (1 - x) * endpointLambda(endpoint1) + x * endpointLambda(endpoint2));
     }
     let factorSq = recompute ? endpoint1.frequencyFactor * endpoint1.frequencyFactor : 1;
 
@@ -5215,7 +5615,9 @@ async function computeUnionMixedPhonon(sampled, x, massFraction) {
         }
         return out;
     });
-    imposeAcousticSumRule(matrices, sampled.qpoints, activeMasses, activePositions, lattice);
+    if (x !== 0 && x !== 1) {
+        imposeAcousticSumRule(matrices, sampled.qpoints, activeMasses, activePositions, lattice);
+    }
 
     let averageMass = activeMasses.reduce((sum, mass) => sum + mass, 0) / natoms;
     let amplitude = Math.sqrt(averageMass);

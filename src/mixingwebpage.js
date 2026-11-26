@@ -309,7 +309,13 @@ export class MixingWebpage extends PhononWebpage {
                 family: entry.family || "zincblende",
                 spacegroup: entry.spacegroup,
             };
-            if (entry.source === phonondb.name) {
+            if (entry.source === "zumba") {
+                // a calculation of this site (the Zumba page), shipped with the page
+                m.source = "zumba";
+                m.reference = getReference({ author: "QE DFPT", url: "zumba.html", name: "Zumba", year: 2026 });
+                m.link = "zumba.html";
+                m.url = entry.url;
+            } else if (entry.source === phonondb.name) {
                 m.source = phonondb.name;
                 m.reference = getReference(phonondb);
                 // zinc blende files ship with the page, the others come from the upstream site
@@ -330,7 +336,7 @@ export class MixingWebpage extends PhononWebpage {
         }
 
         $.get(this.mixingList, function(entries) {
-            addMaterials(entries.filter((entry) => entry.source === phonondb.name));
+            addMaterials(entries.filter((entry) => entry.source === phonondb.name || entry.source === "zumba"));
 
             //materials project entries are only listed if the OpenData bucket is reachable
             let mpEntries = entries.filter((entry) => entry.source === mpdb.name);
@@ -402,6 +408,9 @@ export class MixingWebpage extends PhononWebpage {
         } else if (family === "antifluorite-ABX-F43m") {
             // MgAgAs type: zinc blende with the octahedral site filled
             tag = "half-Heusler";
+        } else if (family === "zmo") {
+            // the Zumba calculation (QE DFPT) of this site
+            tag = "Zumba";
         } else {
             let spacegroup = (material.spacegroup || "").replace(/_(\d)/g, "<sub>$1</sub>");
             for (let parent of ["rocksalt", "fluorite", "antifluorite", "perovskite", "antiperovskite", "rutile", "corundum"]) {
@@ -560,8 +569,11 @@ export class MixingWebpage extends PhononWebpage {
         let binary = getParentFamily(material2.family) === family1 ? material1
             : getParentFamily(family1) === material2.family ? material2
             : null;
+        // folding into a larger cell evaluates D off the band path: force constants
+        // (PhononDB, the Zumba calculation)
+        let hasForceConstants = (material) => material.source === "phonondb" || material.source === "zumba";
         if (binary) {
-            return binary.source === "phonondb";
+            return hasForceConstants(binary);
         }
         // other structures on a common lattice, with vacancies on the sites only one
         // of them fills; a material folded into the other's cell needs force constants
@@ -569,8 +581,8 @@ export class MixingWebpage extends PhononWebpage {
         if (!plan || !material1) {
             return false;
         }
-        return plan.options.some((option) => (!option.fold1 || material1.source === "phonondb") &&
-            (!option.fold2 || material2.source === "phonondb"));
+        return plan.options.some((option) => (!option.fold1 || hasForceConstants(material1)) &&
+            (!option.fold2 || hasForceConstants(material2)));
     }
 
     findMaterial(url) {
@@ -661,8 +673,12 @@ export class MixingWebpage extends PhononWebpage {
         let raws = await Promise.all([this.getRawJson(this.material1.url), this.getRawJson(this.material2.url)]);
         let dielectric1 = await this.getMaterialsProjectDielectric(this.material1.url, raws[0]);
         let dielectric2 = await this.getMaterialsProjectDielectric(this.material2.url, raws[1]);
-        let endpoint1 = buildMixingEndpoint(raws[0], this.material1, dielectric1);
-        let endpoint2 = buildMixingEndpoint(raws[1], this.material2, dielectric2);
+        // the list entries (with the family: a file-frame family like the Zumba Zn2Mo3O8
+        // cannot be recognised from the cell alone)
+        let entry1 = Object.assign({}, this.findMaterial(this.material1.url), { name: this.material1.name });
+        let entry2 = Object.assign({}, this.findMaterial(this.material2.url), { name: this.material2.name });
+        let endpoint1 = buildMixingEndpoint(raws[0], entry1, dielectric1);
+        let endpoint2 = buildMixingEndpoint(raws[1], entry2, dielectric2);
         let sampled = sampleMixingPair(endpoint1, endpoint2);
         if (!sampled.qpoints.length) {
             throw new Error("The two materials have no high-symmetry segment in common.");
@@ -692,7 +708,7 @@ export class MixingWebpage extends PhononWebpage {
         }
         if (union) {
             // two structures on a common cell
-            family = union.world === "fcc" ? "common fcc cell" : "common cubic cell";
+            family = union.world === "fcc" ? "common fcc cell" : union.world === "hex" ? "common close-packed cell" : "common cubic cell";
         }
         family = family ? family + ", " : "";
         return utils.format_formula_html(this.material1.name) +

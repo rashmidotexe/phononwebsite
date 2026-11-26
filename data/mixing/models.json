@@ -6794,5 +6794,13 @@
         "source": "phonondb",
         "spacegroup": "Fm-3m",
         "family": "heusler-A2BX"
+    },
+    {
+        "id": "zumba-zmo",
+        "name": "Zn2Mo3O8",
+        "source": "zumba",
+        "spacegroup": "P6_3mc",
+        "family": "zmo",
+        "url": "data/mixing/zumba/ZMO.json.gz"
     }
 ]

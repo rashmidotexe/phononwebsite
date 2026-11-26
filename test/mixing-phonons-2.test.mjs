@@ -263,13 +263,14 @@ describe('transition-metal dichalcogenide mixing', () => {
         }
     });
 
-    it('does not mix different polytypes', () => {
+    it('mixes different polytypes on the close-packed grid', () => {
+        // the layers of 2H, 1T and 3R on one grid: a common cell with vacancies
         let ws2 = endpoint('phonondb-WS2-2H-mp-224.json.gz', 'WS2');
         let hfs2 = endpoint('phonondb-HfS2-1T-mp-985829.json.gz', 'HfS2');
         let mos2 = endpoint('phonondb-MoS2-3R-mp-1434.json.gz', 'MoS2');
-        assert.throws(() => sampleMixingPair(ws2, mos2), /Cannot mix/);
-        assert.throws(() => sampleMixingPair(hfs2, mos2), /Cannot mix/);
-        assert.throws(() => sampleMixingPair(ws2, hfs2), /Cannot mix/);
+        assert.equal(sampleMixingPair(ws2, mos2).union.world, 'hex');
+        assert.equal(sampleMixingPair(hfs2, mos2).union.world, 'hex');
+        assert.equal(sampleMixingPair(ws2, hfs2).union.map1.length, 10);
     });
 });
 

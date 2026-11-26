@@ -197,7 +197,9 @@ describe('mixing two structures on a common lattice (vacancies)', () => {
         // two orderings on different cells: the smallest common supercell, both folded
         let rocksalts = getWorldMixing('rocksalt-ABX2-R3m', 'rocksalt-ABX2-I41amd').options[0];
         assert.ok(rocksalts.fold1 && rocksalts.det % 2 === 0);
-        assert.equal(getWorldMixing('wurtzite', 'rocksalt'), null);
+        // rutile is not close-packed on any of the grids
+        assert.equal(getWorldMixing('rutile', 'rocksalt'), null);
+        assert.equal(getWorldMixing('wurtzite', 'rocksalt').world, 'hex');
     });
 });
 
@@ -245,5 +247,85 @@ describe('mixing orderings on different cells or along other axes', () => {
         assert.equal(option.det, 4);
         assert.ok(!option.fold1 && !option.fold2);
         assert.ok(option.index > 0);
+    });
+});
+
+describe('close-packed structures on one grid (wurtzite, zinc blende, rocksalt, ...)', () => {
+    let opticalDiff = (a, b) => {
+        let worst = 0;
+        a.forEach((row, k) => row.forEach((v, n) => {
+            if (Math.abs(v) > 1) {
+                worst = Math.max(worst, Math.abs(v - b[k][n]));
+            }
+        }));
+        return worst;
+    };
+    let zmo = () => buildMixingEndpoint(JSON.parse(gunzipSync(readFileSync(join(__dirname, '..', 'data', 'mixing', 'zumba', 'ZMO.json.gz')))),
+        { name: 'Zn2Mo3O8', family: 'zmo' });
+
+    it('reads the Zumba Zn2Mo3O8 force constants as matdyn does', async () => {
+        // the q2r force constants with QE's Ewald parameter: the matdyn dispersion of
+        // the Zumba page, away from Gamma (where the LO direction is a choice)
+        let sampled = sampleMixingPair(zmo(), zmo());
+        let reference = await computeReferenceEigenvalues(sampled);
+        let matdyn = JSON.parse(readFileSync(join(__dirname, '..', 'zumbadb', 'ZMO_dispersion.json')));
+        let worst = 0;
+        sampled.qpoints.forEach((q, k) => {
+            let j = matdyn.qpoints.findIndex((p) => p.every((v, i) => Math.abs(v - q[i]) < 1e-6));
+            if (j < 0 || q.every((v) => Math.abs(v) < 1e-9)) {
+                return;
+            }
+            let ours = reference[k].slice().sort((a, b) => a - b);
+            matdyn.eigenvalues[j].slice().sort((a, b) => a - b).forEach((v, i) => { worst = Math.max(worst, Math.abs(v - ours[i])); });
+        });
+        assert.ok(worst < 0.01, String(worst));
+        let half = await computeMixedPhonon(sampled, 0);
+        assert.ok(opticalDiff(half.eigenvalues, reference) < 1e-6);
+    });
+
+    it('mixes wurtzite with zinc blende, rocksalt, corundum, 1T and perovskite', async () => {
+        let aln = () => endpoint('phonondb-AlN-wurtzite-mp-661.json.gz', 'AlN');
+        let pairs = [
+            [aln, () => endpoint('phonondb-GaP-mp-2490.json.gz', 'GaP'), 20],
+            [aln, () => endpoint('phonondb-NaCl-mp-22862.json.gz', 'NaCl'), 22],
+            [aln, () => endpoint('phonondb-Al2O3-mp-1143.json.gz', 'Al2O3'), 16],
+            [() => endpoint('phonondb-ZrS2-1T-mp-1186.json.gz', 'ZrS2'), aln, 5],
+            [() => endpoint('phonondb-SrTiO3-mp-5229.json.gz', 'SrTiO3'), () => endpoint('phonondb-NaCl-mp-22862.json.gz', 'NaCl'), 8],
+        ];
+        for (let [first, second, sites] of pairs) {
+            let sampled = sampleMixingPair(first(), second());
+            let reversed = sampleMixingPair(second(), first());
+            let label = sampled.endpoint1.name + ' + ' + sampled.endpoint2.name;
+            assert.equal(sampled.union.world, 'hex', label);
+            assert.equal(sampled.union.map1.length, sites, label);
+            let end0 = await computeMixedPhonon(sampled, 0);
+            assert.ok(opticalDiff(end0.eigenvalues, await computeReferenceEigenvalues(sampled)) < 1e-4, label);
+            let end1 = await computeMixedPhonon(sampled, 1);
+            assert.ok(opticalDiff(end1.eigenvalues, await computeReferenceEigenvalues(reversed)) < 1e-4, label);
+            let mixed = await computeMixedPhonon(sampled, 0.4, 0.6);
+            let mirrored = await computeMixedPhonon(reversed, 0.6, 0.4);
+            assert.ok(opticalDiff(mixed.eigenvalues, mirrored.eigenvalues) < 1e-4, label);
+            sampled.qpoints.forEach((q, k) => {
+                if (q.every((v) => Math.abs(v) < 1e-9)) {
+                    assert.ok(mixed.eigenvalues[k].map(Math.abs).sort((p, r) => p - r)[2] < 0.05, label);
+                }
+            });
+        }
+    });
+
+    it('folds a wurtzite into the Zn2Mo3O8 cell', async () => {
+        let sampled = sampleMixingPair(endpoint('phonondb-AlN-wurtzite-mp-661.json.gz', 'AlN'), zmo());
+        assert.equal(sampled.union.world, 'hex');
+        // AlN folded 8 times (2 x 2 in the layer, 4 layers): 32 sites, 13 on Zn2Mo3O8 sites
+        assert.equal(sampled.union.map1.length, 45);
+        let end1 = await computeMixedPhonon(sampled, 1);
+        let alone = await computeReferenceEigenvalues(sampleMixingPair(zmo(), zmo()));
+        assert.ok(opticalDiff(end1.eigenvalues, alone) < 1e-4);
+    });
+
+    it('caps the size of the common cell', () => {
+        // zinc blende (3 layers) with Zn2Mo3O8 (4 layers, 2 x 2): 12 layers, too many sites
+        assert.equal(getWorldMixing('zincblende', 'zmo'), null);
+        assert.equal(getWorldMixing('wurtzite', 'zmo').world, 'hex');
     });
 });

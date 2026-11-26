@@ -14,6 +14,7 @@ import {
     zincblendeAsChalcopyrite,
     wurtziteAsSuperstructure,
     binaryAsSuperstructure,
+    getWorldMixing,
 } from '../src/mixingphonons.js';
 import { solveComplexHermitianWithEigenWasm } from '../src/eigenwasm.js';
 import * as utils from '../src/utils.js';
@@ -597,11 +598,12 @@ describe('wurtzite dynamical-matrix mixing', () => {
         assert.ok(opticalDiff(forward.eigenvalues, mirrored.eigenvalues) < 1e-6);
     });
 
-    it('does not mix a wurtzite with a zinc blende', () => {
+    it('mixes a wurtzite with a zinc blende on the close-packed grid', () => {
+        // AB and ABC stacking: a 6-layer common cell, both folded
         let gan = endpoint('phonondb-GaN-wurtzite-mp-804.json.gz', 'GaN');
         let gap = endpoint('phonondb-GaP-mp-2490.json.gz', 'GaP');
-        assert.throws(() => sampleMixingPair(gan, gap), /Cannot mix/);
-        assert.throws(() => sampleMixingPair(gap, gan), /Cannot mix/);
+        assert.equal(sampleMixingPair(gan, gap).union.map1.length, 20);
+        assert.equal(sampleMixingPair(gap, gan).union.map1.length, 20);
     });
 });
 
@@ -730,12 +732,11 @@ describe('ternary wurtzite dynamical-matrix mixing', () => {
         }
     });
 
-    it('refuses pairs on different lattices', () => {
+    it('mixes other close-packed structures, needs force constants to fold', () => {
+        // a ternary wurtzite with zinc blende and chalcopyrite: the close-packed grid
+        assert.equal(getWorldMixing('wurtzite-ABX2', 'zincblende').world, 'hex');
+        assert.equal(getWorldMixing('chalcopyrite', 'wurtzite-ABX2').world, 'hex');
         let zngen2 = endpoint('phonondb-ZnGeN2-mp-2979.json.gz', 'ZnGeN2');
-        let gap = endpoint('phonondb-GaP-mp-2490.json.gz', 'GaP');
-        let cugas2 = endpoint('phonondb-CuGaS2-mp-5238.json.gz', 'CuGaS2');
-        assert.throws(() => sampleMixingPair(zngen2, gap), /Cannot mix/);
-        assert.throws(() => sampleMixingPair(cugas2, zngen2), /Cannot mix/);
         // a Materials Project wurtzite is only known on its band path
         let rows = JSON.parse(readFileSync(join(__dirname, 'fixtures', 'mixing', 'mp-dfpt-dielectric-AlN-wurtzite.json')));
         let alnMP = buildMixingEndpoint(loadFixture('mpdb-AlN-wurtzite-mp-661-trimmed.json.gz'), { name: 'AlN' }, indexDielectricRows(rows).get(661));
@@ -974,7 +975,8 @@ describe('ternary rocksalt dynamical-matrix mixing', () => {
         let gap = endpoint('phonondb-GaP-mp-2490.json.gz', 'GaP');
         // two orderings on different cells: both folded into the smallest common cell
         assert.equal(sampleMixingPair(nains2, lisco2).union.map1.length, 16);
-        assert.throws(() => sampleMixingPair(zngen2, nains2), /Cannot mix/);
+        // a ternary wurtzite and a ternary rocksalt: the close-packed grid
+        assert.equal(getWorldMixing(zngen2.family, nains2.family).world, 'hex');
         // a zinc blende with force constants folds into the cell, with vacancies
         assert.ok(sampleMixingPair(gap, nains2).union);
         let rows = JSON.parse(readFileSync(join(__dirname, 'fixtures', 'mixing', 'mp-dfpt-dielectric-CaO.json')));
