@@ -149,15 +149,24 @@ export class MixingWebpage extends PhononWebpage {
             // two structures on a common lattice: say which sites only one of them fills
             let only1 = union.map2.filter((i) => i < 0).length;
             let only2 = union.map1.filter((i) => i < 0).length;
+            let shared = union.map1.length - only1 - only2;
             let parts = [];
             if (only1) {
-                parts.push(only1 + " filled only in " + sampled.endpoint1.name);
+                parts.push(only1 + " only in " + sampled.endpoint1.name);
             }
             if (only2) {
                 parts.push(only2 + " only in " + sampled.endpoint2.name);
             }
-            note = "Mixed site by site on a common cell of " + union.map1.length + " sites" +
-                (parts.length ? " (" + parts.join(", ") + "; vacancies in the other, occupied in proportion to the mixture)" : "") + ". ";
+            note = "Mixed site by site on a common cell of " + union.map1.length + " sites";
+            if (parts.length) {
+                let last = parts.pop();
+                note += ": " + shared + " atoms are in both materials, " +
+                    (parts.length ? parts.join(", ") + " and " : "") + last + ". " +
+                    "An atom present in only one material fades in or out with the slider: " +
+                    "its mass, force constants and Born charge are scaled by that material's share of the mixture. ";
+            } else {
+                note += ". ";
+            }
         }
         if (nacMode === 'interpolated' && this.material2) {
             let missing = sampled ? [sampled.endpoint1, sampled.endpoint2].filter((endpoint) => !endpoint.nac) : [];
