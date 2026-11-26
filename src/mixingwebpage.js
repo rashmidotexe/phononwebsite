@@ -397,7 +397,12 @@ export class MixingWebpage extends PhononWebpage {
         */
         let family = material && material.family ? material.family : "";
         let tag = "";
-        if (family.indexOf("wurtzite") === 0) {
+        if (family === "zincblende") {
+            // diamond (Si, C: Fd-3m) is zinc blende with one species
+            tag = material.spacegroup === "Fd-3m" ? "diamond" : "zinc blende";
+        } else if (family === "chalcopyrite") {
+            tag = "chalcopyrite";
+        } else if (family.indexOf("wurtzite") === 0) {
             tag = "wurtzite";
         } else if (family.indexOf("tmd-") === 0) {
             // the polytype of a transition-metal dichalcogenide: 2H, 1T, 3R

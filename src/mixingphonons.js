@@ -3472,8 +3472,9 @@ export function binaryAsSuperstructure(binary, family) {
 //      the stacking axis quarters of the layer spacing d (an anion layer at 0, the
 //      tetrahedral sites at +-3d/4, the octahedral ones at d/2). Wurtzite (AB), zinc
 //      blende, rocksalt and the fluorites (ABC, along [111]), the perovskites (AX3
-//      layers, ABC), NiAs-like and CdI2-like layers, corundum, the dichalcogenides and
-//      the 4H Zn2Mo3O8 all sit on it (HEX_GRID).
+//      layers, ABC), NiAs-like and CdI2-like layers, corundum, the dichalcogenides,
+//      the 4H Zn2Mo3O8 and rutile (hcp anions, buckled; RUTILE_ON_GRID) and its
+//      orderings all sit on it (HEX_GRID).
 // For each member: the world sublattice of each of its own sublattices (binaries:
 // its sites in canonical order; templates: the parent's sublattices), or how its
 // cell is placed in the world ('cscl-fold', 'chalcopyrite', 'grid').
@@ -3498,7 +3499,7 @@ const LATTICE_WORLDS = {
         members: {
             zincblende: 'grid', rocksalt: 'grid', fluorite: 'grid', antifluorite: 'grid', heusler: 'grid',
             chalcopyrite: 'grid', perovskite: 'grid', antiperovskite: 'grid', wurtzite: 'grid',
-            'tmd-1T': 'grid', 'tmd-2H': 'grid', 'tmd-3R': 'grid', corundum: 'grid', zmo: 'grid',
+            'tmd-1T': 'grid', 'tmd-2H': 'grid', 'tmd-3R': 'grid', corundum: 'grid', zmo: 'grid', rutile: 'grid',
         },
         cycle: null,
     },
@@ -3722,6 +3723,26 @@ const ZMO_POSITIONS = [[0.333333, 0.666667, 0.518254], [0.666667, 0.333333, 0.01
     [0.66698, 0.83349, 0.634565], [0.83349, 0.16651, 0.134565], [0.83349, 0.666981, 0.134565],
     [0.333019, 0.16651, 0.134565]];
 
+// rutile on the close-packed grid: its anions are a buckled hcp array stacked along
+// b, the cations fill half the octahedral holes, in straight edge-sharing chains along
+// c (a close-packed row), the filled rows alternating between the two hole layers.
+// The ideal cell: a = sqrt(3) a_cp (3 g2), b = the hcp c (two layers, 8 g3), c = a_cp
+// (b1), anions at u_a = 1/3, u_b = 1/4 (rutile: u = 0.305 for both). The rows of the
+// rutile cell in the grid basis, the grid point of each of RUTILE_SITES, and the
+// rotation of the rutile frame (x along a, z along c) onto the grid frame.
+const RUTILE_ON_GRID = (() => {
+    let supercell = [[0, 3, 0], [0, 0, 8], [2, -1, 0]];
+    let ideal = [[0, 0, 0], [0.5, 0.5, 0.5], [1 / 3, 1 / 4, 0], [-1 / 3, -1 / 4, 0], [5 / 6, 1 / 4, 0.5], [1 / 6, 3 / 4, 0.5]];
+    let sites = ideal.map((r) => {
+        let g = rowTimesMatrix(r, supercell);
+        if (!isIntegerMatrix([g], 1e-8)) {
+            throw new Error('The ideal rutile cell is not on the close-packed grid');
+        }
+        return { sub: 0, n: g.map(Math.round) };
+    });
+    return { supercell: supercell, sites: sites, origin: [0, 0, 0], frame: [[0, 0, 1], [1, 0, 0], [0, 1, 0]] };
+})();
+
 let hexFamilyCache = new Map();
 function hexFamilyCell(family) {
     /*
@@ -3770,6 +3791,19 @@ function hexFamilyCell(family) {
                 frame: parent.frame,
             };
         }
+    } else if (key === 'rutile') {
+        // the rutile cell and its cation orderings (all templates of it)
+        let parent = RUTILE_ON_GRID;
+        let ordering = template || { supercell: IDENTITY3, sites: RUTILE_SITES.map((_, sub) => ({ sub: sub, n: [0, 0, 0] })) };
+        cell = {
+            supercell: mat.matrix_multiply(ordering.supercell, parent.supercell).map((row) => row.map(Math.round)),
+            sites: ordering.sites.map((site) => ({
+                sub: 0,
+                n: parent.sites[site.sub].n.map((v, k) => v + rowTimesMatrix(site.n, parent.supercell)[k]),
+            })),
+            origin: parent.origin,
+            frame: parent.frame,
+        };
     } else if (key === 'zmo') {
         // oxygen (the last 16) in four layers
         cell = readHexagonalGrid(ZMO_POSITIONS, ZMO_POSITIONS.map((_, i) => i >= 10), 0.5);

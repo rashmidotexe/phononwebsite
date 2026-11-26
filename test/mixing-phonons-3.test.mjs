@@ -197,8 +197,8 @@ describe('mixing two structures on a common lattice (vacancies)', () => {
         // two orderings on different cells: the smallest common supercell, both folded
         let rocksalts = getWorldMixing('rocksalt-ABX2-R3m', 'rocksalt-ABX2-I41amd').options[0];
         assert.ok(rocksalts.fold1 && rocksalts.det % 2 === 0);
-        // rutile is not close-packed on any of the grids
-        assert.equal(getWorldMixing('rutile', 'rocksalt'), null);
+        // rutile (a buckled hcp anion array) and rocksalt on the close-packed grid
+        assert.equal(getWorldMixing('rutile', 'rocksalt').world, 'hex');
         assert.equal(getWorldMixing('wurtzite', 'rocksalt').world, 'hex');
     });
 });
@@ -310,6 +310,34 @@ describe('close-packed structures on one grid (wurtzite, zinc blende, rocksalt, 
                     assert.ok(mixed.eigenvalues[k].map(Math.abs).sort((p, r) => p - r)[2] < 0.05, label);
                 }
             });
+        }
+    });
+
+    it('mixes rutile and trirutile with 1T, wurtzite and corundum', async () => {
+        // rutile: the hcp anions of 1T / wurtzite, the cations in half the octahedral
+        // holes; one cation of the 2-cell 1T moves (CdI2 fills alternate layers fully,
+        // rutile half of every layer)
+        let tio2 = () => endpoint('phonondb-TiO2-mp-2657.json.gz', 'TiO2');
+        let pairs = [
+            [tio2, () => endpoint('phonondb-ZrS2-1T-mp-1186.json.gz', 'ZrS2'), 7],
+            [tio2, () => endpoint('phonondb-AlN-wurtzite-mp-661.json.gz', 'AlN'), 10],
+            [() => endpoint('phonondb-ZnSb2O6-mp-3188.json.gz', 'ZnSb2O6'), () => endpoint('phonondb-ZrS2-1T-mp-1186.json.gz', 'ZrS2'), null],
+        ];
+        for (let [first, second, sites] of pairs) {
+            let sampled = sampleMixingPair(first(), second());
+            let reversed = sampleMixingPair(second(), first());
+            let label = sampled.endpoint1.name + ' + ' + sampled.endpoint2.name;
+            assert.equal(sampled.union.world, 'hex', label);
+            if (sites) {
+                assert.equal(sampled.union.map1.length, sites, label);
+            }
+            let end0 = await computeMixedPhonon(sampled, 0);
+            assert.ok(opticalDiff(end0.eigenvalues, await computeReferenceEigenvalues(sampled)) < 1e-4, label);
+            let end1 = await computeMixedPhonon(sampled, 1);
+            assert.ok(opticalDiff(end1.eigenvalues, await computeReferenceEigenvalues(reversed)) < 1e-4, label);
+            let mixed = await computeMixedPhonon(sampled, 0.4, 0.6);
+            let mirrored = await computeMixedPhonon(reversed, 0.6, 0.4);
+            assert.ok(opticalDiff(mixed.eigenvalues, mirrored.eigenvalues) < 1e-4, label);
         }
     });
 
