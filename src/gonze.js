@@ -334,16 +334,18 @@ function getRealSpaceTerms(payload) {
     let reach = (yMax / ewald) * Math.sqrt(epsMax);
     let volume = Math.abs(determinant3x3(lattice));
     let cross = (p, q) => [p[1] * q[2] - p[2] * q[1], p[2] * q[0] - p[0] * q[2], p[0] * q[1] - p[1] * q[0]];
+    let maxOffset = 0;
+    for (let i = 0; i < natoms; i++) {
+        for (let j = 0; j < natoms; j++) {
+            let d0 = positions[j][0] - positions[i][0];
+            let d1 = positions[j][1] - positions[i][1];
+            let d2 = positions[j][2] - positions[i][2];
+            maxOffset = Math.max(maxOffset, Math.sqrt(d0 * d0 + d1 * d1 + d2 * d2));
+        }
+    }
     let span = [0, 1, 2].map((k) => {
         let normal = cross(lattice[(k + 1) % 3], lattice[(k + 2) % 3]);
         let height = volume / Math.sqrt(dot3(normal, normal));
-        let maxOffset = 0;
-        for (let i = 0; i < natoms; i++) {
-            for (let j = 0; j < natoms; j++) {
-                let d = [0, 1, 2].map((c) => positions[j][c] - positions[i][c]);
-                maxOffset = Math.max(maxOffset, Math.sqrt(dot3(d, d)));
-            }
-        }
         return Math.ceil((reach + maxOffset) / height);
     });
     let vectors = [];
@@ -353,16 +355,26 @@ function getRealSpaceTerms(payload) {
     for (let i = 0; i < natoms; i++) {
         rowSums.push(new Float64Array(9));
     }
+    let inv = inverse;
+    let factor = (ewald * ewald * ewald) / sqrtDet;
+    let H = new Float64Array(9);
+    let ZH = new Float64Array(9);
     for (let a = -span[0]; a <= span[0]; a++) {
         for (let b = -span[1]; b <= span[1]; b++) {
             for (let c = -span[2]; c <= span[2]; c++) {
-                let R = [0, 1, 2].map((k) => a * lattice[0][k] + b * lattice[1][k] + c * lattice[2][k]);
+                let R0 = a * lattice[0][0] + b * lattice[1][0] + c * lattice[2][0];
+                let R1 = a * lattice[0][1] + b * lattice[1][1] + c * lattice[2][1];
+                let R2 = a * lattice[0][2] + b * lattice[1][2] + c * lattice[2][2];
                 let index = -1;
                 for (let i = 0; i < natoms; i++) {
                     for (let j = 0; j < natoms; j++) {
-                        let d = [0, 1, 2].map((k) => R[k] + positions[j][k] - positions[i][k]);
-                        let reduced = multiplyMatrixByVector(inverse, d);
-                        let length = Math.sqrt(dot3(d, reduced));
+                        let d0 = R0 + positions[j][0] - positions[i][0];
+                        let d1 = R1 + positions[j][1] - positions[i][1];
+                        let d2 = R2 + positions[j][2] - positions[i][2];
+                        let r0 = inv[0][0] * d0 + inv[0][1] * d1 + inv[0][2] * d2;
+                        let r1 = inv[1][0] * d0 + inv[1][1] * d1 + inv[1][2] * d2;
+                        let r2 = inv[2][0] * d0 + inv[2][1] * d1 + inv[2][2] * d2;
+                        let length = Math.sqrt(d0 * r0 + d1 * r1 + d2 * r2);
                         let y = ewald * length;
                         if (length < 1e-8 || y > yMax) {
                             continue;
@@ -371,27 +383,32 @@ function getRealSpaceTerms(payload) {
                         let tail = erfc(y);
                         let along = (3 * tail / (y * y * y) + gauss * (3 / (y * y) + 2)) / (length * length);
                         let isotropic = tail / (y * y * y) + gauss / (y * y);
-                        let factor = (ewald * ewald * ewald) / sqrtDet;
                         // H in the cartesian axes, then Z_i^T H Z_j
-                        let H = [0, 1, 2].map((p) => [0, 1, 2].map((r) =>
-                            factor * (along * reduced[p] * reduced[r] - isotropic * inverse[p][r])
-                        ));
+                        let reduced = [r0, r1, r2];
+                        for (let p = 0; p < 3; p++) {
+                            for (let r = 0; r < 3; r++) {
+                                H[p * 3 + r] = factor * (along * reduced[p] * reduced[r] - isotropic * inv[p][r]);
+                            }
+                        }
+                        let Zi = born[i];
+                        let Zj = born[j];
+                        // (Z_i^T H)[alpha][r]
+                        for (let alpha = 0; alpha < 3; alpha++) {
+                            for (let r = 0; r < 3; r++) {
+                                ZH[alpha * 3 + r] = Zi[0][alpha] * H[r] + Zi[1][alpha] * H[3 + r] + Zi[2][alpha] * H[6 + r];
+                            }
+                        }
                         let block = new Float64Array(9);
                         let weight = scale / Math.sqrt(payload.masses[i] * payload.masses[j]);
                         for (let alpha = 0; alpha < 3; alpha++) {
                             for (let beta = 0; beta < 3; beta++) {
-                                let value = 0;
-                                for (let p = 0; p < 3; p++) {
-                                    for (let r = 0; r < 3; r++) {
-                                        value += born[i][p][alpha] * H[p][r] * born[j][r][beta];
-                                    }
-                                }
-                                block[alpha * 3 + beta] = value * weight;
+                                block[alpha * 3 + beta] = (ZH[alpha * 3] * Zj[0][beta] + ZH[alpha * 3 + 1] * Zj[1][beta] +
+                                    ZH[alpha * 3 + 2] * Zj[2][beta]) * weight;
                             }
                         }
                         if (index < 0) {
                             index = vectors.length;
-                            vectors.push(R);
+                            vectors.push([R0, R1, R2]);
                         }
                         terms.push({ i: i, j: j, r: index, block: block });
                         // acoustic sum rule: q = 0 sums with the unweighted charges
@@ -473,4 +490,199 @@ export function getGonzeDipoleDipole(payload, qpoint, qDirection = null) {
         }
     }
     return reciprocal;
+}
+
+// ---------------------------------------------------------------------------
+// the same dipole-dipole term, added straight into a dynamical matrix
+// ({real, imag} rows of 3 natoms): for the large cells of the mixing page. Every
+// term of the reciprocal sum is K(G + q) = k k^T p with k = G + q (or the q
+// direction at G = -q), so with u_i = Z_i^T k exp(2 pi i G.r_i) it is
+// p u_i u_j^*: hermitian, only i <= j is summed, and Z_i^T G and the phases of
+// the atoms are kept per payload (they do not depend on q).
+// ---------------------------------------------------------------------------
+
+function getReciprocalCache(payload) {
+    if (payload.nac._reciprocal) {
+        return payload.nac._reciprocal;
+    }
+    let nac = payload.nac;
+    let positions = nac.positions_car;
+    let born = nac.born;
+    let natoms = positions.length;
+    let gList = nac.g_list;
+    let nG = gList.length;
+    // Z_i^T G (3 per atom) and exp(2 pi i G.r_i) (cos, sin) per G and atom
+    let zg = new Float64Array(nG * natoms * 3);
+    let phase = new Float64Array(nG * natoms * 2);
+    for (let g = 0; g < nG; g++) {
+        let G = gList[g];
+        for (let i = 0; i < natoms; i++) {
+            let Z = born[i];
+            let o = (g * natoms + i) * 3;
+            for (let a = 0; a < 3; a++) {
+                zg[o + a] = Z[0][a] * G[0] + Z[1][a] * G[1] + Z[2][a] * G[2];
+            }
+            let r = positions[i];
+            let angle = 2 * Math.PI * (G[0] * r[0] + G[1] * r[1] + G[2] * r[2]);
+            phase[(g * natoms + i) * 2] = Math.cos(angle);
+            phase[(g * natoms + i) * 2 + 1] = Math.sin(angle);
+        }
+    }
+    nac._reciprocal = { zg: zg, phase: phase };
+    return nac._reciprocal;
+}
+
+function addReciprocalDipoleDipole(payload, qpoint, qDirection, matrix, factor) {
+    // factor x getGonzeReciprocalCorrection(payload, qpoint, qDirection), added to matrix
+    let nac = payload.nac;
+    let natoms = payload.masses.length;
+    let qCart = getQCart(qpoint, payload.primitive_lattice);
+    let qDirectionCart = qDirection ? getQCart(qDirection, payload.primitive_lattice) : null;
+    let dielectric = nac.dielectric;
+    let born = nac.born;
+    let tolerance = nac.q_direction_tolerance || 1e-5;
+    let l2 = 4 * nac.lambda * nac.lambda;
+    let gList = nac.g_list;
+    let { zg, phase } = getReciprocalCache(payload);
+    // Z_i^T q, and Z_i^T of the q direction
+    let zq = new Float64Array(natoms * 3);
+    let zd = qDirectionCart ? new Float64Array(natoms * 3) : null;
+    for (let i = 0; i < natoms; i++) {
+        let Z = born[i];
+        for (let a = 0; a < 3; a++) {
+            zq[i * 3 + a] = Z[0][a] * qCart[0] + Z[1][a] * qCart[1] + Z[2][a] * qCart[2];
+            if (zd) {
+                zd[i * 3 + a] = Z[0][a] * qDirectionCart[0] + Z[1][a] * qDirectionCart[1] + Z[2][a] * qDirectionCart[2];
+            }
+        }
+    }
+    let size = 3 * natoms;
+    let accRe = new Float64Array(size * size);
+    let accIm = new Float64Array(size * size);
+    let uRe = new Float64Array(size);
+    let uIm = new Float64Array(size);
+    for (let g = 0; g < gList.length; g++) {
+        let G = gList[g];
+        let k0 = G[0] + qCart[0];
+        let k1 = G[1] + qCart[1];
+        let k2 = G[2] + qCart[2];
+        let p;
+        let useDirection = false;
+        if (Math.sqrt(k0 * k0 + k1 * k1 + k2 * k2) < tolerance) {
+            if (!qDirectionCart) {
+                continue;
+            }
+            let part = getDielectricPart(qDirectionCart, dielectric);
+            if (!(Math.abs(part) > 1e-16)) {
+                continue;
+            }
+            p = 1 / part;
+            useDirection = true;
+        } else {
+            let part = getDielectricPart([k0, k1, k2], dielectric);
+            if (!(Math.abs(part) > 1e-16)) {
+                continue;
+            }
+            p = Math.exp(-part / l2) / part;
+        }
+        if (p === 0) {
+            continue;
+        }
+        let sqrtP = Math.sqrt(Math.abs(p));
+        let sign = p < 0 ? -1 : 1;
+        for (let i = 0; i < natoms; i++) {
+            let c = phase[(g * natoms + i) * 2];
+            let s = phase[(g * natoms + i) * 2 + 1];
+            for (let a = 0; a < 3; a++) {
+                let v = useDirection ? zd[i * 3 + a] : zg[(g * natoms + i) * 3 + a] + zq[i * 3 + a];
+                uRe[i * 3 + a] = v * c * sqrtP;
+                uIm[i * 3 + a] = v * s * sqrtP;
+            }
+        }
+        // acc_xy += sign u_x conj(u_y), for the blocks i <= j
+        for (let i = 0; i < natoms; i++) {
+            for (let x = 3 * i; x < 3 * i + 3; x++) {
+                let ar = uRe[x] * sign;
+                let ai = uIm[x] * sign;
+                let row = x * size;
+                for (let y = 3 * i; y < size; y++) {
+                    let br = uRe[y];
+                    let bi = uIm[y];
+                    accRe[row + y] += ar * br + ai * bi;
+                    accIm[row + y] += ai * br - ar * bi;
+                }
+            }
+        }
+    }
+    let ddQ0 = nac.dd_q0;
+    for (let i = 0; i < natoms; i++) {
+        for (let j = i; j < natoms; j++) {
+            let scale = factor * nac.nac_factor / Math.sqrt(payload.masses[i] * payload.masses[j]);
+            for (let a = 0; a < 3; a++) {
+                for (let b = 0; b < 3; b++) {
+                    let re = accRe[(3 * i + a) * size + 3 * j + b];
+                    let im = accIm[(3 * i + a) * size + 3 * j + b];
+                    if (i === j) {
+                        re -= ddQ0.real[i][a][b];
+                        im -= ddQ0.imag[i][a][b];
+                        matrix.real[3 * i + a][3 * j + b] += scale * re;
+                        matrix.imag[3 * i + a][3 * j + b] += scale * im;
+                    } else {
+                        matrix.real[3 * i + a][3 * j + b] += scale * re;
+                        matrix.imag[3 * i + a][3 * j + b] += scale * im;
+                        // the block j i: the hermitian conjugate
+                        matrix.real[3 * j + b][3 * i + a] += scale * re;
+                        matrix.imag[3 * j + b][3 * i + a] -= scale * im;
+                    }
+                }
+            }
+        }
+    }
+}
+
+export function addGonzeRealSpaceRemainder(payload, qpoint, matrix, factor) {
+    // factor x getGonzeRealSpaceRemainder(payload, qpoint), added to matrix
+    let qCart = getQCart(qpoint, payload.primitive_lattice);
+    let { vectors, terms, rowSums } = getRealSpaceTerms(payload);
+    let positions = payload.nac.positions_car;
+    let natoms = positions.length;
+    let cosR = new Float64Array(vectors.length);
+    let sinR = new Float64Array(vectors.length);
+    for (let n = 0; n < vectors.length; n++) {
+        let angle = 2 * Math.PI * dot3(qCart, vectors[n]);
+        cosR[n] = Math.cos(angle);
+        sinR[n] = Math.sin(angle);
+    }
+    let cosAtom = positions.map((r) => Math.cos(2 * Math.PI * dot3(qCart, r)));
+    let sinAtom = positions.map((r) => Math.sin(2 * Math.PI * dot3(qCart, r)));
+    for (let t = 0; t < terms.length; t++) {
+        let { i, j, r, block } = terms[t];
+        let cosA = cosAtom[j] * cosAtom[i] + sinAtom[j] * sinAtom[i];
+        let sinA = sinAtom[j] * cosAtom[i] - cosAtom[j] * sinAtom[i];
+        let cos = (cosR[r] * cosA - sinR[r] * sinA) * factor;
+        let sin = (sinR[r] * cosA + cosR[r] * sinA) * factor;
+        for (let alpha = 0; alpha < 3; alpha++) {
+            let rowRe = matrix.real[3 * i + alpha];
+            let rowIm = matrix.imag[3 * i + alpha];
+            for (let beta = 0; beta < 3; beta++) {
+                let value = block[alpha * 3 + beta];
+                rowRe[3 * j + beta] -= value * cos;
+                rowIm[3 * j + beta] -= value * sin;
+            }
+        }
+    }
+    for (let i = 0; i < natoms; i++) {
+        let sums = rowSums[i];
+        for (let alpha = 0; alpha < 3; alpha++) {
+            for (let beta = 0; beta < 3; beta++) {
+                matrix.real[3 * i + alpha][3 * i + beta] += factor * (sums[alpha * 3 + beta] + sums[beta * 3 + alpha]) / 2;
+            }
+        }
+    }
+}
+
+export function addGonzeDipoleDipole(payload, qpoint, qDirection, matrix, factor) {
+    // factor x getGonzeDipoleDipole(payload, qpoint, qDirection), added to matrix
+    addReciprocalDipoleDipole(payload, qpoint, qDirection, matrix, factor);
+    addGonzeRealSpaceRemainder(payload, qpoint, matrix, factor);
 }

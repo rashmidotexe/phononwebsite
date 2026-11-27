@@ -200,6 +200,12 @@ describe('mixing two structures on a common lattice (vacancies)', () => {
         // rutile (a buckled hcp anion array) and rocksalt on the close-packed grid
         assert.equal(getWorldMixing('rutile', 'rocksalt').world, 'hex');
         assert.equal(getWorldMixing('wurtzite', 'rocksalt').world, 'hex');
+        // CsCl (bcc along [111]) on the close-packed grid; with a perovskite still the
+        // cubic world, with a Heusler the fcc one
+        assert.equal(getWorldMixing('cscl', 'wurtzite').world, 'hex');
+        assert.equal(getWorldMixing('cscl', 'rutile').world, 'hex');
+        assert.equal(getWorldMixing('cscl', 'perovskite').world, 'cubic');
+        assert.equal(getWorldMixing('cscl', 'heusler').world, 'fcc');
     });
 });
 
@@ -347,13 +353,18 @@ describe('close-packed structures on one grid (wurtzite, zinc blende, rocksalt, 
         // AlN folded 8 times (2 x 2 in the layer, 4 layers): 32 sites, 13 on Zn2Mo3O8 sites
         assert.equal(sampled.union.map1.length, 45);
         let end1 = await computeMixedPhonon(sampled, 1);
-        let alone = await computeReferenceEigenvalues(sampleMixingPair(zmo(), zmo()));
+        // Zn2Mo3O8 in its own cell on the same (coarser, 45 sites) path
+        let reversed = sampleMixingPair(zmo(), endpoint('phonondb-AlN-wurtzite-mp-661.json.gz', 'AlN'));
+        assert.ok(sampled.coarsePath && reversed.qpoints.length === sampled.qpoints.length);
+        let alone = await computeReferenceEigenvalues(reversed);
         assert.ok(opticalDiff(end1.eigenvalues, alone) < 1e-4);
     });
 
     it('caps the size of the common cell', () => {
-        // zinc blende (3 layers) with Zn2Mo3O8 (4 layers, 2 x 2): 12 layers, too many sites
-        assert.equal(getWorldMixing('zincblende', 'zmo'), null);
+        // zinc blende (3 layers) with Zn2Mo3O8 (4 layers, 2 x 2): 12 layers, 156 sites;
+        // chalcopyrite doubles that, beyond the limit
+        assert.equal(getWorldMixing('zincblende', 'zmo').world, 'hex');
+        assert.equal(getWorldMixing('chalcopyrite', 'zmo'), null);
         assert.equal(getWorldMixing('wurtzite', 'zmo').world, 'hex');
     });
 });

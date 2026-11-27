@@ -106,7 +106,7 @@
  */
 
 import { buildDynamicalMatrixBlocks } from './dynamicalmatrix.js';
-import { getGonzeReciprocalCorrection, getGonzeRealSpaceRemainder, getGonzeDipoleDipole } from './gonze.js';
+import { getGonzeReciprocalCorrection, addGonzeRealSpaceRemainder, addGonzeDipoleDipole } from './gonze.js';
 import { solveComplexHermitianWithEigenWasm } from './eigenwasm.js';
 import * as atomic_data from './atomic_data.js';
 import * as utils from './utils.js';
@@ -3474,7 +3474,8 @@ export function binaryAsSuperstructure(binary, family) {
 //      blende, rocksalt and the fluorites (ABC, along [111]), the perovskites (AX3
 //      layers, ABC), NiAs-like and CdI2-like layers, corundum, the dichalcogenides,
 //      the 4H Zn2Mo3O8 and rutile (hcp anions, buckled; RUTILE_ON_GRID) and its
-//      orderings all sit on it (HEX_GRID).
+//      orderings, and CsCl (bcc along [111], a net every grid step) all sit on it
+//      (HEX_GRID).
 // For each member: the world sublattice of each of its own sublattices (binaries:
 // its sites in canonical order; templates: the parent's sublattices), or how its
 // cell is placed in the world ('cscl-fold', 'chalcopyrite', 'grid').
@@ -3500,6 +3501,7 @@ const LATTICE_WORLDS = {
             zincblende: 'grid', rocksalt: 'grid', fluorite: 'grid', antifluorite: 'grid', heusler: 'grid',
             chalcopyrite: 'grid', perovskite: 'grid', antiperovskite: 'grid', wurtzite: 'grid',
             'tmd-1T': 'grid', 'tmd-2H': 'grid', 'tmd-3R': 'grid', corundum: 'grid', zmo: 'grid', rutile: 'grid',
+            cscl: 'grid',
         },
         cycle: null,
     },
@@ -3507,7 +3509,11 @@ const LATTICE_WORLDS = {
 // the doubled CsCl cell of the fcc world: rows of rocksaltLattice(2 b) in the basis b I
 const CSCL_TO_FCC = [[0, 1, 1], [1, 0, 1], [1, 1, 0]];
 // mixtures of more sites are not offered (a slider step would take too long)
-const MAX_UNION_SITES = 96;
+const MAX_UNION_SITES = 192;
+// above this many sites the band path is sampled more coarsely: a slider step costs
+// about (q-points) x (sites)^3 and keeps (q-points) x (sites)^2 numbers, so the
+// points per segment go as (THIN_SITES / sites)^1.5, at least 3
+const THIN_SITES = 40;
 
 function worldMemberKey(family) {
     let template = SUPERSTRUCTURES[family];
@@ -3612,6 +3618,10 @@ const HEX_GRID = (() => {
         cubicFrame: frame,
         fcc: toGrid(rocksaltLattice(1)),
         cubic: toGrid(IDENTITY3),
+        // a bcc cube (CsCl) of half the edge: its (111) planes are triangular nets of
+        // the same spacing, one grid step apart, cycling A B C (the Heuslers on the fcc
+        // cell are the same grid points)
+        bcc: toGrid(IDENTITY3.map((row) => row.map((v) => v / 2))),
     };
 })();
 
@@ -3768,9 +3778,11 @@ function hexFamilyCell(family) {
             frame: HEX_GRID.cubicFrame,
         };
     };
-    if (LATTICE_WORLDS.fcc.members[key] && key !== 'cscl') {
+    if (key === 'cscl') {
+        cell = fromCubic('cubic', HEX_GRID.bcc);
+    } else if (LATTICE_WORLDS.fcc.members[key]) {
         cell = fromCubic('fcc', HEX_GRID.fcc);
-    } else if (LATTICE_WORLDS.cubic.members[key] && key !== 'cscl') {
+    } else if (LATTICE_WORLDS.cubic.members[key]) {
         cell = fromCubic('cubic', HEX_GRID.cubic);
     } else if (key === 'wurtzite') {
         if (!template) {
@@ -4059,7 +4071,8 @@ function worldCell(endpoint, world) {
         // checks the setting)
         let family = hexFamilyCell(endpoint.family);
         let key = worldMemberKey(endpoint.family);
-        let own = LATTICE_WORLDS.fcc.members[key] ? worldCell(endpoint, 'fcc')
+        let own = key === 'cscl' ? worldCell(endpoint, 'cubic')
+            : LATTICE_WORLDS.fcc.members[key] ? worldCell(endpoint, 'fcc')
             : LATTICE_WORLDS.cubic.members[key] ? worldCell(endpoint, 'cubic')
             : { cell: endpointLattice(endpoint), positions: endpointPositions(endpoint) };
         return {
@@ -4817,6 +4830,13 @@ export function sampleMixingPair(endpoint1, endpoint2) {
         throw new Error('The band paths of ' + endpoint1.name + ' and ' + endpoint2.name +
             ' have no segment in common; a PhononDB file for one of them can be evaluated on the other\'s path');
     }
+    let unionSites = union ? union.map1.length : 0;
+    if (unionSites > THIN_SITES) {
+        let factor = Math.pow(THIN_SITES / unionSites, 1.5);
+        path = path.map((segment) => Object.assign({}, segment, {
+            npoints: Math.max(3, Math.round((segment.npoints - 1) * factor) + 1),
+        }));
+    }
     let qpoints = [];
     let matrices1 = [];
     let matrices2 = [];
@@ -4858,6 +4878,8 @@ export function sampleMixingPair(endpoint1, endpoint2) {
         matrices1: matrices1,
         matrices2: matrices2,
         recomputeNac: recomputeNac,
+        // a large common cell: the band path sampled more coarsely
+        coarsePath: unionSites > THIN_SITES,
         shortRange1: shortRange1,
         shortRange2: shortRange2,
         qDirections: qDirections,
@@ -4988,24 +5010,32 @@ function getGonzeDdQ0(gList, born, dielectric, positionsCar, lambda) {
             }
         }
         let prefactor = Math.exp(-gEpsG / l2) / gEpsG;
+        // sum_j (Z_i^T G)(G^T Z_j) e^{2 pi i G.(r_i - r_j)} = v_i S^* with
+        // v_i = Z_i^T G e^{2 pi i G.r_i} and S = sum_j v_j: linear in the atoms
+        let vRe = new Float64Array(3 * natoms);
+        let vIm = new Float64Array(3 * natoms);
+        let sRe = [0, 0, 0];
+        let sIm = [0, 0, 0];
         for (let i = 0; i < natoms; i++) {
-            for (let j = 0; j < natoms; j++) {
-                let phase = 2 * Math.PI * (
-                    G[0] * (positionsCar[i][0] - positionsCar[j][0]) +
-                    G[1] * (positionsCar[i][1] - positionsCar[j][1]) +
-                    G[2] * (positionsCar[i][2] - positionsCar[j][2])
-                );
-                let cos = Math.cos(phase);
-                let sin = Math.sin(phase);
-                // (Z_i^T G)(G^T Z_j) = outer(Z_i^T G, Z_j^T G)
-                let zi = [0, 1, 2].map((alpha) => born[i][0][alpha] * G[0] + born[i][1][alpha] * G[1] + born[i][2][alpha] * G[2]);
-                let zj = [0, 1, 2].map((beta) => born[j][0][beta] * G[0] + born[j][1][beta] * G[1] + born[j][2][beta] * G[2]);
-                for (let alpha = 0; alpha < 3; alpha++) {
-                    for (let beta = 0; beta < 3; beta++) {
-                        let value = zi[alpha] * zj[beta] * prefactor;
-                        ddQ0.real[i][alpha][beta] += value * cos;
-                        ddQ0.imag[i][alpha][beta] += value * sin;
-                    }
+            let r = positionsCar[i];
+            let angle = 2 * Math.PI * (G[0] * r[0] + G[1] * r[1] + G[2] * r[2]);
+            let cos = Math.cos(angle);
+            let sin = Math.sin(angle);
+            for (let alpha = 0; alpha < 3; alpha++) {
+                let z = born[i][0][alpha] * G[0] + born[i][1][alpha] * G[1] + born[i][2][alpha] * G[2];
+                vRe[3 * i + alpha] = z * cos;
+                vIm[3 * i + alpha] = z * sin;
+                sRe[alpha] += z * cos;
+                sIm[alpha] += z * sin;
+            }
+        }
+        for (let i = 0; i < natoms; i++) {
+            for (let alpha = 0; alpha < 3; alpha++) {
+                let ar = vRe[3 * i + alpha];
+                let ai = vIm[3 * i + alpha];
+                for (let beta = 0; beta < 3; beta++) {
+                    ddQ0.real[i][alpha][beta] += prefactor * (ar * sRe[beta] + ai * sIm[beta]);
+                    ddQ0.imag[i][alpha][beta] += prefactor * (ai * sRe[beta] - ar * sIm[beta]);
                 }
             }
         }
@@ -5218,7 +5248,7 @@ function subtractRealSpaceDipole(endpoint, matrices, qpoints) {
     let factorSq = endpoint.frequencyFactor * endpoint.frequencyFactor;
     return matrices.map((matrix, k) => {
         let out = { real: matrix.real.map((row) => row.slice()), imag: matrix.imag.map((row) => row.slice()) };
-        addBlockTensor(out, getGonzeRealSpaceRemainder(payload, qpoints[k]), -factorSq);
+        addGonzeRealSpaceRemainder(payload, qpoints[k], out, -factorSq);
         return out;
     });
 }
@@ -5466,8 +5496,7 @@ export async function computeMixedPhonon(sampled, x, massFraction = x) {
                 masses, x
             );
             // the full Ewald sum, matching what was subtracted from the end-members
-            let dd = getGonzeDipoleDipole(nacPayload, q, sampled.qDirections[k]);
-            addBlockTensor(matrix, dd, frequencyFactorSq);
+            addGonzeDipoleDipole(nacPayload, q, sampled.qDirections[k], matrix, frequencyFactorSq);
             return matrix;
         }
         return mixForceConstantMatrices(
@@ -5645,7 +5674,7 @@ async function computeUnionMixedPhonon(sampled, x, massFraction) {
             }
         }
         if (nacPayload) {
-            addBlockTensor(out, getGonzeDipoleDipole(nacPayload, q, sampled.qDirections[k]), factorSq);
+            addGonzeDipoleDipole(nacPayload, q, sampled.qDirections[k], out, factorSq);
         }
         return out;
     });

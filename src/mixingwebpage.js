@@ -167,6 +167,9 @@ export class MixingWebpage extends PhononWebpage {
             } else {
                 note += ". ";
             }
+            if (sampled.coarsePath) {
+                note += "For a cell this large the band path is sampled more coarsely, and each change of the slider takes longer (up to about 20 seconds for the largest cells). ";
+            }
         }
         if (nacMode === 'interpolated' && this.material2) {
             let missing = sampled ? [sampled.endpoint1, sampled.endpoint2].filter((endpoint) => !endpoint.nac) : [];
